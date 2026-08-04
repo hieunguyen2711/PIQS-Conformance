@@ -85,7 +85,22 @@ Against Kim's published ground truth the checker agrees on **146/160 = 91.2%** o
 judgments, with 30/40 scoring units matching all three metrics exactly — see
 [docs/KIM_VALIDATION.md](docs/KIM_VALIDATION.md).
 
-## Provenance
+## Credits and data provenance
+
+**`fixtures/kim/` is not our data.** It is the corpus from Kim (2025), redistributed here
+unmodified for reproducibility: 145 Java files across 12 programs — two case studies (POSS, a
+Point of Sale System; SWS, a Smart Wallet System), each in an original form plus five
+LLM-refactored versions (ChatGPT, Claude, Copilot, Gemini, Meta). Kim's published per-property
+verdicts and PSR/CPC/PIQS tables are the ground truth that `validation/compare.py` scores
+against, and the PSR/CPC/PIQS formulas and the Table 9 weighting philosophy are Kim's.
+
+Those files are treated as read-only research data and are never edited. The ZIP distribution
+they were extracted from is recorded per program in `validation/kim_file_manifest.json` under
+`source_zip`. Credit for the corpus and the metric belongs to Kim; the structural checker, the
+39-case mutation battery, the three added patterns (Builder, Decorator, Template Method) and
+the renaming-invariance work are ours.
+
+## Repo provenance
 
 Migrated from `Java-Design-Patterns-Analyzer`, which was a FastAPI service carrying LLM
 clients, HPC job scripts and generated datasets. What came across and what did not is recorded
