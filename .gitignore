@@ -1,0 +1,39 @@
+# Superseded history from the old repo: four fix passes of *_v1..*_v4 outputs, the
+# make_report*.py generations, and the piqs_service_*.diff patches. Kept on disk for
+# reference, deliberately out of the repo. See docs/MIGRATION.md.
+archive/
+
+# Python cache
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.so
+
+# Python tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Coverage
+.coverage
+htmlcov/
+coverage.xml
+
+# Packaging
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store

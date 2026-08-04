@@ -1,0 +1,9 @@
+# piqs/ and validation/ import only the standard library (re, dataclasses, json, os, sys,
+# subprocess, tempfile, shutil, argparse). There is no runtime dependency.
+#
+# pytest is needed for tests/ only.
+#
+# javac is an optional EXTERNAL tool, not a Python package: validation/run_scorer.py and
+# validation/run_mutation_battery_bdt.py record whether each case compiles, and degrade to
+# "n/a" when javac is not on PATH.
+pytest==8.3.3
