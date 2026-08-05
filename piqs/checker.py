@@ -58,7 +58,7 @@ _DECL_RE = re.compile(
 # checker recorded a phantom method `add` on the enclosing type. The lookbehind rejects a
 # name that sits directly after a receiver dot (`kids.add`, `this.helper`, `super.doThing`,
 # `new Foo().bar`) and also stops a match starting mid-identifier. A bare call such as
-# `setChanged();` has no dot, so it is rejected in _extract_methods instead -- see the
+# `setChanged();` has no dot, so it is rejected in _extract_methods_regex instead -- see the
 # return-type rule there.
 _METHOD_SIG_RE = re.compile(
     r"(?<![\w$.])"
@@ -227,6 +227,21 @@ class PIQSChecker:
         }
 
     def _extract_types(self, java_files: dict[str, str]) -> dict[str, JavaType]:
+        """The extractor the checker runs on. Phase-1 migration: this is the single
+        switch point between the regex reference implementation and the tree-sitter
+        parser. Every predicate reads the JavaType/JavaMethod/JavaField model below and
+        is indifferent to which extractor built it."""
+        return self._extract_types_regex(java_files)
+
+    # ------------------------------------------------------------------ #
+    # Regex reference extractor (phase-1 migration).
+    #
+    # This is the ORIGINAL extraction path, kept verbatim under a `_regex` suffix so the
+    # parity harness (validation/extractor_parity.py) can run it side by side with the
+    # tree-sitter extractor and diff the fact model. It is deleted once parity is clean;
+    # nothing but the parity harness and _extract_types above may call it.
+    # ------------------------------------------------------------------ #
+    def _extract_types_regex(self, java_files: dict[str, str]) -> dict[str, JavaType]:
         types: dict[str, JavaType] = {}
 
         for content in java_files.values():
@@ -241,7 +256,7 @@ class PIQSChecker:
                     if part.strip()
                 ]
                 is_abs = bool(match.group("abs")) or kind == "interface"
-                body = self._extract_block(content, match.end() - 1)
+                body = self._extract_block_regex(content, match.end() - 1)
 
                 t = JavaType(
                     name=name,
@@ -252,13 +267,13 @@ class PIQSChecker:
                     content=content,
                     body=body,
                 )
-                t.methods = self._extract_methods(name, body)
-                t.fields = self._extract_fields(body)
+                t.methods = self._extract_methods_regex(name, body)
+                t.fields = self._extract_fields_regex(body)
                 types[name] = t
 
         return types
 
-    def _extract_methods(self, owner: str, body: str) -> list[JavaMethod]:
+    def _extract_methods_regex(self, owner: str, body: str) -> list[JavaMethod]:
         methods: list[JavaMethod] = []
 
         for m in _METHOD_SIG_RE.finditer(body):
@@ -280,12 +295,12 @@ class PIQSChecker:
                 continue
 
             params = m.group("params") or ""
-            param_types, param_names = self._parse_params(params)
+            param_types, param_names = self._parse_params_regex(params)
 
             method_body = ""
             has_body = m.group("tail") == "{"
             if has_body:
-                method_body = self._extract_block(body, m.end() - 1)
+                method_body = self._extract_block_regex(body, m.end() - 1)
 
             methods.append(
                 JavaMethod(
@@ -304,7 +319,7 @@ class PIQSChecker:
         return methods
 
     @staticmethod
-    def _class_scope_only(body: str) -> str:
+    def _class_scope_only_regex(body: str) -> str:
         """Fix F: return only the class-body text at brace-depth 0 -- every method,
         constructor, initialiser and nested-type body (and anything deeper) is stripped.
         Fields are declared at class scope; anything inside those removed blocks is a
@@ -530,11 +545,11 @@ class PIQSChecker:
         (RULE 1: a Java interface counts as an abstract type)."""
         return {t.name for t in types.values() if t.is_abstract}
 
-    def _extract_fields(self, body: str) -> list[JavaField]:
+    def _extract_fields_regex(self, body: str) -> list[JavaField]:
         fields: list[JavaField] = []
         # Fix F: parse field declarations only at class-body scope; local variables inside
         # method/constructor bodies must not be captured as fields.
-        for m in _FIELD_RE.finditer(self._class_scope_only(body)):
+        for m in _FIELD_RE.finditer(self._class_scope_only_regex(body)):
             field_type = self._base_name(m.group("type") or "")
             if not field_type:
                 continue
@@ -1624,7 +1639,7 @@ class PIQSChecker:
         return base, derived, rows
 
     @staticmethod
-    def _extract_block(text: str, open_brace_idx: int) -> str:
+    def _extract_block_regex(text: str, open_brace_idx: int) -> str:
         if open_brace_idx < 0 or open_brace_idx >= len(text) or text[open_brace_idx] != "{":
             return ""
         depth = 0
@@ -1639,7 +1654,7 @@ class PIQSChecker:
         return text[open_brace_idx + 1 :]
 
     @staticmethod
-    def _parse_params(params: str) -> tuple[list[str], list[str]]:
+    def _parse_params_regex(params: str) -> tuple[list[str], list[str]]:
         if not params.strip():
             return [], []
         param_types: list[str] = []

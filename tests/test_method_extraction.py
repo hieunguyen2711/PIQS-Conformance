@@ -24,7 +24,7 @@ from piqs.checker import PIQSChecker  # noqa: E402
 
 
 def names(owner: str, body: str) -> set[str]:
-    return {m.name for m in PIQSChecker()._extract_methods(owner, body)}
+    return {m.name for m in PIQSChecker()._extract_methods_regex(owner, body)}
 
 
 # --------------------------------------------------------------------------------------- #
@@ -110,14 +110,14 @@ def test_interface_methods_survive() -> None:
 
 
 def test_constructor_is_flagged_as_constructor() -> None:
-    methods = PIQSChecker()._extract_methods("AuditLog", "    AuditLog(String name) { }\n")
+    methods = PIQSChecker()._extract_methods_regex("AuditLog", "    AuditLog(String name) { }\n")
     ctors = [m for m in methods if m.is_constructor]
     assert [m.name for m in ctors] == ["AuditLog"]
 
 
 def test_return_type_and_params_still_parse() -> None:
     body = "    public Wallet createWallet(String currency, int limit) { return null; }\n"
-    m = next(m for m in PIQSChecker()._extract_methods("Factory", body) if m.name == "createWallet")
+    m = next(m for m in PIQSChecker()._extract_methods_regex("Factory", body) if m.name == "createWallet")
     assert m.return_type == "Wallet"
     assert m.param_types == ["String", "int"]
     assert m.param_names == ["currency", "limit"]
