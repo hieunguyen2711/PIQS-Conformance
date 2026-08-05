@@ -571,7 +571,7 @@
         "isUpdate(m)": true,
         "isSubject(x)": true,
         "isRegisterObserver(m)": false,
-        "isUnregisterObserver(m)": true,
+        "isUnregisterObserver(m)": false,
         "isNotify(m)": true,
         "notifies(s,o)": true,
         "updates(o,s)": true
@@ -813,7 +813,7 @@
         "isUpdate(m)": true,
         "isSubject(x)": true,
         "isRegisterObserver(m)": false,
-        "isUnregisterObserver(m)": true,
+        "isUnregisterObserver(m)": false,
         "isNotify(m)": true,
         "notifies(s,o)": true,
         "updates(o,s)": true
@@ -1055,7 +1055,7 @@
         "isUpdate(m)": true,
         "isSubject(x)": true,
         "isRegisterObserver(m)": false,
-        "isUnregisterObserver(m)": true,
+        "isUnregisterObserver(m)": false,
         "isNotify(m)": true,
         "notifies(s,o)": true,
         "updates(o,s)": true
@@ -1297,7 +1297,7 @@
         "isUpdate(m)": true,
         "isSubject(x)": true,
         "isRegisterObserver(m)": false,
-        "isUnregisterObserver(m)": true,
+        "isUnregisterObserver(m)": false,
         "isNotify(m)": true,
         "notifies(s,o)": true,
         "updates(o,s)": true
@@ -1539,7 +1539,7 @@
         "isUpdate(m)": true,
         "isSubject(x)": true,
         "isRegisterObserver(m)": false,
-        "isUnregisterObserver(m)": true,
+        "isUnregisterObserver(m)": false,
         "isNotify(m)": true,
         "notifies(s,o)": true,
         "updates(o,s)": true
@@ -2390,10 +2390,10 @@
         "isConcrete(x)": true,
         "reads(m,p)": true,
         "modifies(m,p)": false,
-        "modifiesCollection(m,c,p)": true,
+        "modifiesCollection(m,c,p)": false,
         "traversesCollection(m,c)": true,
-        "increases(m,c)": true,
-        "decreases(m,c)": true,
+        "increases(m,c)": false,
+        "decreases(m,c)": false,
         "hasMethod(c,m)": true,
         "calls(m1,m2)": true,
         "implements(x,y)": true
@@ -2401,9 +2401,9 @@
       "derived_predicates": {
         "isObserver(x)": true,
         "isUpdate(m)": true,
-        "isSubject(x)": true,
+        "isSubject(x)": false,
         "isRegisterObserver(m)": false,
-        "isUnregisterObserver(m)": true,
+        "isUnregisterObserver(m)": false,
         "isNotify(m)": false,
         "notifies(s,o)": true,
         "updates(o,s)": true
@@ -2572,8 +2572,8 @@
       "properties": {
         "O1": {
           "weight": 2,
-          "satisfaction": 1,
-          "satisfied": true,
+          "satisfaction": 0,
+          "satisfied": false,
           "justification": "At least one abstract subject exists."
         },
         "O2": {
@@ -2595,12 +2595,12 @@
           "justification": "Observers implement update behavior."
         }
       },
-      "psr": 25.0,
-      "cpc": 18.18,
-      "piqs": 22.27,
-      "psr_formula": "(1/4)*100",
-      "cpc_formula": "(2/11)*100",
-      "piqs_formula": "(25.0*0.6)+(18.18*0.4)",
+      "psr": 0.0,
+      "cpc": 0.0,
+      "piqs": 0.0,
+      "psr_formula": "(0/4)*100",
+      "cpc_formula": "(0/11)*100",
+      "piqs_formula": "(0.0*0.6)+(0.0*0.4)",
       "base_predicates": {
         "isAbstract(x)": true,
         "isConcrete(x)": true,
@@ -2617,10 +2617,10 @@
       "derived_predicates": {
         "isObserver(x)": false,
         "isUpdate(m)": false,
-        "isSubject(x)": true,
+        "isSubject(x)": false,
         "isRegisterObserver(m)": false,
         "isUnregisterObserver(m)": false,
-        "isNotify(m)": true,
+        "isNotify(m)": false,
         "notifies(s,o)": false,
         "updates(o,s)": false
       },

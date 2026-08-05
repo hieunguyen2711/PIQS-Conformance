@@ -179,6 +179,72 @@ New decision recorded in this work:
   abstract `header()`/`body()`), verified recognised (T3=1). The classic abstract-*class* form
   remains fully supported; this decision only *adds* the interface form, it does not replace it.
 
+## Framework inheritance
+
+**The rule.** A type that obtains its pattern structure by extending or implementing a type the
+project does not declare is scored as **not conforming**, unless the source still declares the
+roles the pattern requires of it. Framework inheritance by itself never satisfies a property.
+
+Detection is recorded, not acted on. Every evaluation reports:
+
+```json
+"framework_inheritance": [
+  {"type": "AuditLog", "supertype": "Observable", "pattern_roles_supplied": []}
+]
+```
+
+A supertype counts as framework only when it is **both** absent from the project's own
+declarations **and** on `_FRAMEWORK_SUPERTYPES` (`Observable`, `Observer`, `AbstractList`,
+`AbstractMap`, `AbstractSet`, `FilterInputStream`, `FilterOutputStream`, `HttpServlet`, `Thread`,
+`TimerTask`), matched on the simple name by exact comparison, never by substring. A project that
+declares its own `Observer.java` is *not* a framework user, and its local interface is seen by the
+ordinary structural predicates like any other type. A referenced supertype that is neither
+declared locally nor on the list is neither — it is reported separately as
+`unknown_supertypes`, so a missing file or a third-party dependency can never be silently read as
+either local structure or framework structure.
+
+**Why.** The study measures **structure the model produced, not structure it inherited.** In the
+SWS case study, `AuditLog extends java.util.Observable` and its whole body is:
+
+```java
+public void logAction(String logEntry) {
+    setChanged();
+    notifyObservers(logEntry);
+}
+```
+
+There is no observer collection, no registration method, no callback interface and no traversal in
+the source. All of it lives in `java.util.Observable`. Four of the five models wrote that structure
+themselves; one reached for the framework. Crediting the fifth with an Observer implementation
+would be crediting `java.util.Observable`, and would make the fifth model indistinguishable from
+the four that did the work.
+
+Note what the rule does *not* say. It is not "framework inheritance disqualifies you." A class
+extending `AbstractList` inherits the algorithm skeleton but must still supply `get()` and
+`size()`; those primitives are its participation in Template Method, they are declared in the
+source, and the ordinary predicates find them. The rule is enforced simply by removing the
+shortcuts that granted a role for a supertype's *name* — after which a type is credited only for
+structure the checker can actually see. `pattern_roles_supplied` describes what that structure is;
+it is descriptive and never decides anything, because deciding what a framework supertype
+*requires* would need a model of the framework, and the policy does not depend on having one.
+
+**Alternatives rejected.**
+
+- *Accept framework inheritance as conforming.* This would require modelling the JDK — knowing
+  that `Observable` supplies registration, a collection and notification — and would credit a model
+  for structure it did not produce. It also does not scale: every framework a generated program
+  reaches for would need a hand-written model before the program could be scored.
+- *Exclude such files from the corpus.* This would hide a real and interesting model behaviour.
+  That one of five models delegated the pattern to `java.util.Observable` while the other four
+  implemented it is a finding, not noise, and dropping the file would erase it.
+
+**Effect on the replication.** Applying this policy moved exactly one of 160 property judgments:
+`SWS/Meta/observer/O1`, satisfied → not satisfied, and with it that unit's PSR/CPC/PIQS from
+25.0/18.18/22.27 to 0/0/0. Headline agreement with Kim goes from 91.2% to **90.6%**; O1 per-property
+agreement from 9/10 to 8/10, still above the 80% reliability threshold. Kim marked that cell
+satisfied. We now disagree, for the same reason we already disagreed with Kim on O2 of the same
+cell — recorded in `KIM_VALIDATION.md` as Kim-side leniency.
+
 ## Oracle
 
 There is no Kim ground truth for these three patterns (Kim 2025 never covered them). The oracle is
