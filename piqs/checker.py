@@ -1322,10 +1322,16 @@ class PIQSChecker:
         # (delegates some methods, hard-codes others) keeps D2=D3=1 (still recognised) but D6=0,
         # flagging the incomplete forwarding. Recognition stays keyed to the critical {D2,D3} set.
         def _fully_delegates(w, wrapped_fields):
-            # Consider only REAL bodied methods of the wrapper (skip the bodyless pseudo-methods the
-            # signature regex harvests from call expressions inside other bodies -- e.g. `inner.add(s)`
-            # yields a spurious bodyless `add`; without this guard it would overwrite the real `add`
-            # and hide its delegation).
+            # Consider only the wrapper's IMPLEMENTED operations. D6 asks whether every component
+            # operation the wrapper implements forwards to the wrapped reference, so a method with
+            # no implementation is not in scope: an ABSTRACT decorator base may leave part of the
+            # component API abstract for its concrete decorators to supply (D5's
+            # abstract_decorator_base), and those declarations neither forward nor fail to forward.
+            #
+            # This guard was originally written to skip the bodyless pseudo-methods the signature
+            # regex harvested from call expressions. That reason is gone with the regex, but the
+            # rule is not: dropping it scores an abstract decorator base with one abstract
+            # component method as D6=0 (verified -- PIQS 100 -> 86.67 on such a program).
             w_ops = {}
             for m in w.methods:
                 if m.is_constructor or not m.has_body:
@@ -1335,7 +1341,7 @@ class PIQSChecker:
                 comp = types.get(ctype)
                 if comp is None:
                     continue
-                comp_ops = {m.name for m in comp.methods if not m.is_constructor and m.return_type is not None}
+                comp_ops = {m.name for m in comp.methods if not m.is_constructor}
                 implemented = [op for op in comp_ops if op in w_ops]
                 if implemented and all(
                     self._delegates_to_field(w_ops[op].body, f.name) for op in implemented
@@ -1399,14 +1405,11 @@ class PIQSChecker:
 
         for a in abstract_types:
             concrete_methods = [m for m in a.methods if m.has_body and not m.is_constructor]
-            # A genuine abstract primitive is a bodyless, non-constructor method that declares a
-            # return type. The `return_type is not None` guard rejects spurious "methods" the
-            # signature regex harvests from CALL EXPRESSIONS inside other method bodies (e.g.
-            # `System.out.println(...)` -> a bodyless, return-type-less pseudo-method) -- those
-            # must never be counted as deferred primitives (they would fake inversion of control).
+            # An abstract primitive is a bodyless, non-constructor method: a step the abstract type
+            # declares and defers to its subclasses.
             abstract_methods = [
                 m for m in a.methods
-                if (not m.has_body) and not m.is_constructor and m.return_type is not None
+                if (not m.has_body) and not m.is_constructor
             ]
             primitive_names = {m.name for m in abstract_methods}
 
