@@ -1331,7 +1331,13 @@ class PIQSChecker:
             # This guard was originally written to skip the bodyless pseudo-methods the signature
             # regex harvested from call expressions. That reason is gone with the regex, but the
             # rule is not: dropping it scores an abstract decorator base with one abstract
-            # component method as D6=0 (verified -- PIQS 100 -> 86.67 on such a program).
+            # component method as D6=0 (PIQS 100 -> 86.67 on such a program).
+            #
+            # DO NOT DELETE THE `not m.has_body` CLAUSE BELOW. No file in fixtures/ exercises it,
+            # so removing it passes all four suites while silently changing behaviour. It is
+            # pinned by tests/test_decorator_d6_abstract_base.py against
+            # tests/fixtures_parser/abstract_decorator_base.java, which is the only thing that
+            # will catch the deletion.
             w_ops = {}
             for m in w.methods:
                 if m.is_constructor or not m.has_body:
