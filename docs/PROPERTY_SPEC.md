@@ -29,8 +29,16 @@ are detected by shape.
 Base predicates reused verbatim from the five existing patterns: `isAbstract`, `isConcrete`,
 `hasMethod`, `returns`, `implements`, `extends`, `overrides`, `accepts`, `calls`, `reads`,
 `modifies`. Pass-3 precision work reused: whole-token identifier matching (`_calls_method`,
-`_mentions_token`, `_has_verb_prefix`) and class-scope-only field extraction (`_class_scope_only`).
-Substring name matching and method-local-variable-as-field are **not** reintroduced.
+`_mentions_token`, `_has_verb_prefix`) and class-scope-only field extraction. Substring name
+matching and method-local-variable-as-field are **not** reintroduced.
+
+> **Parser migration, phase 1.** Class-scope-only field extraction was originally `_class_scope_only`,
+> which stripped every brace-delimited block from the class body text before applying a field
+> regex. Declaration extraction is now a tree-sitter parse (`piqs/parser.py`), so class scope is
+> read off the syntax tree — fields are the `field_declaration` children of the type's own body
+> node — and `_class_scope_only`, the field regex and the declaration/signature regexes are
+> deleted. The guarantee is unchanged and stronger: a method-local variable is not a field
+> because it is not in the type's body, not because a brace-stripping pass removed it.
 
 Two new AST helpers were added (the only ones the codebase lacked):
 

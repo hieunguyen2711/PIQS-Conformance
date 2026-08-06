@@ -1,9 +1,10 @@
 """The parity harness must actually catch a difference.
 
-`--a regex --b regex` reporting zero differences proves nothing on its own: an empty diff
-function scores the same. This is the negative control. Each case perturbs exactly one fact
-in the model and asserts the harness reports it, so a clean parity run means the extractors
-agree rather than that the comparison is blind.
+A parity run reporting zero differences proves nothing on its own: an empty diff function
+scores the same. This is the negative control. Each case perturbs exactly one fact in the
+model and asserts the harness reports it, so a clean parity run means the extractors agree
+rather than that the comparison is blind. It drives the harness with the tree-sitter
+extractor; the regex extractor it was first validated against is gone.
 
 The last two cases pin the two normalisations that must NOT be reported: whitespace in body
 strings, and member/type ordering.
@@ -20,7 +21,7 @@ import pytest
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
-from piqs.checker import PIQSChecker  # noqa: E402
+from piqs.parser import extract_types  # noqa: E402
 from validation.extractor_parity import diff_dumps, dump  # noqa: E402
 
 SOURCE = {
@@ -36,12 +37,12 @@ SOURCE = {
 }
 
 
-def _regex(files):
-    return PIQSChecker()._extract_types_regex(files)
+def _extract(files):
+    return extract_types(files)
 
 
 def _base_dump() -> dict:
-    return dump(SOURCE, _regex)
+    return dump(SOURCE, _extract)
 
 
 def test_the_model_is_populated() -> None:
@@ -116,8 +117,8 @@ def test_identical_dumps_are_clean() -> None:
 def test_whitespace_is_not_a_difference() -> None:
     """Reformatting a body must not be reported -- only its content may be."""
     reflowed = {"Sample.java": SOURCE["Sample.java"].replace("    ", "\t\t").replace(" { ", "\n{\n")}
-    a = dump(SOURCE, _regex)
-    b = dump(reflowed, _regex)
+    a = dump(SOURCE, _extract)
+    b = dump(reflowed, _extract)
     assert diff_dumps("Sample.java", a, b) == []
 
 

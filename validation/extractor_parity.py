@@ -54,11 +54,17 @@ def _norm(text: str) -> str:
 # --------------------------------------------------------------------------------------- #
 
 def _regex_extractor(files: dict[str, str]) -> dict:
-    return PIQSChecker()._extract_types_regex(files)
+    raise SystemExit(
+        "The regex extractor was deleted after this harness reported parity.\n"
+        "To re-run the regex-vs-parser comparison, check out the commit that added\n"
+        "piqs/parser.py (the last one where PIQSChecker._extract_types_regex still exists)\n"
+        "and run it there. `--a parser --b parser` still works as a self-check, and the\n"
+        "harness is reusable for the phase-2 body-level migration."
+    )
 
 
 def _parser_extractor(files: dict[str, str]) -> dict:
-    from piqs.parser import extract_types  # imported lazily: may not exist yet
+    from piqs.parser import extract_types
 
     return extract_types(files)
 
