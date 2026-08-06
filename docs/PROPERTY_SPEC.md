@@ -179,6 +179,19 @@ New decision recorded in this work:
   abstract `header()`/`body()`), verified recognised (T3=1). The classic abstract-*class* form
   remains fully supported; this decision only *adds* the interface form, it does not replace it.
 
+  **Implementation note (parser migration, phase 1).** When this decision was taken the extractor
+  could not actually see the `default` modifier: `_METHOD_SIG_RE`'s modifier alternation listed
+  `public|protected|private|static|final|abstract|synchronized` and nothing else, so a default
+  method was extracted with an **empty** modifier set. The decision was still implemented
+  correctly, because what T1/T2/T3 read is `has_body` — a default method has a brace body, an
+  abstract interface method does not — and `has_body` was always right. But the modifier that
+  *names* the idiom was unobservable, so the accepted variant could not have been distinguished
+  from a hypothetical bodied interface method by any other route. As of the tree-sitter extractor
+  (`piqs/parser.py`) the modifier is recorded: `render()` now carries `modifiers == {"default"}`.
+  No property reads it today and no verdict moved; it is recorded here because the design decision
+  was documented while the implementation could not observe the thing it decided about. Pinned by
+  `tests/fixtures_parser/interface_default_method.java`.
+
 ## Framework inheritance
 
 **The rule.** A type that obtains its pattern structure by extending or implementing a type the
