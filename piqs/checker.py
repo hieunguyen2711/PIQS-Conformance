@@ -41,41 +41,6 @@ _CRITICAL_PROPERTIES = {
     "template-method": {"T3"},
 }
 
-_DECL_RE = re.compile(
-    r"\b(public\s+)?(?P<abs>abstract\s+)?(?P<kind>class|interface|enum)\s+"
-    r"(?P<name>[A-Za-z_][A-Za-z0-9_]*)"
-    r"(?:\s+extends\s+(?P<extends>[A-Za-z_][A-Za-z0-9_\.]*))?"
-    r"(?:\s+implements\s+(?P<implements>[^\{]+))?\s*\{",
-    re.MULTILINE,
-)
-
-# Fix E: an optional `throws <exceptions>` clause may sit between the parameter list and
-# the opening brace/semicolon. Without this, methods like `create(...) throws IOException {`
-# were not matched at all and their return type became invisible (breaking Factory F4).
-#
-# Fix H: the leading `(?<![\w$.])` stops a method CALL being read as a declaration. Without
-# it, `kids.add(n);` in a method body matched with no modifiers and no return type, and the
-# checker recorded a phantom method `add` on the enclosing type. The lookbehind rejects a
-# name that sits directly after a receiver dot (`kids.add`, `this.helper`, `super.doThing`,
-# `new Foo().bar`) and also stops a match starting mid-identifier. A bare call such as
-# `setChanged();` has no dot, so it is rejected in _extract_methods instead -- see the
-# return-type rule there.
-_METHOD_SIG_RE = re.compile(
-    r"(?<![\w$.])"
-    r"(?P<mods>(?:(?:public|protected|private|static|final|abstract|synchronized)\s+)*)"
-    r"(?:(?P<ret>[A-Za-z_][A-Za-z0-9_<>\[\]\.]*?)\s+)?"
-    r"(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\((?P<params>[^)]*)\)\s*"
-    r"(?:throws\s+[A-Za-z_][A-Za-z0-9_,.\s]*?\s*)?"
-    r"(?P<tail>\{|;)",
-    re.MULTILINE,
-)
-
-_FIELD_RE = re.compile(
-    r"(?m)^\s*(?P<mods>(?:(?:public|protected|private|static|final|volatile|transient)\s+)*)"
-    r"(?P<type>[A-Za-z_][A-Za-z0-9_<>\[\]\.]*?)\s+"
-    r"(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*(?:=[^;]*)?;"
-)
-
 # Framework supertypes that supply pattern structure from outside the project source.
 # A supertype counts as framework only when it is BOTH on this list AND absent from the
 # project's own declarations -- a project that declares its own `Observer` is not using the
@@ -93,23 +58,6 @@ _FRAMEWORK_SUPERTYPES = {
     "Thread",
     "TimerTask",
 }
-
-_KEYWORD_NAMES = {
-    "if",
-    "for",
-    "while",
-    "switch",
-    "catch",
-    "return",
-    "new",
-    "throw",
-    "case",
-    "else",
-    "do",
-    "try",
-    "finally",
-}
-
 
 @dataclass
 class JavaField:
@@ -227,101 +175,20 @@ class PIQSChecker:
         }
 
     def _extract_types(self, java_files: dict[str, str]) -> dict[str, JavaType]:
-        types: dict[str, JavaType] = {}
+        """The extractor the checker runs on: a tree-sitter parse of each file (piqs/parser.py).
 
-        for content in java_files.values():
-            for match in _DECL_RE.finditer(content):
-                name = match.group("name")
-                kind = match.group("kind")
-                extends_name = self._base_name(match.group("extends") or "") or None
-                impl_raw = match.group("implements") or ""
-                impl = [
-                    self._base_name(part.strip().split()[-1])
-                    for part in impl_raw.split(",")
-                    if part.strip()
-                ]
-                is_abs = bool(match.group("abs")) or kind == "interface"
-                body = self._extract_block(content, match.end() - 1)
+        Every predicate reads the JavaType / JavaMethod / JavaField model below and is
+        indifferent to how it was built. The regex declaration scanner this replaced was
+        removed once validation/extractor_parity.py compared both extractors fact by fact
+        across all 184 corpus files and every remaining difference was traced to a regex bug
+        (see tests/fixtures_parser/ for one regression test per bug class).
 
-                t = JavaType(
-                    name=name,
-                    kind=kind,
-                    is_abstract=is_abs,
-                    extends=extends_name,
-                    implements=[x for x in impl if x],
-                    content=content,
-                    body=body,
-                )
-                t.methods = self._extract_methods(name, body)
-                t.fields = self._extract_fields(body)
-                types[name] = t
+        The import is function-local because piqs.parser imports the dataclasses and
+        _base_name from this module.
+        """
+        from piqs.parser import extract_types
 
-        return types
-
-    def _extract_methods(self, owner: str, body: str) -> list[JavaMethod]:
-        methods: list[JavaMethod] = []
-
-        for m in _METHOD_SIG_RE.finditer(body):
-            name = m.group("name")
-            if name in _KEYWORD_NAMES:
-                continue
-
-            mods = {x for x in (m.group("mods") or "").split() if x}
-            ret = self._base_name(m.group("ret") or "") or None
-            is_ctor = ret is None and name == owner
-
-            # Fix H: a declaration carries a return type, or is this type's constructor.
-            # `setChanged();` and `notifyObservers(logEntry);` have neither and are calls,
-            # not declarations. A control-flow word is not a return type either, so
-            # `return compute();` does not declare `compute`.
-            if ret in _KEYWORD_NAMES:
-                continue
-            if ret is None and not is_ctor:
-                continue
-
-            params = m.group("params") or ""
-            param_types, param_names = self._parse_params(params)
-
-            method_body = ""
-            has_body = m.group("tail") == "{"
-            if has_body:
-                method_body = self._extract_block(body, m.end() - 1)
-
-            methods.append(
-                JavaMethod(
-                    name=name,
-                    owner=owner,
-                    return_type=ret,
-                    param_types=param_types,
-                    param_names=param_names,
-                    modifiers=mods,
-                    body=method_body,
-                    is_constructor=is_ctor,
-                    has_body=has_body,
-                )
-            )
-
-        return methods
-
-    @staticmethod
-    def _class_scope_only(body: str) -> str:
-        """Fix F: return only the class-body text at brace-depth 0 -- every method,
-        constructor, initialiser and nested-type body (and anything deeper) is stripped.
-        Fields are declared at class scope; anything inside those removed blocks is a
-        local variable and must not be captured as a field."""
-        out: list[str] = []
-        depth = 0
-        for ch in body:
-            if ch == "{":
-                depth += 1
-                continue
-            if ch == "}":
-                if depth > 0:
-                    depth -= 1
-                continue
-            if depth == 0:
-                out.append(ch)
-        return "".join(out)
+        return extract_types(java_files)
 
     @staticmethod
     def _calls_method(body: str, name: str) -> bool:
@@ -529,18 +396,6 @@ class PIQSChecker:
         component and a Template-Method abstract type are both 'abstract types' in this sense
         (RULE 1: a Java interface counts as an abstract type)."""
         return {t.name for t in types.values() if t.is_abstract}
-
-    def _extract_fields(self, body: str) -> list[JavaField]:
-        fields: list[JavaField] = []
-        # Fix F: parse field declarations only at class-body scope; local variables inside
-        # method/constructor bodies must not be captured as fields.
-        for m in _FIELD_RE.finditer(self._class_scope_only(body)):
-            field_type = self._base_name(m.group("type") or "")
-            if not field_type:
-                continue
-            mods = {x for x in (m.group("mods") or "").split() if x}
-            fields.append(JavaField(name=m.group("name"), field_type=field_type, modifiers=mods))
-        return fields
 
     def _evaluate_factory_method(self, types: dict[str, JavaType]) -> tuple[dict[str, bool], dict[str, bool], list[dict]]:
         abstract_types = [t for t in types.values() if t.is_abstract]
@@ -1467,10 +1322,22 @@ class PIQSChecker:
         # (delegates some methods, hard-codes others) keeps D2=D3=1 (still recognised) but D6=0,
         # flagging the incomplete forwarding. Recognition stays keyed to the critical {D2,D3} set.
         def _fully_delegates(w, wrapped_fields):
-            # Consider only REAL bodied methods of the wrapper (skip the bodyless pseudo-methods the
-            # signature regex harvests from call expressions inside other bodies -- e.g. `inner.add(s)`
-            # yields a spurious bodyless `add`; without this guard it would overwrite the real `add`
-            # and hide its delegation).
+            # Consider only the wrapper's IMPLEMENTED operations. D6 asks whether every component
+            # operation the wrapper implements forwards to the wrapped reference, so a method with
+            # no implementation is not in scope: an ABSTRACT decorator base may leave part of the
+            # component API abstract for its concrete decorators to supply (D5's
+            # abstract_decorator_base), and those declarations neither forward nor fail to forward.
+            #
+            # This guard was originally written to skip the bodyless pseudo-methods the signature
+            # regex harvested from call expressions. That reason is gone with the regex, but the
+            # rule is not: dropping it scores an abstract decorator base with one abstract
+            # component method as D6=0 (PIQS 100 -> 86.67 on such a program).
+            #
+            # DO NOT DELETE THE `not m.has_body` CLAUSE BELOW. No file in fixtures/ exercises it,
+            # so removing it passes all four suites while silently changing behaviour. It is
+            # pinned by tests/test_decorator_d6_abstract_base.py against
+            # tests/fixtures_parser/abstract_decorator_base.java, which is the only thing that
+            # will catch the deletion.
             w_ops = {}
             for m in w.methods:
                 if m.is_constructor or not m.has_body:
@@ -1480,7 +1347,7 @@ class PIQSChecker:
                 comp = types.get(ctype)
                 if comp is None:
                     continue
-                comp_ops = {m.name for m in comp.methods if not m.is_constructor and m.return_type is not None}
+                comp_ops = {m.name for m in comp.methods if not m.is_constructor}
                 implemented = [op for op in comp_ops if op in w_ops]
                 if implemented and all(
                     self._delegates_to_field(w_ops[op].body, f.name) for op in implemented
@@ -1544,14 +1411,11 @@ class PIQSChecker:
 
         for a in abstract_types:
             concrete_methods = [m for m in a.methods if m.has_body and not m.is_constructor]
-            # A genuine abstract primitive is a bodyless, non-constructor method that declares a
-            # return type. The `return_type is not None` guard rejects spurious "methods" the
-            # signature regex harvests from CALL EXPRESSIONS inside other method bodies (e.g.
-            # `System.out.println(...)` -> a bodyless, return-type-less pseudo-method) -- those
-            # must never be counted as deferred primitives (they would fake inversion of control).
+            # An abstract primitive is a bodyless, non-constructor method: a step the abstract type
+            # declares and defers to its subclasses.
             abstract_methods = [
                 m for m in a.methods
-                if (not m.has_body) and not m.is_constructor and m.return_type is not None
+                if (not m.has_body) and not m.is_constructor
             ]
             primitive_names = {m.name for m in abstract_methods}
 
@@ -1622,40 +1486,6 @@ class PIQSChecker:
             self._row("T5", 2, t5, "Subclass overrides the primitives, not the template method."),
         ]
         return base, derived, rows
-
-    @staticmethod
-    def _extract_block(text: str, open_brace_idx: int) -> str:
-        if open_brace_idx < 0 or open_brace_idx >= len(text) or text[open_brace_idx] != "{":
-            return ""
-        depth = 0
-        for i in range(open_brace_idx, len(text)):
-            ch = text[i]
-            if ch == "{":
-                depth += 1
-            elif ch == "}":
-                depth -= 1
-                if depth == 0:
-                    return text[open_brace_idx + 1 : i]
-        return text[open_brace_idx + 1 :]
-
-    @staticmethod
-    def _parse_params(params: str) -> tuple[list[str], list[str]]:
-        if not params.strip():
-            return [], []
-        param_types: list[str] = []
-        param_names: list[str] = []
-        for raw in params.split(","):
-            part = raw.strip()
-            if not part:
-                continue
-            tokens = part.split()
-            if len(tokens) == 1:
-                param_types.append(PIQSChecker._base_name(tokens[0]) or tokens[0])
-                param_names.append("")
-                continue
-            param_types.append(PIQSChecker._base_name(" ".join(tokens[:-1])) or tokens[0])
-            param_names.append(tokens[-1])
-        return param_types, param_names
 
     @staticmethod
     def _base_name(name: str) -> str:

@@ -1,13 +1,16 @@
 """A method call is not a method declaration.
 
-`_METHOD_SIG_RE` had no guard against a receiver, so `kids.add(n);` inside a method body
-parsed as a declaration of a method named `add`. Those phantom methods land in every
-`JavaType.methods` list the checker builds, and any rule of the form "does a method exist
-that does X" can then be satisfied by a method that was never declared. Phantoms can only
-add satisfied properties, never remove them.
+Written against the regex extractor: `_METHOD_SIG_RE` had no guard against a receiver, so
+`kids.add(n);` inside a method body parsed as a declaration of a method named `add`. Those
+phantom methods landed in every `JavaType.methods` list the checker built, and any rule of the
+form "does a method exist that does X" could then be satisfied by a method that was never
+declared. Phantoms can only add satisfied properties, never remove them.
 
-A declaration must carry a return type (or be the enclosing type's constructor) and must not
-have a dot immediately before its name.
+The tree-sitter extractor cannot produce one -- a call expression is not a declaration node --
+so these cases now hold by construction rather than by a return-type rule and a lookbehind.
+They are kept as a regression suite over the property that actually matters: the extractor
+reports exactly the declared methods, no more and no fewer. The declaration half of the file
+is the half that can still fail.
 """
 
 from __future__ import annotations
@@ -20,11 +23,21 @@ import pytest
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
-from piqs.checker import PIQSChecker  # noqa: E402
+from piqs.parser import extract_types  # noqa: E402
+
+
+def methods(owner: str, body: str) -> list:
+    """Extract `body` as the class body of `owner`.
+
+    Declared `abstract` so that a bodyless method (an interface-style declaration, which
+    several cases below exercise) is legal Java in the wrapper.
+    """
+    src = f"abstract class {owner} {{\n{body}\n}}\n"
+    return extract_types({f"{owner}.java": src})[owner].methods
 
 
 def names(owner: str, body: str) -> set[str]:
-    return {m.name for m in PIQSChecker()._extract_methods(owner, body)}
+    return {m.name for m in methods(owner, body)}
 
 
 # --------------------------------------------------------------------------------------- #
@@ -110,14 +123,13 @@ def test_interface_methods_survive() -> None:
 
 
 def test_constructor_is_flagged_as_constructor() -> None:
-    methods = PIQSChecker()._extract_methods("AuditLog", "    AuditLog(String name) { }\n")
-    ctors = [m for m in methods if m.is_constructor]
+    ctors = [m for m in methods("AuditLog", "    AuditLog(String name) { }\n") if m.is_constructor]
     assert [m.name for m in ctors] == ["AuditLog"]
 
 
 def test_return_type_and_params_still_parse() -> None:
     body = "    public Wallet createWallet(String currency, int limit) { return null; }\n"
-    m = next(m for m in PIQSChecker()._extract_methods("Factory", body) if m.name == "createWallet")
+    m = next(m for m in methods("Factory", body) if m.name == "createWallet")
     assert m.return_type == "Wallet"
     assert m.param_types == ["String", "int"]
     assert m.param_names == ["currency", "limit"]

@@ -29,8 +29,16 @@ are detected by shape.
 Base predicates reused verbatim from the five existing patterns: `isAbstract`, `isConcrete`,
 `hasMethod`, `returns`, `implements`, `extends`, `overrides`, `accepts`, `calls`, `reads`,
 `modifies`. Pass-3 precision work reused: whole-token identifier matching (`_calls_method`,
-`_mentions_token`, `_has_verb_prefix`) and class-scope-only field extraction (`_class_scope_only`).
-Substring name matching and method-local-variable-as-field are **not** reintroduced.
+`_mentions_token`, `_has_verb_prefix`) and class-scope-only field extraction. Substring name
+matching and method-local-variable-as-field are **not** reintroduced.
+
+> **Parser migration, phase 1.** Class-scope-only field extraction was originally `_class_scope_only`,
+> which stripped every brace-delimited block from the class body text before applying a field
+> regex. Declaration extraction is now a tree-sitter parse (`piqs/parser.py`), so class scope is
+> read off the syntax tree — fields are the `field_declaration` children of the type's own body
+> node — and `_class_scope_only`, the field regex and the declaration/signature regexes are
+> deleted. The guarantee is unchanged and stronger: a method-local variable is not a field
+> because it is not in the type's body, not because a brace-stripping pass removed it.
 
 Two new AST helpers were added (the only ones the codebase lacked):
 
@@ -178,6 +186,19 @@ New decision recorded in this work:
   case `t4_template_interface_default_method` (an `interface Report` whose `default render()` calls
   abstract `header()`/`body()`), verified recognised (T3=1). The classic abstract-*class* form
   remains fully supported; this decision only *adds* the interface form, it does not replace it.
+
+  **Implementation note (parser migration, phase 1).** When this decision was taken the extractor
+  could not actually see the `default` modifier: `_METHOD_SIG_RE`'s modifier alternation listed
+  `public|protected|private|static|final|abstract|synchronized` and nothing else, so a default
+  method was extracted with an **empty** modifier set. The decision was still implemented
+  correctly, because what T1/T2/T3 read is `has_body` — a default method has a brace body, an
+  abstract interface method does not — and `has_body` was always right. But the modifier that
+  *names* the idiom was unobservable, so the accepted variant could not have been distinguished
+  from a hypothetical bodied interface method by any other route. As of the tree-sitter extractor
+  (`piqs/parser.py`) the modifier is recorded: `render()` now carries `modifiers == {"default"}`.
+  No property reads it today and no verdict moved; it is recorded here because the design decision
+  was documented while the implementation could not observe the thing it decided about. Pinned by
+  `tests/fixtures_parser/interface_default_method.java`.
 
 ## Framework inheritance
 

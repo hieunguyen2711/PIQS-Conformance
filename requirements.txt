@@ -1,5 +1,18 @@
-# piqs/ and validation/ import only the standard library (re, dataclasses, json, os, sys,
-# subprocess, tempfile, shutil, argparse). There is no runtime dependency.
+# piqs/parser.py parses Java with tree-sitter. Both versions are PINNED, not floated: the
+# tree-sitter Python API changed between 0.21 and 0.22 (and again at 0.23), so the binding
+# style is version-specific. This code targets the 0.25 API:
+#
+#     Language(tree_sitter_java.language())   # takes a PyCapsule, single argument
+#     Parser(language)                        # language passed to the constructor
+#
+# Under 0.21 the first call is `Language(ptr, "java")` and the parser is configured with
+# `parser.set_language(...)`; that form does NOT work here. Do not relax these pins without
+# re-running validation/extractor_parity.py.
+tree-sitter==0.25.2
+tree-sitter-java==0.23.5
+
+# The rest of piqs/ and validation/ imports only the standard library (re, dataclasses, json,
+# os, sys, subprocess, tempfile, shutil, argparse).
 #
 # pytest is needed for tests/ only.
 #
