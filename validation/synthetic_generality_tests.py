@@ -102,10 +102,14 @@ real_comp = {
 p = props("composite", real_comp)
 results.append(("D: genuine part-whole -> C1/C4/C5 = 1", p, p["C1"] == 1 and p["C4"] == 1 and p["C5"] == 1))
 
-# POLICY: Fix E (_METHOD_SIG_RE `throws` clause). A `throws` clause may sit between the parameter
-# list and the brace/semicolon; without matching it the declaration is invisible and its return
-# type is lost, which is what F4 reads. F1 additionally exercises the interface-as-abstract-role
-# rule (docs/PROPERTY_SPEC.md): an INTERFACE creator is accepted as the abstract creator.
+# POLICY: a `throws` clause must not hide a declaration. A `throws` clause sits between the
+# parameter list and the brace/semicolon; if the extractor stops short of it the declaration is
+# invisible and its return type -- which is what F4 reads -- is lost. Originally a fix to
+# _METHOD_SIG_RE, which had to be taught the clause explicitly; since the parser migration the
+# clause is just a node in the method declaration and cannot truncate anything. Kept as a
+# regression case because the property it pins is about F4's input, not about the extractor.
+# F1 additionally exercises the interface-as-abstract-role rule (docs/PROPERTY_SPEC.md): an
+# INTERFACE creator is accepted as the abstract creator.
 throws_factory = {
     "Doc.java": "interface Doc { }",
     "PdfDoc.java": "class PdfDoc implements Doc { }",
@@ -116,10 +120,13 @@ p = props("factory-method", throws_factory)
 results.append(("E: factory method with `throws` -> F1 & F4 pass", p, p["F1"] == 1 and p["F4"] == 1))
 
 # ---------------- Pass 3 (F, G) ----------------
-# POLICY: Fix F (_class_scope_only). Fields are declared at class scope; anything inside a method,
-# constructor, initialiser or nested-type body is a local variable and must not be captured as a
-# field. docs/PROPERTY_SPEC.md, "Reused scaffolding": method-local-variable-as-field is not
-# reintroduced.
+# POLICY: class-scope-only field extraction. Fields are declared at class scope; anything inside a
+# method, constructor, initialiser or nested-type body is a local variable and must not be captured
+# as a field. docs/PROPERTY_SPEC.md, "Reused scaffolding": method-local-variable-as-field is not
+# reintroduced. Originally enforced by _class_scope_only, which stripped every brace-delimited
+# block from the class body text before applying a field regex; since the parser migration class
+# scope is read off the syntax tree (fields are the field_declaration children of the type's own
+# body node) and _class_scope_only is deleted. The guarantee is unchanged.
 # F: a method-local variable must NOT be extracted as a class field.
 local_only = {"C.java": "class C { void run(){ Foo f = new Foo(); f.bar(); } } class Foo { void bar(){} }"}
 types = svc._extract_types(local_only)
