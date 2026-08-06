@@ -1,8 +1,8 @@
 {
   "headline": {
     "total_property_judgments": 160,
-    "agreed": 146,
-    "agreement_pct": 91.2,
+    "agreed": 145,
+    "agreement_pct": 90.6,
     "score_units": 40,
     "units_exact_match_all3": 30
   },
@@ -1979,8 +1979,8 @@
       "pattern": "observer",
       "property": "O1",
       "kim": "satisfied",
-      "mine": "satisfied",
-      "match": true
+      "mine": "not satisfied",
+      "match": false
     },
     {
       "case_study": "SWS",
@@ -2564,12 +2564,12 @@
       "kim_psr": 50.0,
       "kim_cpc": 45.45,
       "kim_piqs": 48.18,
-      "my_psr": 25.0,
-      "my_cpc": 18.18,
-      "my_piqs": 22.27,
-      "d_psr": 25.0,
-      "d_cpc": 27.27,
-      "d_piqs": 25.91
+      "my_psr": 0.0,
+      "my_cpc": 0.0,
+      "my_piqs": 0.0,
+      "d_psr": 50.0,
+      "d_cpc": 45.45,
+      "d_piqs": 48.18
     }
   ],
   "reliability": {
@@ -2659,8 +2659,8 @@
     },
     "O1": {
       "tested": 10,
-      "agreed": 9,
-      "agreement_pct": 90.0,
+      "agreed": 8,
+      "agreement_pct": 80.0,
       "reliable": true
     },
     "O2": {

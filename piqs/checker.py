@@ -52,7 +52,16 @@ _DECL_RE = re.compile(
 # Fix E: an optional `throws <exceptions>` clause may sit between the parameter list and
 # the opening brace/semicolon. Without this, methods like `create(...) throws IOException {`
 # were not matched at all and their return type became invisible (breaking Factory F4).
+#
+# Fix H: the leading `(?<![\w$.])` stops a method CALL being read as a declaration. Without
+# it, `kids.add(n);` in a method body matched with no modifiers and no return type, and the
+# checker recorded a phantom method `add` on the enclosing type. The lookbehind rejects a
+# name that sits directly after a receiver dot (`kids.add`, `this.helper`, `super.doThing`,
+# `new Foo().bar`) and also stops a match starting mid-identifier. A bare call such as
+# `setChanged();` has no dot, so it is rejected in _extract_methods instead -- see the
+# return-type rule there.
 _METHOD_SIG_RE = re.compile(
+    r"(?<![\w$.])"
     r"(?P<mods>(?:(?:public|protected|private|static|final|abstract|synchronized)\s+)*)"
     r"(?:(?P<ret>[A-Za-z_][A-Za-z0-9_<>\[\]\.]*?)\s+)?"
     r"(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\((?P<params>[^)]*)\)\s*"
@@ -66,6 +75,24 @@ _FIELD_RE = re.compile(
     r"(?P<type>[A-Za-z_][A-Za-z0-9_<>\[\]\.]*?)\s+"
     r"(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*(?:=[^;]*)?;"
 )
+
+# Framework supertypes that supply pattern structure from outside the project source.
+# A supertype counts as framework only when it is BOTH on this list AND absent from the
+# project's own declarations -- a project that declares its own `Observer` is not using the
+# JDK one. Matched on the simple name by exact comparison, never by substring: the corpora
+# are single-package and may or may not carry imports. Extend freely.
+_FRAMEWORK_SUPERTYPES = {
+    "Observable",
+    "Observer",
+    "AbstractList",
+    "AbstractMap",
+    "AbstractSet",
+    "FilterInputStream",
+    "FilterOutputStream",
+    "HttpServlet",
+    "Thread",
+    "TimerTask",
+}
 
 _KEYWORD_NAMES = {
     "if",
@@ -160,12 +187,30 @@ class PIQSChecker:
         cpc = (weighted_earned / weighted_total) * 100 if weighted_total else 0.0
         piqs = (psr * 0.6) + (cpc * 0.4)
 
+        # Framework inheritance: structure supplied from outside the source. Reported as a
+        # flag so a reader can see it; it never satisfies a property. See PROPERTY_SPEC.md.
+        framework_supers, unknown_supers = self._classify_supertypes(types)
+
         return {
             "pattern_name": normalized,
             "files_analyzed": sorted(java_files.keys()),
             "base_predicates": base,
             "derived_predicates": derived,
             "logical_assessment": assessments,
+            "framework_inheritance": [
+                {
+                    "type": type_name,
+                    "supertype": supertype,
+                    "pattern_roles_supplied": self._framework_roles_supplied(
+                        types[type_name], types
+                    ),
+                }
+                for type_name, supertype in framework_supers
+            ],
+            "unknown_supertypes": [
+                {"type": type_name, "supertype": supertype}
+                for type_name, supertype in unknown_supers
+            ],
             "breadth_calculation_psr": {
                 "formula": f"({satisfied}/{total_properties})*100",
                 "result_percent": round(psr, 2),
@@ -224,6 +269,15 @@ class PIQSChecker:
             mods = {x for x in (m.group("mods") or "").split() if x}
             ret = self._base_name(m.group("ret") or "") or None
             is_ctor = ret is None and name == owner
+
+            # Fix H: a declaration carries a return type, or is this type's constructor.
+            # `setChanged();` and `notifyObservers(logEntry);` have neither and are calls,
+            # not declarations. A control-flow word is not a return type either, so
+            # `return compute();` does not declare `compute`.
+            if ret in _KEYWORD_NAMES:
+                continue
+            if ret is None and not is_ctor:
+                continue
 
             params = m.group("params") or ""
             param_types, param_names = self._parse_params(params)
@@ -382,6 +436,73 @@ class PIQSChecker:
             seen.add(parent.name)
             cur = parent
         return fields
+
+    def _framework_roles_supplied(self, t: "JavaType", types: dict[str, "JavaType"]) -> list[str]:
+        """Which pattern-bearing structures a framework-inheriting type declares ITSELF.
+
+        Descriptive, never a verdict. We cannot know what a framework supertype *requires*
+        without modelling that framework -- the policy does not need us to. Removing the
+        framework shortcuts is what enforces it: a type is credited only for structure the
+        ordinary predicates can see. This list just records what that structure is, so a
+        reader can tell `AuditLog extends Observable` (supplies nothing) from a subclass that
+        genuinely implements the roles its pattern asks of it.
+        """
+        roles = []
+        if re.search(
+            r"\b(?:List|Set|Collection|ArrayList|LinkedList|HashSet|CopyOnWriteArrayList|Vector)"
+            r"\s*<\s*([A-Za-z_][A-Za-z0-9_]*)\s*>",
+            t.body,
+        ) and any(
+            elem in types
+            for elem in re.findall(
+                r"\b(?:List|Set|Collection|ArrayList|LinkedList|HashSet|CopyOnWriteArrayList|Vector)"
+                r"\s*<\s*([A-Za-z_][A-Za-z0-9_]*)\s*>",
+                t.body,
+            )
+        ):
+            roles.append("holds_collection_of_project_type")
+        if any(
+            re.search(r"for\s*\(\s*(?:final\s+)?[A-Za-z_][A-Za-z0-9_<>\[\]]*\s+[A-Za-z_]", m.body)
+            and re.search(r"\.[A-Za-z_][A-Za-z0-9_]*\s*\(", m.body)
+            for m in t.methods
+        ):
+            roles.append("traverses_collection_invoking_member")
+        if any(
+            pt in types and types[pt].is_abstract for m in t.methods for pt in m.param_types
+        ):
+            roles.append("accepts_project_abstraction")
+        if any(s in types for s in self._declared_supertypes(t)):
+            roles.append("implements_project_abstraction")
+        if any(not m.has_body for m in t.methods):
+            roles.append("declares_abstract_member")
+        return roles
+
+    @staticmethod
+    def _declared_supertypes(t: "JavaType") -> list[str]:
+        """`t`'s extends target plus every interface it implements."""
+        return ([t.extends] if t.extends else []) + list(t.implements)
+
+    def _classify_supertypes(
+        self, types: dict[str, "JavaType"]
+    ) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+        """Split every supertype the project references but does not declare into
+        (framework, unknown), each a list of (type_name, supertype_name).
+
+        A supertype declared in the project is neither -- it is local, and the ordinary
+        structural predicates already see it. Of the rest, one on _FRAMEWORK_SUPERTYPES is
+        framework; anything else is UNKNOWN: a missing file, a third-party library, or a type
+        the source referenced but never wrote. Unknown is reported, never silently folded into
+        either bucket.
+        """
+        framework: list[tuple[str, str]] = []
+        unknown: list[tuple[str, str]] = []
+        for t in types.values():
+            for supertype in self._declared_supertypes(t):
+                if supertype in types:
+                    continue
+                bucket = framework if supertype in _FRAMEWORK_SUPERTYPES else unknown
+                bucket.append((t.name, supertype))
+        return sorted(set(framework)), sorted(set(unknown))
 
     def _conforms_to(self, t: "JavaType", target: str, types: dict[str, "JavaType"]) -> bool:
         """True if `t` is-a `target` -- implements/extends it directly or transitively through
@@ -817,14 +938,13 @@ class PIQSChecker:
     def _evaluate_observer(self, types: dict[str, JavaType]) -> tuple[dict[str, bool], dict[str, bool], list[dict]]:
         class_types = [t for t in types.values() if t.kind == "class"]
 
-        # --- Fix B: JDK Observer framework (java.util.Observable / java.util.Observer).
-        # These are abstract framework types not declared in the project. A class that
-        # `extends Observable` fills the (abstract) subject role; a class that
-        # `implements Observer` fills the (abstract) observer role. Keyed off the framework
-        # type names, never off the user's class names.
-        jdk_subjects = [t for t in class_types if t.extends == "Observable"]
-        jdk_observers = [t for t in class_types if "Observer" in t.implements]
-
+        # --- Fix B (JDK Observer framework) is GONE as of Fix J. `extends Observable` and
+        # `implements Observer` used to fill the abstract subject / observer roles outright.
+        # Under the framework-inheritance policy a type gets credit only for structure the
+        # source itself declares, so both shortcuts are removed. Detection still happens --
+        # in `evaluate`, via `_classify_supertypes` -- but it produces the informational
+        # `framework_inheritance` flag, never a satisfied property.
+        #
         # --- Fix A: detect the observer callback by STRUCTURE, not by the name `update`.
         # A subject notifies either (a) by iterating a collection of observers and invoking
         # a method on each element, or (b) by invoking a method on a single held observer
@@ -879,7 +999,10 @@ class PIQSChecker:
                         notifies_single = True
 
         observer_type_objs = [types[n] for n in observer_type_names if n in types]
-        observer_names = set(observer_type_names) | {o.name for o in jdk_observers}
+        # Fix J (framework-inheritance policy): the observer role is whatever the source
+        # structurally declares. A class that merely `implements Observer` inherits the role
+        # from the framework and no longer contributes one here.
+        observer_names = set(observer_type_names)
 
         # Subject candidates (registration/notification role): interface or class declaring
         # registration/notification methods (unchanged from prior behaviour), augmented with
@@ -919,9 +1042,19 @@ class PIQSChecker:
             if any(obs == t.extends or obs in t.implements for obs in observer_names)
         ]
 
-        # O4: every concrete observer implements the callback (ANY name), or the JDK Observer.
+        # O4: every concrete observer declares the callback the subject actually invokes.
+        # `callback_names` is harvested from the invocation sites themselves, never from a
+        # literal set, so the callback may carry ANY name (update, ping, onLogEvent, ...).
+        # Matching the observer's declared method against it is override matching by name,
+        # which Java requires of an override -- not a name lookup.
+        #
+        # Fix K: the `or ("Observer" in t.implements)` escape is removed. It granted O4 for
+        # implementing a type merely SPELLED `Observer`, with no callback in the source --
+        # the same shortcut Fix J took out of o2, and the one that would have rewarded a
+        # model for using the canonical name while denying an equivalent interface under
+        # any other name. Framework inheritance is reported via `framework_inheritance`.
         observers_update = bool(concrete_observers) and all(
-            bool(callback_names & {m.name for m in t.methods}) or ("Observer" in t.implements)
+            bool(callback_names & {m.name for m in t.methods})
             for t in concrete_observers
         )
 
@@ -940,9 +1073,9 @@ class PIQSChecker:
         }
 
         derived = {
-            "isObserver(x)": bool(observer_type_objs) or bool(jdk_observers),
+            "isObserver(x)": bool(observer_type_objs),
             "isUpdate(m)": bool(callback_names),
-            "isSubject(x)": bool(subject_candidates) or bool(jdk_subjects),
+            "isSubject(x)": bool(subject_candidates),
             "isRegisterObserver(m)": is_register,
             "isUnregisterObserver(m)": is_unregister,
             "isNotify(m)": is_notify,
@@ -950,12 +1083,15 @@ class PIQSChecker:
             "updates(o,s)": observers_update,
         }
 
-        # O1: an ABSTRACT subject exists -- an interface/abstract-class subject, OR a class
-        #     extending the abstract JDK Observable (Fix B).
-        o1 = any(t.is_abstract for t in subject_candidates) or bool(jdk_subjects)
-        # O2: an ABSTRACT observer exists -- a structurally-detected observer interface/
-        #     abstract class, OR a class implementing the abstract JDK Observer (Fix B).
-        o2 = any(t.is_abstract for t in observer_type_objs) or bool(jdk_observers)
+        # O1: an ABSTRACT subject exists -- an interface/abstract-class subject.
+        # O2: an ABSTRACT observer exists -- a structurally-detected observer interface or
+        #     abstract class.
+        # Fix J (framework-inheritance policy): both clauses that credited a type for merely
+        # extending Observable / implementing Observer are gone. Inheriting the structure from
+        # a framework is not producing it; see docs/PROPERTY_SPEC.md, "Framework inheritance".
+        # The detector survives as a flag on the result, never as a verdict.
+        o1 = any(t.is_abstract for t in subject_candidates)
+        o2 = any(t.is_abstract for t in observer_type_objs)
         # O3: the subject actually notifies observers -- collection loop or single held
         #     observer -- regardless of the callback's name (Fix A).
         o3 = notifies_observers
