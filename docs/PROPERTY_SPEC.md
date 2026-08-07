@@ -28,7 +28,7 @@ are detected by shape.
 
 Base predicates reused verbatim from the five existing patterns: `isAbstract`, `isConcrete`,
 `hasMethod`, `returns`, `implements`, `extends`, `overrides`, `accepts`, `calls`, `reads`,
-`modifies`. Pass-3 precision work reused: whole-token identifier matching (`_calls_method`,
+`modifies`. Pass-3 precision work reused: whole-token identifier matching (`_calls_within`,
 `_mentions_within`, `_has_verb_prefix`) and class-scope-only field extraction. Substring name
 matching and method-local-variable-as-field are **not** reintroduced.
 
@@ -441,6 +441,30 @@ distinct node positions — `new Loaf(this)` (constructor argument) and `synchro
 suites stay green whichever behaviour is chosen. `tests/test_body_helpers_divergences.py` is the
 only thing that distinguishes a correct migration from a wrong one, and each of its guards ships
 with the mutation that makes it fail. See the next section.
+
+## Rule: does a divergence REDEFINE the predicate, or REMOVE A FALSE POSITIVE?
+
+Every migration divergence is decided by this question, and it is the reason two divergences that
+look alike are decided oppositely.
+
+| | Redefines the predicate | Removes a false positive |
+|---|---|---|
+| Test | changes **which programs satisfy a property** | removes an answer that was **never correct for any program** |
+| Handling | needs its **own separately-measured change**, with its own prediction | may **ride along** with a mechanism migration |
+| Why | a movement caused by new meaning is indistinguishable from one caused by the new mechanism, so the migration stops being measurable | there is no reading under which the old answer was right, so nothing is being traded away |
+
+Worked pair, from phase 2 step 2:
+
+* **Divergence #2 — compound assignment.** `total += x` does populate state, and `_assigns_field`
+  is documented as signalling a step that populates state, so the regex is arguably wrong. It was
+  **preserved anyway**: correcting it would change which builders satisfy B1/B2. Parked as a
+  candidate meaning change with its own prediction.
+* **Divergence #3 — local declaration.** `int count = 5;` declares a local that shadows the field
+  and leaves the field untouched. The regex called that an assignment to the field. **The tree's
+  answer was taken**, because no program was ever served by the old one.
+
+Applied across step 2: #3, #4, #6 and #7 removed false positives and rode along; #2 preserved
+regex behaviour; #1, #5 and #8 were parity requirements rather than either.
 
 ## What a green suite does not prove
 

@@ -36,6 +36,14 @@ Run all four after **every** change. Never fewer.
 .venv/bin/python3 -m pytest tests/ -q                                # incl. invariance
 ```
 
+**A fifth command, answering a different question.** The four suites report VERDICTS. This
+reports the FACTS the parser extracts, so a parser regression is visible even when no verdict
+moves — which is exactly the situation Step 3 creates:
+
+```bash
+.venv/bin/python3 validation/golden_facts.py --check    # 197 files, 267 types, 552 methods
+```
+
 | Suite | Baseline |
 |---|---|
 | Kim property agreement | **90.6%** (145/160) |
@@ -43,12 +51,18 @@ Run all four after **every** change. Never fewer.
 | Mutation battery | 12/12 |
 | BDT battery | 27/27 + 5/5 D6 |
 | Renaming invariance failures | **8** (5 × `C3`, 3 × `O1`) |
-| pytest | **179 passed, 8 failed** (187 collected) |
+| pytest | **179 passed, 8 failed** (187 collected), **0 warnings** |
+| Golden facts (`--check`) | 197 files, 267 types, 552 methods, 0 differences |
 
 pytest was 120 before the scope table (+20 `tests/test_scope_table.py`) and 140 before body
 helper 1 (+17 `tests/test_body_helpers_divergences.py`). Collected by file: 81 invariance +
 22 parity-harness + 20 method-extraction + 20 scope-table + 17 body-divergences +
 3 parser-declarations + 2 D6 = 165.
+
+**The pytest warning count is 0, and that is load-bearing.** A `SyntaxWarning` from `\\s` in a
+docstring was caught during step 2 only because the run reported `1 warning` where there had
+been none. Every `.py` in the repo now compiles clean under `-W error::SyntaxWarning`. If the
+count is ever non-zero, something new is wrong.
 
 The 8 invariance failures are **known and expected**. `C3` and `O1` still read hardcoded names.
 They are fixed in Stage 3 and Stage 4, not before.
@@ -114,12 +128,11 @@ prove"):
 | `piqs/checker.py` | **1516** | **1621** |
 | `piqs/parser.py` | **302** | **583** |
 
-**Parity harness limitation.** The regex side is deleted, so `validation/extractor_parity.py` can
-only compare the parser against itself, which passes trivially. It therefore **cannot** verify a
-tree-sitter version bump, despite what `requirements.txt` used to say — that instruction has been
-corrected in place. A committed golden-fact snapshot would fix this. Queued as a Phase 2 Step 3
-prerequisite, because Step 3 moves verdicts on purpose and a fact-level guard is the only way to
-tell "new detection" from "accidental parser regression".
+**Parity harness limitation — now solved by a different tool.** The regex side is deleted, so
+`validation/extractor_parity.py` can only compare the parser against itself, which passes
+trivially, and it can never verify a version bump. `validation/golden_facts.py --check` does: the
+snapshot was written by the pinned versions and committed, so a bumped parser is compared against
+recorded facts rather than against itself. `requirements.txt` carries the procedure.
 
 Current behaviour, verified: default invocation exits **1** with an explanation;
 `--a parser --b parser` compares 184 files with 0 differences and exits 0.
@@ -556,7 +569,7 @@ cite lines 886 and 904–906. Find things by name instead:
 |---|---|
 | `_assigns_field` is documented as signalling a step that **populates state**. `total += x` populates state and is not matched (the regex is `name\s*=(?!=)`; the `+` blocks it). Phase 2 preserves this deliberately — a mechanism change that also changes meaning makes any movement ambiguous. Candidate meaning change, own prediction. Corpus coverage: 0 sites. | after Step 2 |
 | Shadowing-aware resolution (a local shadowing a field should arguably fail `D3`) | Step 3 |
-| Golden-fact snapshot so a tree-sitter version bump can be verified | **before Step 3** |
+
 | `Map<K,V>` element type invisible — `_base_name` strips it before the field model sees it | may fall out of Phase 2 |
 | `run_scorer.py` calls `javac` and swallows the error — find out what it was for. Unrelated to the process exit code, which is correct (verified: exits 1 on failure). | before generation |
 | Add `compiles` + `compile_errors` to result records | before generation |
@@ -565,7 +578,9 @@ cite lines 886 and 904–906. Find things by name instead:
 | `A-not-rebroken` case in `validation/synthetic_generality_tests.py` is vacuous — it repeats case A's assertion on case A's fixture. Needs a `ping` callback alongside a `pinger` local to become a real guard. That script is **not** one of the four suites. | any time |
 | `w_ops.setdefault` keeps the first overload — pre-existing looseness in `D6` | low priority |
 
-**Removed from this list, because it is done:** the stale-results guard. `compare.py` now refuses
+**Removed from this list, because it is done:** the golden-fact snapshot — `validation/golden_facts.py` + `results/parser_golden.json`, 197 files / 267 types / 552 methods, proven to go red on six deliberate faults (field type, dropped method, a `calls` entry, an `assignments` entry, an empty corpus, an unparseable file) and green unmodified. `requirements.txt` now carries the version-bump procedure instead of a note saying none exists.
+
+**Also removed, because it is done:** the stale-results guard. `compare.py` now refuses
 to run when `results/kim_replication_raw.json` is older than `checker.py` or `parser.py`. Built,
 committed, and proven to fire in all four branches (fresh → 0; touch `checker.py` → 1; touch
 `parser.py` → 1; results absent → 1).
