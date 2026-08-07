@@ -489,6 +489,57 @@ def _single_lambda_param(lam, src: bytes) -> str | None:
     return _text(name_node, src) if name_node is not None else None
 
 
+# Stream/collection operations that yield the SAME element type they consume. Used to walk a
+# chained `forEach` receiver back to the collection it started from (loop form 5).
+#
+# The list is an ALLOWLIST and anything unrecognised rejects the chain. That direction is
+# deliberate: an operation that changes the element type -- `map`, `flatMap`, `mapToObj` -- makes
+# the base identifier the wrong place to read the element type from, and the corpus cannot tell us
+# which unfamiliar operation is which. Narrower is the safe default for a NEW detector.
+#
+#     observers.stream().forEach(...)                     base = observers, elements Observer  OK
+#     observers.stream().filter(...).forEach(...)          filter preserves the type           OK
+#     observers.stream().map(o -> o.getTag()).forEach(...) elements are Tag, NOT Observer      REJECT
+#
+# `Collections.unmodifiableList(observers)` is deliberately NOT here. It is a STATIC call whose
+# object is `Collections` and whose collection is an ARGUMENT, so a receiver walk never reaches
+# `observers` and the entry would be dead. A dead allowlist entry reads as coverage that does not
+# exist. If that shape is ever wanted it needs an argument case, not a name in this set.
+_ELEMENT_PRESERVING = {
+    "stream",
+    "parallelStream",
+    "filter",
+    "sorted",
+    "distinct",
+    "limit",
+    "skip",
+    "peek",
+}
+
+
+def _collection_of(node, src: bytes) -> str | None:
+    """The collection identifier a `forEach` receiver ultimately refers to, or None.
+
+    Form 3 is the base case -- the receiver IS the collection. Form 5 walks a chain of
+    element-preserving operations back to it. Anything else returns None, and None can never
+    match a `coll_fields` key, so the rejection needs no special case downstream.
+    """
+    seen = 0
+    while node is not None:
+        if node.type == "identifier":
+            return _text(node, src)
+        if node.type != "method_invocation":
+            return None
+        name = node.child_by_field_name("name")
+        if name is None or _text(name, src) not in _ELEMENT_PRESERVING:
+            return None
+        node = node.child_by_field_name("object")
+        seen += 1
+        if seen > 8:  # pathological chain; refuse rather than loop
+            return None
+    return None
+
+
 def _traversals(node, src: bytes) -> list[tuple[str, str]]:
     """[(collection identifier, callback name)] for each notification loop in a method body.
 
@@ -503,9 +554,11 @@ def _traversals(node, src: bytes) -> list[tuple[str, str]]:
     Implemented so far:
 
         form 3   `observers.forEach(o -> o.update())`
+        form 5   `observers.stream().forEach(o -> o.update())`, and any chain of
+                 element-preserving operations -- see `_ELEMENT_PRESERVING`
 
-    Still on `foreach_re` in the checker: form 1 (enhanced-for). Not yet implemented: forms 5
-    (stream), 4 (method reference), 2 (indexed) and 6 (iterator).
+    Still on `foreach_re` in the checker: form 1 (enhanced-for). Not yet implemented: forms 4
+    (method reference), 2 (indexed) and 6 (iterator).
     """
     out: list[tuple[str, str]] = []
 
@@ -514,22 +567,17 @@ def _traversals(node, src: bytes) -> list[tuple[str, str]]:
             nm = n.child_by_field_name("name")
             obj = n.child_by_field_name("object")
             args = n.child_by_field_name("arguments")
-            if (
-                nm is not None
-                and obj is not None
-                and args is not None
-                and _text(nm, src) == "forEach"
-                # Form 3 only: the receiver is the collection itself. A chained receiver
-                # (`observers.stream().forEach`) is form 5 and is not handled yet.
-                and obj.type == "identifier"
-            ):
+            if nm is not None and args is not None and _text(nm, src) == "forEach":
+                # Form 3: the receiver IS the collection. Form 5: walk a chain of
+                # element-preserving operations back to it. Anything else -> None -> rejected.
+                coll = _collection_of(obj, src)
                 lams = [c for c in args.named_children if c.type == "lambda_expression"]
-                if len(lams) == 1:
+                if coll and len(lams) == 1:
                     param = _single_lambda_param(lams[0], src)
                     if param:
                         cb = _callback_on(lams[0].child_by_field_name("body"), param, src)
                         if cb:
-                            out.append((_text(obj, src), cb))
+                            out.append((coll, cb))
         for c in n.children:
             walk(c)
 

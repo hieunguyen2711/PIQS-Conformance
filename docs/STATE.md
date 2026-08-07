@@ -239,6 +239,31 @@ computed at the wrong granularity can erase the very case it was built to detect
 Two deliberate errors of comparable severity were introduced during step 2, one per helper, and
 measured before correction. What caught them differed:
 
+**Step 3 negative controls — independence proven by disjoint mutation sets.** N1 and N3 both guard
+the element-type check, but on *different code paths*, so a mutation of one leaves the other
+untouched:
+
+| Mutation | N1 | N2 | N3 |
+|---|---|---|---|
+| element-type check dropped on the **form-1** branch | **flips** | held | held |
+| element-type check dropped on the **form-3** branch | held | held | **flips** |
+| element MENTIONED rather than the receiver | held | **flips** | held |
+| element type taken from any observer-typed field | held | held | **flips** |
+
+N1 = {A1}, N2 = {B}, N3 = {A3, C} — disjoint. An earlier table patched both branches at once,
+which made N1's set look like a subset of N3's and the two look redundant.
+
+**N4 is UNPROVEN and must not be counted as a guard yet.** It guards the enclosing-loop rule for
+forms 2 and 6, and nothing implements those, so there is no code to widen and no mutation that can
+flip it. It is proven when form 2 lands. **If the stopping rule drops forms 2 and 6, delete N4**
+rather than leaving a guard for shipped-nothing.
+
+**Mutation-testing method note.** Results from rapid successive in-place patches proved
+unreliable: stale `__pycache__` survived rewrites and produced two contradictory readings of the
+same mutation. Mutation runs now clear bytecode and verify the on-disk content immediately before
+evaluating. Earlier single-mutation runs in this project were separated by full suite runs and are
+not affected.
+
 | Helper | Deliberate error | Caught by a PRE-EXISTING suite? | Caught by its new fixture? |
 |---|---|---|---|
 | 2 — mentions | omit the `this` / `super` keyword nodes | **Yes** — BDT battery, 3 mismatches, exit 1 | yes (4 fail) |
@@ -624,7 +649,7 @@ cite lines 886 and 904–906. Find things by name instead:
 | `_assigns_field` is documented as signalling a step that **populates state**. `total += x` populates state and is not matched (the regex is `name\s*=(?!=)`; the `+` blocks it). Phase 2 preserves this deliberately — a mechanism change that also changes meaning makes any movement ambiguous. Candidate meaning change, own prediction. Corpus coverage: 0 sites. | after Step 2 |
 | Shadowing-aware resolution (a local shadowing a field should arguably fail `D3`) | Step 3 |
 
-| **`Map<K,V>` element type — LOWER priority and HIGHER risk than it looked.** `_base_name` strips the type argument, and `elem_field_re` does not list `Map` at all, so the 6 Kim `forEach` sites (`wallets.forEach((currency, wallet) -> ...)`) cannot resolve an element type. Unblocking it is **not** simply recovering missed positives: **(a)** `Map.forEach` takes a `BiConsumer`, so the element is the **second** lambda parameter — adding `Map` to `elem_field_re` naively would resolve the element type to `String`, not `Wallet`, silently wrong; **(b)** iterating a wallet map is very likely not observer notification at all, so unblocking it may **create a false positive on Kim** rather than recover a missed one. Do not touch in Step 3. | deprioritised |
+| **`Map<K,V>` element type — LOWER priority, and the BiConsumer risk turned out NOT to apply.** Measured after form 3 landed: all six Kim sites are rejected at the **arity check** (a `BiConsumer` has two parameters; `Collection.forEach` takes a one-parameter `Consumer`), *before* `coll_fields` is ever consulted. So the false-positive risk — that adding `Map` to `elem_field_re` would silently resolve the element to the FIRST lambda parameter, `String` rather than `Wallet` — is **not reachable through form 3 at all**. That is a better outcome than being blocked by the accident of `elem_field_re` not listing `Map`: one is a rule correct on its own terms, the other would have evaporated the moment someone edited that regex. What remains genuinely blocked is `values().forEach(...)` and `entrySet().forEach(...)`; see PROPERTY_SPEC.md. Original note follows.** `_base_name` strips the type argument, and `elem_field_re` does not list `Map` at all, so the 6 Kim `forEach` sites (`wallets.forEach((currency, wallet) -> ...)`) cannot resolve an element type. Unblocking it is **not** simply recovering missed positives: **(a)** `Map.forEach` takes a `BiConsumer`, so the element is the **second** lambda parameter — adding `Map` to `elem_field_re` naively would resolve the element type to `String`, not `Wallet`, silently wrong; **(b)** iterating a wallet map is very likely not observer notification at all, so unblocking it may **create a false positive on Kim** rather than recover a missed one. Do not touch in Step 3. | deprioritised |
 | `run_scorer.py` calls `javac` and swallows the error — find out what it was for. Unrelated to the process exit code, which is correct (verified: exits 1 on failure). | before generation |
 | Add `compiles` + `compile_errors` to result records | before generation |
 | Rule: unknown supertypes analysed separately, not scored as failure | before generation |

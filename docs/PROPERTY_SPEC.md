@@ -463,6 +463,29 @@ call must sit inside a `for_statement` (form 2) or a `while_statement` (form 6).
 `tests/fixtures_parser/loopN4_single_call_no_loop.java`, whose expected O3 is 0 — none of the six
 positive fixtures can raise this alarm, because every one of them contains a loop.
 
+### Known limitation — Map iteration is not detected as notification (recorded, not fixed)
+
+The two idiomatic ways to iterate a `Map`'s values are
+
+```java
+observers.values().forEach(o -> o.update());
+observers.entrySet().forEach(e -> e.getValue().update());
+```
+
+Neither `values` nor `entrySet` is in `_ELEMENT_PRESERVING`, so both chains are rejected and no
+notification is detected. That is the **safe** direction — rejecting is a missed positive, not a
+false one — but it is a real gap, not a theoretical one: generated 2026 Java writes
+`values().forEach(...)` routinely.
+
+Fixing it needs the **type argument** of the `Map`, which `_base_name` strips (`Map<String,
+Observer>` -> `Map`), and it interacts with the parked `Map<K,V>` item. `entrySet()` is harder
+still: the element is a `Map.Entry`, and the observer is reached through `getValue()`, so the
+callback is one hop further out than the loop variable.
+
+A third Map shape, `map.forEach((k, v) -> v.update())`, is rejected for a different and better
+reason: it takes a `BiConsumer`, and the one-parameter check for `Consumer` rejects it at the
+shape. See the parked item in `docs/STATE.md`.
+
 ## Rule: does a divergence REDEFINE the predicate, or REMOVE A FALSE POSITIVE?
 
 Every migration divergence is decided by this question, and it is the reason two divergences that

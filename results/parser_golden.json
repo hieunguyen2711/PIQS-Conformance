@@ -22283,7 +22283,12 @@
      "param_names": [],
      "param_types": [],
      "return_type": "void",
-     "traversals": []
+     "traversals": [
+      [
+       "observers",
+       "update"
+      ]
+     ]
     }
    ]
   },
