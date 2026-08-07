@@ -104,7 +104,44 @@ def kim_scores_from_fails(pattern, fails):
     return sat, round(psr, 2), round(cpc, 2), round(piqs, 2)
 
 
+# Freshness guard. This script reads results/kim_replication_raw.json off disk, and nothing
+# in that file records which checker produced it. A stale snapshot therefore renders a
+# complete, plausible, entirely wrong report for code that no longer exists -- the failure
+# mode is silence, not an error.
+#
+# The `&&` in the documented command (run_scorer.py && compare.py) already covers the case
+# where run_scorer.py crashes: it exits 1, and compare.py never starts. What it does NOT
+# cover is compare.py run on its own, or run after an edit to the checker. Refuse those.
+#
+# parser.py is guarded alongside checker.py: it is the extractor every predicate reads from,
+# so a parser edit moves verdicts exactly as a predicate edit does.
+_SOURCES = ("piqs/checker.py", "piqs/parser.py")
+
+
+def _assert_fresh():
+    if not os.path.exists(RAW):
+        raise SystemExit(
+            f"MISSING RESULTS: {os.path.relpath(RAW, ROOT)} does not exist.\n"
+            "Run validation/run_scorer.py first."
+        )
+    raw_mtime = os.path.getmtime(RAW)
+    stale = [
+        src
+        for src in _SOURCES
+        if os.path.exists(os.path.join(ROOT, src))
+        and os.path.getmtime(os.path.join(ROOT, src)) > raw_mtime
+    ]
+    if stale:
+        raise SystemExit(
+            f"STALE RESULTS: {os.path.relpath(RAW, ROOT)} is older than "
+            + ", ".join(stale)
+            + ".\nThe report would describe a checker that no longer exists.\n"
+            "Re-run validation/run_scorer.py before comparing."
+        )
+
+
 def main():
+    _assert_fresh()
     raw = json.load(open(RAW))
     my = {(r["case_study"], r["llm"], r["pattern"]): r for r in raw["results"]}
 
