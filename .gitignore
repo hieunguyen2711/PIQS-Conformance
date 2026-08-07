@@ -3,6 +3,10 @@
 # reference, deliberately out of the repo. See docs/MIGRATION.md.
 archive/
 
+# Compiled Java: validation/run_scorer.py and run_mutation_battery_bdt.py invoke javac
+# over the corpus. Class files are build output, never source.
+*.class
+
 # Python cache
 __pycache__/
 **/__pycache__/
