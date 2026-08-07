@@ -255,7 +255,7 @@ def test_own_field_shadows_inherited_field_of_the_same_name():
     and ancestors after, so a plain dict comprehension let the ancestor win.
 
     Java hides a superclass field behind a subclass field of the same name. Inside `Sub.write`,
-    the bare `held` is `Component`, not `Base`'s `Object`.
+    the bare `held` is `Sink`, not `Base`'s `Object`.
 
     Why it is not cosmetic: D3 asks whether a wrapper forwards to THE HELD REFERENCE, and step 3
     resolves that receiver's type through this table. No corpus file shadows an inherited field,
@@ -271,13 +271,13 @@ def test_own_field_shadows_inherited_field_of_the_same_name():
     write = next(m for m in sub.methods if m.name == "write")
 
     # Preconditions, asserted rather than assumed -- this case is easy to render vacuous.
-    assert [(f.name, f.field_type) for f in sub.fields] == [("held", "Component")]
+    assert [(f.name, f.field_type) for f in sub.fields] == [("held", "Sink")]
     assert [(f.name, f.field_type) for f in PIQSChecker()._effective_fields(sub, types)] == [
-        ("held", "Component"),
+        ("held", "Sink"),
         ("held", "Object"),
     ], "the fixture must actually shadow: own field first, inherited second"
 
-    assert PIQSChecker()._scope(sub, write, types)["held"] == "Component"
+    assert PIQSChecker()._scope(sub, write, types)["held"] == "Sink"
 
 
 # --------------------------------------------------------------------------------------- #

@@ -167,7 +167,7 @@ def test_scope_walk_still_stops_where_the_call_walk_descends():
     m = next(x for x in t.methods if x.name == "write")
     scope = PIQSChecker()._scope(t, m, types)
     assert "r" in m.locals, "the enclosing method's own local is in scope"
-    assert scope["inner"] == "Sink", "the field is in scope"
+    assert scope["inner"] == "Forwardable", "the field is in scope"
     # the call walk saw into the anonymous class; the scope walk did not
     assert ("inner", "write") in m.calls
 
@@ -245,3 +245,64 @@ def test_bodyless_method_has_no_calls():
     m = method(BODYLESS, "Contract", "op")
     assert m.has_body is False
     assert m.calls == []
+
+
+# --------------------------------------------------------------------------------------- #
+# Divergence #1 -- `this` and `super` are KEYWORD nodes, not identifiers.
+#
+# The only divergence in the set with a live verdict. Builder B1 accepts a method as the
+# TERMINAL only if its body consumes configured state, and one of the two ways to do that is
+# passing `this` to the product constructor. A mentions set built from `identifier` nodes alone
+# answers False for every `this`, so a legitimate build() stops being a terminal and B1 fails.
+#
+# 43 real call sites pass "this"; 3 are True, all in the BDT battery.
+# --------------------------------------------------------------------------------------- #
+
+THIS_KEYWORD = fixture("div1_this_keyword.java")
+
+
+def mentions(method_name: str, token: str) -> bool:
+    return PIQSChecker._mentions_within(method(THIS_KEYWORD, "Assembler", method_name), token)
+
+
+def test_this_as_constructor_argument_is_mentioned():
+    """`return new Loaf(this);` -- `this` in ARGUMENT position. This is the shape Builder B1
+    reads to accept a terminal."""
+    assert mentions("bake", "this") is True
+
+
+def test_this_as_synchronized_lock_is_mentioned():
+    """`synchronized (this) { ... }` -- a DIFFERENT node position from the argument case. A fix
+    that special-cased only the constructor argument would pass the test above and fail this."""
+    assert mentions("guarded", "this") is True
+
+
+def test_this_as_field_qualifier_is_mentioned():
+    """`this.size = size;`"""
+    assert mentions("handOff", "this") is True
+
+
+def test_super_is_mentioned():
+    """`super` is a keyword node too, and the old whole-word regex matched it."""
+    assert mentions("handOff", "super") is True
+
+
+def test_this_in_comment_or_string_is_not_mentioned():
+    """Divergence #4 applies to mentions as well as calls. The body of `quiet()` contains the
+    text `this` twice -- once commented out, once inside a string literal -- and neither is a
+    mention."""
+    assert mentions("quiet", "this") is False
+
+
+def test_method_without_this_does_not_mention_it():
+    """Anti-vacuity. Without this, an implementation returning True for everything would pass
+    every assertion above."""
+    assert mentions("plain", "this") is False
+    assert mentions("plain", "super") is False
+
+
+def test_ordinary_identifiers_still_resolve():
+    """The migration must not lose what the regex already did right: a plain field name is still
+    a mention, and a substring is still not one."""
+    assert mentions("handOff", "size") is True
+    assert mentions("handOff", "siz") is False

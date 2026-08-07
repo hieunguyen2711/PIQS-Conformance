@@ -110,6 +110,9 @@ class JavaMethod:
     # alive, so holding one past parse time gives a dangling reference that fails silently.
     # Everything is extracted eagerly into plain data, which also keeps JavaMethod serializable.
     calls: list[tuple[str | None, str]] = field(default_factory=list)
+    # Every whole token named in the body -- identifiers AND the `this` / `super`
+    # keywords. Built by piqs.parser; read through `PIQSChecker._mentions_within`.
+    mentions: set[str] = field(default_factory=set)
 
 
 @dataclass
@@ -219,9 +222,18 @@ class PIQSChecker:
         return extract_types(java_files)
 
     @staticmethod
-    def _mentions_token(body: str, name: str) -> bool:
-        """Fix G: True if `name` occurs in `body` as a whole identifier, not a substring."""
-        return re.search(r"(?<![A-Za-z0-9_])" + re.escape(name) + r"(?![A-Za-z0-9_])", body) is not None
+    def _mentions_within(method: "JavaMethod", token: str) -> bool:
+        """mentionsWithin(method, token): does `method`'s body name `token` as a whole token?
+
+        Phase 2, step 2. Reads `method.mentions`, precomputed from the AST; the
+        `_mentions_token(body, name)` regex it replaces is gone. Whole-token matching is
+        unchanged -- `siz` still does not match inside `size` -- but it now comes from the tree
+        rather than a look-behind.
+
+        `this` and `super` are included: they are keyword nodes, and Builder B1 reads
+        `this` to accept a terminal. Comments and string literals are not (divergence #4).
+        """
+        return token in method.mentions
 
     @staticmethod
     def _has_verb_prefix(name: str, verb: str) -> bool:
@@ -1091,7 +1103,7 @@ class PIQSChecker:
                 has_instance_method = True
                 returns = True
                 for m in accessor:
-                    if any(self._mentions_token(m.body, f.name) for c2 in classes for f in c2.fields
+                    if any(self._mentions_within(m, f.name) for c2 in classes for f in c2.fields
                            if "static" in f.modifiers and f.field_type == c.name):
                         accesses_field = True
                     if re.search(rf"\bnew\s+{c.name}\s*\(", m.body):
@@ -1203,8 +1215,8 @@ class PIQSChecker:
                 if (
                     m.has_body
                     and m.return_type not in (None, "void", t.name)
-                    and (self._mentions_token(m.body, "this")
-                         or any(self._mentions_token(m.body, fn) for fn in field_names))
+                    and (self._mentions_within(m, "this")
+                         or any(self._mentions_within(m, fn) for fn in field_names))
                 ):
                     terminals.append(m)
 

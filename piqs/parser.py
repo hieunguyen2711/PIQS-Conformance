@@ -71,6 +71,19 @@ _BODY_NODES = {"class_body", "interface_body", "enum_body"}
 # Children of a `modifiers` node that are annotations rather than modifier keywords.
 _ANNOTATION_NODES = {"marker_annotation", "annotation"}
 
+# Leaf nodes that count as a "whole token named in the body", for `_mentioned_tokens`.
+#
+# `this` and `super` are KEYWORDS, not identifiers, and they get their own node types. The regex
+# this replaces was a whole-word text match, so it found them like any other word. Dropping them
+# is not a cosmetic loss: Builder B1 accepts a terminal only if its body consumes the builder's
+# configured state, and one of the two routes is passing `this` to the product constructor.
+#
+# Measured with them omitted: 4 divergence tests fail AND the BDT battery reports 3 mismatches --
+# `builder_bloch_fluent_static_nested` and `t5_builder_immutable_product` both flip B1=1 -> 0,
+# PIQS 100 -> 20. Kim does not move, because Kim never scores Builder. This is the one divergence
+# in the set with a live verdict.
+_TOKEN_NODES = {"identifier", "type_identifier", "this", "super"}
+
 _base_name = PIQSChecker._base_name
 
 
@@ -346,6 +359,38 @@ def _invocations(node, src: bytes) -> list[tuple[str | None, str]]:
     return out
 
 
+def _mentioned_tokens(node, src: bytes) -> set[str]:
+    """Every whole token named in a method body -- identifiers AND keywords.
+
+    Phase 2, step 2. Replaces `_mentions_token`'s regex, which matched any whole word anywhere
+    in the body text. Two things follow, and they pull in opposite directions:
+
+      * Comments and string literals are NOT tokens (divergence #4). `// this` is not a mention.
+
+      * `this` and `super` ARE tokens, and they are KEYWORD nodes, not identifiers. A walk over
+        `identifier` alone silently answers False for every `this` -- and Builder B1 reads
+        exactly that: `_evaluate_builder` accepts a terminal only if its body consumes the
+        builder's configured state, one route being passing `this` to the product constructor.
+        Lose it and a legitimate `build()` stops being a terminal.
+
+    Measured: 43 real call sites pass "this", 3 of them True, all in the BDT battery. Omitting
+    the keyword produces exactly those 3 disagreements, in two distinct node positions --
+    `new Pizza(this)` (constructor argument) and `synchronized (this)` (statement lock). A fix
+    covering only one of the two is not a fix; see tests/fixtures_parser/div1_this_keyword.java.
+    """
+    out: set[str] = set()
+
+    def walk(n) -> None:
+        if n.type in _TOKEN_NODES:
+            out.add(_text(n, src))
+        for c in n.children:
+            walk(c)
+
+    if node is not None:
+        walk(node)
+    return out
+
+
 def _build_method(decl, owner: str, src: bytes) -> JavaMethod:
     is_ctor = decl.type == "constructor_declaration"
     name_node = decl.child_by_field_name("name")
@@ -376,6 +421,7 @@ def _build_method(decl, owner: str, src: bytes) -> JavaMethod:
         is_constructor=is_ctor,
         has_body=has_body,
         locals=_declared_in_body(body_node, src) if has_body else {},
+        mentions=_mentioned_tokens(body_node, src) if has_body else set(),
         calls=_invocations(body_node, src) if has_body else [],
     )
 

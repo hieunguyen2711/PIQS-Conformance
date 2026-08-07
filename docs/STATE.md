@@ -43,7 +43,7 @@ Run all four after **every** change. Never fewer.
 | Mutation battery | 12/12 |
 | BDT battery | 27/27 + 5/5 D6 |
 | Renaming invariance failures | **8** (5 × `C3`, 3 × `O1`) |
-| pytest | **157 passed, 8 failed** (165 collected) |
+| pytest | **165 passed, 8 failed** (173 collected) |
 
 pytest was 120 before the scope table (+20 `tests/test_scope_table.py`) and 140 before body
 helper 1 (+17 `tests/test_body_helpers_divergences.py`). Collected by file: 81 invariance +
@@ -131,7 +131,7 @@ Goal: move method **body** analysis from regex to tree-sitter, and build a scope
 | Step | What | Status |
 |---|---|---|
 | 1 | Scope table: `{identifier → declared type}` per method | **DONE**, unmerged on `parser-phase2` |
-| 2 | Body helpers as tree queries | **1 of 4 done** — `_calls_method` + `_calls_within` migrated |
+| 2 | Body helpers as tree queries | **2 of 4 done** — calls and mentions migrated |
 | 3 | Traversal detection, six loop forms | not started — the payoff |
 
 ### Step 1 — what was built
@@ -204,6 +204,50 @@ For the paper: *"Across 51 programs / 184 files / 237 types / 492 methods, the s
 11), of which 14 are untyped lambda parameters. Full scope size, including fields and parameters,
 averages 2.71 over all 492 methods (max 12)."*
 
+
+### Figure provenance — every number audited after the collapse bug
+
+`extract_types` keys its result by **simple name**. Calling it once over many files collapses
+same-named classes across programs, last one wins. Every published figure was re-derived to find
+out which ones were computed that way.
+
+| Figure | How it was computed | Verdict |
+|---|---|---|
+| Scope-table census | one whole-corpus call | **CORRECTED** — see above |
+| Divergence #8 coverage | one whole-corpus call | **CORRECTED** — 422 bodies, 7 lambdas, 0 anonymous classes |
+| "185 methods with bodies" | one whole-corpus call | **CORRECTED** — the corpus has **422** |
+| Framework-inheriting types = **1** (`AuditLog` → `Observable`) | per-program `evaluate()` | **VERIFIED, holds** |
+| Unknown supertypes = **0** | per-program `evaluate()` | **VERIFIED, holds** |
+| "5 sites feed `coll_fields` a non-field name" | per file | **VERIFIED, holds** |
+| 34,190 masked comment/string characters | per program | **VERIFIED**, but the denominator was unstated — it is the **10 scored** programs. All 12 (including the two unscored `original_base`) give 38,729 |
+| Body-helper call counts (765 / 78 / 52 / 42) | drove the real checker per scoring unit | **VERIFIED, holds** |
+| Divergence #1: 43 `this` sites, 3 True | same | **VERIFIED, holds** |
+| ERROR/MISSING nodes = 0 | per file | **VERIFIED**, denominator now stated: 0 of **422** corpus bodies, 0 of **448** including test fixtures |
+| Phase 1 parity: 184 files, 0 differences | `extractor_parity.py` parses **one file at a time** (`single = {basename: content}`) | **VERIFIED, holds** |
+
+**Phase 1 is not affected.** `validation/extractor_parity.py` builds a fresh single-entry dict per
+file, so its 26 differences and its "phantom methods: 0" result were never measured on a collapsed
+table. Do not re-open that work.
+
+**The collapse does not merely understate — it can erase a finding.** Recomputing framework
+inheritance over a whole-corpus `extract_types` gives **0** framework-inheriting types, because
+`AuditLog` collapses with a same-named class from another program and the survivor does not extend
+`Observable`. The per-program figure is 1. A finding that exists per program can vanish entirely
+when the corpus is flattened.
+
+### Method counts, with denominators stated
+
+| Basis | Files | Methods | With body | Bodyless |
+|---|---:|---:|---:|---:|
+| 184 corpus files | 184 | 492 | **422** | 70 |
+| 51 units, per program | — | 492 | 422 | 70 |
+| Corpus + `tests/fixtures_parser` | 193 | 526 | 448 | 78 |
+
+Per-file and per-program are identical: a file belongs to exactly one program, so grouping cannot
+change per-file extraction. The census differed only because it extracted every file in **one**
+call. An earlier report gave "434 method bodies" for the ERROR scan and "422" for divergence #8
+without saying so — 434 was corpus **plus the five test fixtures existing at that moment**.
+
 Load-bearing check: `Receipt.toString` resolves `items → List` and `item → SaleLineItem`;
 `Sale.getSaleLineItem` is correctly **absent** from its own scope.
 
@@ -214,11 +258,28 @@ Five helpers move, in this order — one at a time, four suites between each:
 | # | Helper | Divergences it decides | Status |
 |---|---|---|---|
 | 1 | `_calls_method` **+ `_calls_within`** (a one-line delegate; cannot move separately) | 4, 6, 7, 8 | **DONE** |
-| 2 | `_mentions_token` | 1, 4 | next — build the `this` fixture first |
+| 2 | `_mentions_token` → `_mentions_within` | 1, 4 | **DONE** |
 | 3 | `_delegates_to_field` | 4, 5, 8 | not started |
 | 4 | `_assigns_field` | 2, 3, 4 | not started |
 
 Helper 1 landed with zero movement on all four suites, as predicted; pytest 140 → 157.
+Attribution measured directly at both commits: `8b49bc4` (parent) 140 passed, `5ae1640` 157
+passed, every other suite figure identical.
+
+**Helper 2 is the one that proved a divergence live.** `_mentions_token` → `_mentions_within`,
+reading `JavaMethod.mentions`. Built NAIVELY first — `{identifier, type_identifier}` — and
+measured before correcting:
+
+| | naive | correct (`+ this, super`) |
+|---|---|---|
+| divergence fixtures | **4 fail** | 24 pass |
+| BDT battery | **3 mismatches, exit 1** | 27/27 + 5/5, exit 0 |
+| Kim | 90.6% — **unmoved** | 90.6% |
+
+`builder_bloch_fluent_static_nested` and `t5_builder_immutable_product` both flip `B1=1 → 0`,
+PIQS 100 → 20. Builder B1 accepts a terminal only if its body consumes configured state, and one
+route is passing `this` to the product constructor. **Kim never scores Builder**, so only the BDT
+battery could ever have caught this — the corpus that matters is not always the big one.
 `_calls_method` is **deleted** — `_calls_within` reading `JavaMethod.calls` is the single API.
 `validation/synthetic_generality_tests.py` was the only consumer outside the four suites and now
 goes through a real parse rather than a bare string; it still reports 10/10.

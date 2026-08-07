@@ -139,7 +139,7 @@ types = svc._extract_types(real_field)
 c_foo_fields = [f for f in types["C"].fields if f.field_type == "Foo"]
 results.append(("F: genuine class-scope field kept -> C has 1 Foo field", {"C.fields(Foo)": len(c_foo_fields)}, len(c_foo_fields) == 1))
 
-# POLICY: Fix G (whole-token identifier matching -- _calls_within, _mentions_token,
+# POLICY: Fix G (whole-token identifier matching -- _calls_within, _mentions_within,
 # _has_verb_prefix). docs/PROPERTY_SPEC.md, "Reused scaffolding": substring name matching is not
 # reintroduced.
 #
@@ -157,9 +157,9 @@ def _body(src_body):
 
 # G: identifier must match as a whole token, not a substring.
 m_sub = _body("PaymentStrategy payment = PaymentFactory.get();")
-g_sub = (svc._calls_within(m_sub, "pay") is False) and (svc._mentions_token(m_sub.body, "pay") is False)
+g_sub = (svc._calls_within(m_sub, "pay") is False) and (svc._mentions_within(m_sub, "pay") is False)
 results.append(("G: 'pay' does NOT match inside 'payment'/'PaymentFactory'",
-                {"calls_pay": svc._calls_within(m_sub, "pay"), "mentions_pay": svc._mentions_token(m_sub.body, "pay")}, g_sub))
+                {"calls_pay": svc._calls_within(m_sub, "pay"), "mentions_pay": svc._mentions_within(m_sub, "pay")}, g_sub))
 
 # G: an exact token / call DOES match; verb-prefix distinguishes addChild from address.
 m_tok = _body("obj.pay(amount);")

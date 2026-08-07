@@ -29,7 +29,7 @@ are detected by shape.
 Base predicates reused verbatim from the five existing patterns: `isAbstract`, `isConcrete`,
 `hasMethod`, `returns`, `implements`, `extends`, `overrides`, `accepts`, `calls`, `reads`,
 `modifies`. Pass-3 precision work reused: whole-token identifier matching (`_calls_method`,
-`_mentions_token`, `_has_verb_prefix`) and class-scope-only field extraction. Substring name
+`_mentions_within`, `_has_verb_prefix`) and class-scope-only field extraction. Substring name
 matching and method-local-variable-as-field are **not** reintroduced.
 
 > **Parser migration, phase 1.** Class-scope-only field extraction was originally `_class_scope_only`,
@@ -325,7 +325,8 @@ tree rather than from a look-behind assertion.
 
 | # | Construct | Decision | Why |
 |---|---|---|---|
-| 4 | Comments and string literals | **Not code.** `// observers.add(o)` is not a call | A model must not earn a property for a commented-out call. This is the one divergence the corpus exercises in bulk: 34,190 masked characters, 0 of 40 units moved |
+| 1 | `this` / `super` are KEYWORD nodes, not identifiers | **Include them** in the mentions set | The retired regex was a whole-word text match and found them like any word. Builder B1 accepts a terminal only if its body consumes configured state, one route being passing `this` to the product constructor. **The only divergence in the set with a live verdict** |
+| 4 | Comments and string literals | **Not code.** `// observers.add(o)` is not a call | A model must not earn a property for a commented-out call. The one divergence the corpus exercises in bulk: 34,190 masked characters across the 10 scored programs, 0 of 40 units moved |
 | 6 | `new Wallet()` | **Not a method call** | `callsWithin(method, target)` takes a *method* as its target. The regex matched a bare identifier followed by `(`, which a constructor also is |
 | 7 | A method **declared** in the body | **Not an invocation** | The phantom-method problem phase 1 removed at the type level, reappearing at the body level. Collecting only `method_invocation` excludes it with no special case |
 | 8 | Anonymous / local class bodies | **Descend** | A call written inside an anonymous class still runs against the *enclosing* instance's fields, so it really is the enclosing class delegating. This is the one place the call walk differs from the scope walk |
@@ -370,7 +371,14 @@ alive; holding one past parse time gives a dangling reference that fails silentl
 way a small test will not surface. Everything is extracted eagerly into plain Python data, which
 also keeps `JavaMethod` serializable for the result records.
 
-**Coverage warning.** Of these four divergences, three occur **zero** times in either corpus (#6,
+**Divergence 1 is the exception to everything below.** Omitting `this`/`super` fails 4 fixtures
+AND breaks the BDT battery: `builder_bloch_fluent_static_nested` and `t5_builder_immutable_product`
+flip `B1=1 → 0`, PIQS 100 → 20, 3 mismatches, exit 1. Kim does not move, because Kim never scores
+Builder. Measured: 43 call sites pass `"this"`, 3 are True, all in BDT. The fixture covers two
+distinct node positions — `new Loaf(this)` (constructor argument) and `synchronized (this)`
+(statement lock) — because a fix for one is not a fix for the other.
+
+**Coverage warning.** Of the other four divergences, three occur **zero** times in either corpus (#6,
 #7, #8 — and #8's near-miss, 7 lambdas in 422 method bodies, is not even the affected shape). All four
 suites stay green whichever behaviour is chosen. `tests/test_body_helpers_divergences.py` is the
 only thing that distinguishes a correct migration from a wrong one, and each of its guards ships
