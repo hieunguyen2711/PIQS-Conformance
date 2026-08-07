@@ -165,6 +165,86 @@ def _field_declarations(body_node):
                     yield inner
 
 
+def _declared_in_body(node, src: bytes) -> dict[str, str | None]:
+    """{identifier: declared base type} for every name declared inside a method body.
+
+    Phase 2, step 1. Five declaration forms carry a name into method scope:
+
+        local_variable_declaration    List<Observer> seen = ...;   (one entry per declarator)
+        enhanced_for_statement        for (Observer o : seen)
+        resource                      try (Scanner s = ...)
+        catch_formal_parameter        catch (IOException e)
+        lambda_expression parameters  o -> ...   /   (Observer o) -> ...
+
+    A lambda parameter with no written type maps to None: the name is in scope, the type is
+    not knowable here. Callers that need the element type take it from the iterated
+    collection instead.
+
+    The walk STOPS at a nested type body. A field of a local or anonymous class, and a
+    variable declared inside one, belong to that class -- not to the enclosing method. This
+    is the same boundary `_member_declarations` draws for methods, and it is what keeps the
+    scope table honest where the old `t.body` text matching was not: text matching cannot see
+    a brace, so it absorbed nested declarations and method signatures alike.
+
+    A lambda BODY is not such a boundary -- a lambda shares the enclosing method's scope --
+    so the walk descends into it.
+    """
+    out: dict[str, str | None] = {}
+
+    def add(name_node, type_node) -> None:
+        if name_node is None:
+            return
+        name = _text(name_node, src)
+        if not name:
+            return
+        out[name] = _base_name(_text(type_node, src)) if type_node is not None else None
+
+    def walk(n) -> None:
+        for child in n.children:
+            # A nested type's body is a different scope. Do not descend.
+            # This covers a local class (`class_declaration` -> `class_body`) and an anonymous
+            # class (`object_creation_expression` -> `class_body`) alike.
+            if child.type in _BODY_NODES:
+                continue
+
+            if child.type == "local_variable_declaration":
+                type_node = child.child_by_field_name("type")
+                for d in child.named_children:
+                    if d.type == "variable_declarator":
+                        add(d.child_by_field_name("name"), type_node)
+
+            elif child.type == "enhanced_for_statement":
+                add(child.child_by_field_name("name"), child.child_by_field_name("type"))
+
+            elif child.type == "resource":
+                add(child.child_by_field_name("name"), child.child_by_field_name("type"))
+
+            elif child.type == "catch_formal_parameter":
+                add(
+                    child.child_by_field_name("name"),
+                    next((c for c in child.named_children if c.type == "catch_type"), None),
+                )
+
+            elif child.type == "lambda_expression":
+                params = child.child_by_field_name("parameters")
+                if params is not None:
+                    if params.type == "identifier":
+                        # `o -> ...`: one untyped parameter.
+                        add(params, None)
+                    else:
+                        # `formal_parameters` (typed) or `inferred_parameters` (`(a, b) -> ...`).
+                        for p in params.named_children:
+                            if p.type == "formal_parameter":
+                                add(p.child_by_field_name("name"), p.child_by_field_name("type"))
+                            elif p.type == "identifier":
+                                add(p, None)
+
+            walk(child)
+
+    walk(node)
+    return out
+
+
 def _build_method(decl, owner: str, src: bytes) -> JavaMethod:
     is_ctor = decl.type == "constructor_declaration"
     name_node = decl.child_by_field_name("name")
@@ -192,6 +272,7 @@ def _build_method(decl, owner: str, src: bytes) -> JavaMethod:
         body=_brace_inner(body_node, src) if has_body else "",
         is_constructor=is_ctor,
         has_body=has_body,
+        locals=_declared_in_body(body_node, src) if has_body else {},
     )
 
 

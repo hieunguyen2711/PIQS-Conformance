@@ -266,6 +266,53 @@ agreement from 9/10 to 8/10, still above the 80% reliability threshold. Kim mark
 satisfied. We now disagree, for the same reason we already disagreed with Kim on O2 of the same
 cell — recorded in `KIM_VALIDATION.md` as Kim-side leniency.
 
+## Identifier resolution (parser phase 2)
+
+**The rule.** An identifier resolves to a project type when its declared type's simple name
+appears in the project's type table. Types not declared in the project are external. This is
+sound for single-package projects; cross-package name collisions are not resolved and did not
+occur in either corpus.
+
+**The scope table.** `PIQSChecker._scope(type, method, types)` returns `{identifier: declared
+base type}` for one method. Three sources, merged in Java shadowing order — a later source
+overwrites an earlier one:
+
+| # | Source | Where it comes from |
+|---|---|---|
+| 1 | fields of the type and of its project-defined ancestors | `_effective_fields` |
+| 2 | the method's parameters | `JavaMethod.param_names` / `param_types` |
+| 3 | names declared in the method body | `JavaMethod.locals`, built by `piqs.parser` |
+
+Source 3 covers local variables, enhanced-for variables, try-with-resources resources, catch
+parameters and lambda parameters. A lambda parameter written without a type (`o -> o.update()`)
+records the **name with type `None`** — the name is in scope, and no type is invented. A consumer
+that needs the element type takes it from the iterated collection.
+
+**What the table deliberately excludes.** The walk stops at a nested type body, so a field of a
+local or anonymous class, and a variable declared inside one, belong to that class rather than to
+the enclosing method. Block scope is not modelled: the dict is flat, so two sibling blocks each
+declaring `i` collapse to one entry.
+
+**Why this replaces text matching.** The pattern being retired is
+`elem_field_re.findall(t.body)` in `_evaluate_observer` (and its twins in `_evaluate_composite`
+and `_framework_roles_supplied`). `t.body` is the whole text between a class's braces, method
+bodies and signatures included, so the regex cannot tell a declaration from anything shaped like
+one. Measured across the 184 corpus files, five types feed it a name that is not a class field:
+
+| File | Harvested | Actually a |
+|---|---|---|
+| `RefactoredPOSCopilot/Receipt.java:35` | `items` | local variable |
+| `POS/Receipt.java:35` | `items` | local variable (unscored, `original_base`) |
+| `RefactoredPOSCopilot/Sale.java:20` | `getSaleLineItem` | **method name** |
+| `POS/Sale.java:27` | `getSaleLineItem` | **method name** (unscored) |
+| `RefactoredPOSClaude/Sale.java:38` | `getComponents` | **method name** |
+
+The method-name entries are inert today only by luck: `foreach_re` wants a bare identifier after
+the colon, and a call site always carries `()`. The local-variable entries are **load-bearing** —
+they are why a method-local collection of observers is detected at all today. Any scope table that
+held fields only would therefore be a silent regression, not a no-op; see
+`tests/test_scope_table.py`.
+
 ## Oracle
 
 There is no Kim ground truth for these three patterns (Kim 2025 never covered them). The oracle is

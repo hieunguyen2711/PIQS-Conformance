@@ -82,6 +82,22 @@ class JavaMethod:
     # empty-bodied concrete method (`void step() {}`) -- both leave `body == ""`. Template
     # Method (T1/T2/T3) needs this distinction; the five original patterns never read it.
     has_body: bool = True
+    # {identifier: declared base type} for every name declared INSIDE this method's body --
+    # local variables, enhanced-for variables, try-with-resources resources, catch parameters
+    # and lambda parameters. Built by piqs.parser from the AST.
+    #
+    # Parameters are deliberately NOT duplicated here: they already live in `param_names` /
+    # `param_types`, and a second copy is a second thing to keep in step. Assemble the full
+    # scope with `PIQSChecker._scope(type, method, types)`, which is the only supported way to
+    # read it -- that merges fields, then parameters, then these, in Java shadowing order.
+    #
+    # The value is None when a name is declared without a type the parser can see: an
+    # untyped lambda parameter (`o -> o.update()`). The NAME is still recorded, because a
+    # consumer that needs the type gets it from the iterated collection, not from the lambda.
+    #
+    # Block scope is not modelled -- the dict is flat, so two sibling blocks each declaring
+    # `i` collapse to one entry (last wins). No predicate distinguishes them.
+    locals: dict[str, str | None] = field(default_factory=dict)
 
 
 @dataclass
@@ -303,6 +319,38 @@ class PIQSChecker:
             seen.add(parent.name)
             cur = parent
         return fields
+
+    def _scope(
+        self, t: "JavaType", m: "JavaMethod", types: dict[str, "JavaType"]
+    ) -> dict[str, str | None]:
+        """{identifier: declared base type} visible inside `m`, a method of `t`.
+
+        Phase 2, step 1 -- the scope table. The single supported way to ask what a name means
+        inside a method body. Sources, merged in Java shadowing order so that a later source
+        overwrites an earlier one:
+
+            1. fields of `t` and of its project-defined ancestors   (`_effective_fields`)
+            2. `m`'s parameters
+            3. names declared in `m`'s body                         (`m.locals`)
+
+        A local named `x` therefore beats a field named `x`, which is what Java does.
+
+        The value is the declared type's BASE name (`List<Observer> seen` -> "List"), or None
+        for an untyped lambda parameter. Use `name in types` to decide whether a type is
+        project-defined; see docs/PROPERTY_SPEC.md, "Identifier resolution".
+
+        NOTHING READS THIS YET. It is built and tested on its own so that the verdict-moving
+        change -- replacing the `t.body` text matching in `_evaluate_observer` and
+        `_evaluate_composite` -- lands as a separate, separately-measured step.
+        """
+        scope: dict[str, str | None] = {
+            f.name: f.field_type for f in self._effective_fields(t, types)
+        }
+        for pname, ptype in zip(m.param_names, m.param_types):
+            if pname:
+                scope[pname] = ptype or None
+        scope.update(m.locals)
+        return scope
 
     def _framework_roles_supplied(self, t: "JavaType", types: dict[str, "JavaType"]) -> list[str]:
         """Which pattern-bearing structures a framework-inheriting type declares ITSELF.
