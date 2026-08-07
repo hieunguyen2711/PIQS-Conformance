@@ -371,7 +371,7 @@ way a small test will not surface. Everything is extracted eagerly into plain Py
 also keeps `JavaMethod` serializable for the result records.
 
 **Coverage warning.** Of these four divergences, three occur **zero** times in either corpus (#6,
-#7, #8 — and #8's near-miss, one lambda in 185 methods, is not even the affected shape). All four
+#7, #8 — and #8's near-miss, 7 lambdas in 422 method bodies, is not even the affected shape). All four
 suites stay green whichever behaviour is chosen. `tests/test_body_helpers_divergences.py` is the
 only thing that distinguishes a correct migration from a wrong one, and each of its guards ships
 with the mutation that makes it fail. See the next section.

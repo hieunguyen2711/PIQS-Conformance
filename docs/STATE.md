@@ -147,32 +147,62 @@ Goal: move method **body** analysis from regex to tree-sitter, and build a scope
 Design: **build the table, wire nothing.** Zero call sites changed, so zero movement is true by
 construction. All verdict risk is pushed into Step 3 where it can be measured alone.
 
-Lambda parameters are stored as name-without-type (`dict[str, str | None]`). Locals shadow fields,
-matching Java. Parameters are **not** duplicated into `locals` — they already live in
-`param_names` / `param_types`; `_scope` is the only supported accessor.
+Lambda parameters are stored as name-without-type (`dict[str, str | None]`). Parameters are
+**not** duplicated into `locals` — they already live in `param_names` / `param_types`; `_scope`
+is the only supported accessor.
 
-Four guards, each proven by the mutation that makes it fail: drop the nested-type boundary → the
-nested-variable test fails; also harvest nested `field_declaration`s → both nested tests fail;
-invent a type for `o -> ...` → the untyped-lambda test fails; merge fields over locals → both
-shadowing tests fail.
+**Three shadowing relationships, not one.** `_scope` merges fields → parameters → locals, so:
 
-**Census — 184 files, 131 types, 233 methods.** The two quantities have different denominators;
-stating them together without saying which was the original error.
+| Relationship | Nearest declaration wins | Guard |
+|---|---|---|
+| local vs field | the local | `test_local_shadows_field_of_the_same_name` |
+| parameter vs field | the parameter | `test_parameter_shadows_field_of_the_same_name` |
+| **own field vs inherited field** | **the own field** | `test_own_field_shadows_inherited_field_of_the_same_name` |
+
+The third was **inverted until 2026-08-07**. `_effective_fields` returns own fields first and
+ancestors after, so a plain dict comprehension let the ancestor win: a `Sub` declaring
+`Component held` over a `Base` declaring `Object held` resolved `held` to `Object`. Fixed by
+`reversed(...)` **inside `_scope` only** — `_effective_fields` is not reordered, because its other
+caller (`_evaluate_builder`) collapses the result into a set, where order is invisible, and
+reordering it would be an unmeasured change elsewhere.
+
+Not cosmetic: D3 asks whether a wrapper forwards to *the held reference*, and Step 3 resolves that
+receiver's type through this table. **No corpus file shadows an inherited field**, so all four
+suites passed with the bug present. Pinned by `tests/fixtures_parser/shadowed_inherited_field.java`.
+
+Five guards, each proven by the mutation that makes it fail:
+
+| Mutation | Tests that fail |
+|---|---|
+| drop the nested-type boundary | the nested-*variable* test |
+| also harvest nested `field_declaration`s | both nested tests |
+| invent a type for `o -> ...` | the untyped-lambda test |
+| merge fields over locals | both *local/parameter* shadowing tests |
+| **drop `reversed()` in `_scope`** | **only the inherited-field test** — the other two shadowing guards still pass, which is exactly why this bug survived |
+
+**Census — measured PER PROGRAM, which is how the checker evaluates.** 51 units (12 Kim programs
++ 12 mutation-battery + 27 BDT cases), 184 files, 237 types, 492 methods.
 
 | | A — body-declared names (`m.locals`) | B — full scope (fields + params + locals) |
 |---|---:|---:|
-| Total | **102** (2 untyped lambda params) | 506 |
-| Mean over the **33 non-empty** methods | **3.09** | 5.67 |
-| Mean over **all 233** methods | 0.44 | **2.17** |
+| Total | **170** (14 untyped lambda params) | **1332** |
+| Mean over the **88 non-empty** methods | **1.93** | — |
+| Mean over **all 492** methods | 0.35 | **2.71** |
 | Max in one method | 11 | 12 |
 
-`102 / 33 = 3.09` (A). `506 / 233 = 2.17` (B). The earlier report mixed A's totals with B's mean
-and max, which is why it would not divide.
+`170 / 88 = 1.93` (A). `1332 / 492 = 2.71` (B). Both divide.
 
-For the paper: *"Across 184 files / 131 types / 233 methods, the scope table records 102
-body-declared names in 33 methods (mean 3.09 per non-empty method; 0.44 over all methods; max 11),
-of which 2 are untyped lambda parameters. Full scope size, including fields and parameters,
-averages 2.17 over all 233 methods (max 12)."*
+> **An earlier version of this census was wrong** and the figures are in the git history: 131
+> types / 233 methods / 102 names / 2 untyped lambda params / mean 3.09 / 506 entries. It called
+> `extract_types` **once over all 184 files at once**. That function keys its result by SIMPLE
+> NAME, so a class appearing in several programs — `Sale` is in five — collapses to a single
+> entry, last one wins. Every figure was understated. The checker never does this: it evaluates
+> one program at a time. Census the same way, or the denominator is not the population.
+
+For the paper: *"Across 51 programs / 184 files / 237 types / 492 methods, the scope table records
+170 body-declared names in 88 methods (mean 1.93 per non-empty method; 0.35 over all methods; max
+11), of which 14 are untyped lambda parameters. Full scope size, including fields and parameters,
+averages 2.71 over all 492 methods (max 12)."*
 
 Load-bearing check: `Receipt.toString` resolves `items → List` and `item → SaleLineItem`;
 `Sale.getSaleLineItem` is correctly **absent** from its own scope.
@@ -211,7 +241,7 @@ an accident.
 | 5 | `getX().op()` chains | Reject via `None` qualifier | 0 |
 | 6 | `new Wallet()` matches `_calls_method(body, "Wallet")` | Exclude — a constructor is not a method | 0 |
 | 7 | A method **declared** in a body | Exclude — a declaration is not an invocation | 0 |
-| 8 | Anonymous / local class bodies | **Descend** — no boundary for calls | 0 |
+| 8 | Anonymous / local class bodies | **Descend** — no boundary for calls | 0 of 422 bodies (7 have a lambda, not the affected shape) |
 
 Seven of eight have **zero corpus coverage**. The suites are not evidence. Each ships with its own
 fixture, in the same commit as the helper that decides it.
@@ -234,8 +264,8 @@ The last row is #7 surviving inside a descended body: collecting only `method_in
 excludes a `method_declaration` automatically, no special case. Descending does not resurrect
 declarations, and there the tree is right and the regex is wrong.
 
-Corpus coverage of #8: of 185 methods with bodies, **1** contains a lambda
-(`User.showAllBalances`) and **0** contain an anonymous class body. At the real call sites,
+Corpus coverage of #8: of **422** method bodies in the 184 corpus files, **7** contain a lambda
+and **0** contain an anonymous class body. At the real call sites,
 descend and stop both agree with the regex on all 943 calls.
 
 **Uniform normalisation rule** (reproduces the regex on all 13 cases, for receivers and assignment

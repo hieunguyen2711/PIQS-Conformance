@@ -245,6 +245,40 @@ def _declared_in_body(node, src: bytes) -> dict[str, str | None]:
     return out
 
 
+class JavaParseError(ValueError):
+    """A method body tree-sitter could not parse cleanly.
+
+    Raised rather than swallowed. Every body-level fact -- `locals`, `calls` -- is collected by
+    walking the body's subtree, and a walk over a broken subtree returns an EMPTY result, which
+    is indistinguishable from a correct "this method declares nothing and calls nothing". The
+    predicates would then quietly report False and the four suites would stay green.
+
+    tree-sitter is error-tolerant by design: it always returns a tree, inserting ERROR and
+    MISSING nodes around what it could not parse. That tolerance is what makes the silence
+    possible, so it has to be checked for explicitly.
+
+    Measured: 0 of 434 method bodies across all 189 .java files in the repo produce an ERROR or
+    MISSING node -- including the five Kim programs that FAIL `javac`, whose errors are semantic
+    (unresolved symbols, bad types) rather than syntactic. So this never fires today. It exists
+    for generated code, which is what the checker is actually for.
+    """
+
+
+def _assert_parsable(node, owner: str, name: str) -> None:
+    if node is None:
+        return
+    stack = [node]
+    while stack:
+        n = stack.pop()
+        if n.type == "ERROR" or n.is_missing:
+            raise JavaParseError(
+                f"{owner}.{name}: method body contains a tree-sitter "
+                f"{'MISSING' if n.is_missing else 'ERROR'} node at byte {n.start_byte}. "
+                "Body-level facts would be silently empty; refusing to continue."
+            )
+        stack.extend(n.children)
+
+
 def _qualifier(node, src: bytes) -> str | None:
     """The receiver a call or assignment is written against, as the old regexes saw it.
 
@@ -328,6 +362,8 @@ def _build_method(decl, owner: str, src: bytes) -> JavaMethod:
 
     body_node = next((c for c in decl.children if c.type in {"block", "constructor_body"}), None)
     has_body = body_node is not None
+    if has_body:
+        _assert_parsable(body_node, owner, name)
 
     return JavaMethod(
         name=name,

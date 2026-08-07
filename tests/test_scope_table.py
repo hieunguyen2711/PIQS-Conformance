@@ -247,6 +247,39 @@ def test_parameter_shadows_field_of_the_same_name():
     assert scope_of(PARAM_SHADOW, "ParamShadow", "go")["v"] == "String"
 
 
+def test_own_field_shadows_inherited_field_of_the_same_name():
+    """A THIRD shadowing relationship, and the one the other two did not cover.
+
+    The two tests above are LOCAL-vs-FIELD and PARAMETER-vs-FIELD. This is
+    FIELD-vs-INHERITED-FIELD, and it was inverted: `_effective_fields` returns own fields first
+    and ancestors after, so a plain dict comprehension let the ancestor win.
+
+    Java hides a superclass field behind a subclass field of the same name. Inside `Sub.write`,
+    the bare `held` is `Component`, not `Base`'s `Object`.
+
+    Why it is not cosmetic: D3 asks whether a wrapper forwards to THE HELD REFERENCE, and step 3
+    resolves that receiver's type through this table. No corpus file shadows an inherited field,
+    so all four suites pass with the bug present -- see docs/PROPERTY_SPEC.md, "What a green
+    suite does not prove".
+    """
+    path = os.path.join(ROOT, "tests", "fixtures_parser", "shadowed_inherited_field.java")
+    with open(path, encoding="utf-8") as fh:
+        src = fh.read()
+
+    types = extract_types({"shadowed_inherited_field.java": src})
+    sub = types["Sub"]
+    write = next(m for m in sub.methods if m.name == "write")
+
+    # Preconditions, asserted rather than assumed -- this case is easy to render vacuous.
+    assert [(f.name, f.field_type) for f in sub.fields] == [("held", "Component")]
+    assert [(f.name, f.field_type) for f in PIQSChecker()._effective_fields(sub, types)] == [
+        ("held", "Component"),
+        ("held", "Object"),
+    ], "the fixture must actually shadow: own field first, inherited second"
+
+    assert PIQSChecker()._scope(sub, write, types)["held"] == "Component"
+
+
 # --------------------------------------------------------------------------------------- #
 # The table must not change what the corpus sees. A bodyless method has no locals at all.
 # --------------------------------------------------------------------------------------- #

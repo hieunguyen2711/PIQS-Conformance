@@ -360,8 +360,20 @@ class PIQSChecker:
         change -- replacing the `t.body` text matching in `_evaluate_observer` and
         `_evaluate_composite` -- lands as a separate, separately-measured step.
         """
+        # `reversed` is load-bearing. `_effective_fields` returns own fields FIRST, then the
+        # parent's, then the grandparent's. A plain comprehension lets the LATER entry win, so
+        # an inherited field would overwrite the subclass field that shadows it -- the inverse
+        # of Java, where a subclass field hides a superclass field of the same name. Walking
+        # ancestors-first makes the nearest declaration land last and win.
+        #
+        # `_effective_fields` itself is NOT reordered: its other caller (`_evaluate_builder`)
+        # collapses the result into a set, so order is invisible there, and changing it would be
+        # an unmeasured behaviour change somewhere else.
+        #
+        # Guarded by tests/fixtures_parser/shadowed_inherited_field.java. No corpus file shadows
+        # an inherited field, so all four suites pass without this.
         scope: dict[str, str | None] = {
-            f.name: f.field_type for f in self._effective_fields(t, types)
+            f.name: f.field_type for f in reversed(self._effective_fields(t, types))
         }
         for pname, ptype in zip(m.param_names, m.param_types):
             if pname:

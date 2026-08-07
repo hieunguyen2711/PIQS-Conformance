@@ -6,18 +6,23 @@ not an accident of implementation.
 
 WHY THIS FILE HAS TO EXIST.
 
-Measured across both corpora -- Kim's 40 scoring units and the 39 mutation-battery cases --
-these constructs occur as follows:
+Measured across both corpora -- Kim's 40 scoring units and the 39 mutation-battery cases, over
+422 method bodies in 184 files -- these constructs occur as follows:
 
     #4  comments / string literals   34,190 characters masked, 0 of 40 units moved
     #6  `new Wallet()`               0 call sites
     #7  declaration inside a body    0 call sites
-    #8  anonymous / local class body 0 methods (1 lambda, 0 anonymous classes of 185 methods)
+    #8  anonymous / local class body 0 bodies (7 contain a lambda, which is NOT the affected
+                                     shape -- a lambda body is a `block`, not a `class_body`)
 
 So all four suites stay green whichever behaviour is chosen. The suites cannot distinguish a
 correct migration from a wrong one here. This file is the only thing that can. It is the same
 situation as the D6 guard, four times over -- see docs/PROPERTY_SPEC.md, "What a green suite
 does not prove".
+
+Each case lives in its own `.java` file under `tests/fixtures_parser/`, named after the
+divergence it guards, so the decision in PROPERTY_SPEC.md and the program that pins it can be
+found from one another.
 
 Each test therefore asserts BOTH directions where the direction is meaningful: that the tree
 rejects what the regex accepted, and that the tree still accepts the ordinary case, so a query
@@ -36,6 +41,16 @@ from piqs.checker import PIQSChecker  # noqa: E402
 from piqs.parser import extract_types  # noqa: E402
 
 
+FIXTURES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures_parser")
+
+
+def fixture(name: str) -> str:
+    """Load a named divergence fixture. Each is a real .java file, named after the divergence it
+    guards, so a future reader can find the case from the decision and back again."""
+    with open(os.path.join(FIXTURES, name), encoding="utf-8") as fh:
+        return fh.read()
+
+
 def method(src: str, type_name: str, method_name: str):
     return next(
         m for m in extract_types({"T.java": src})[type_name].methods if m.name == method_name
@@ -50,18 +65,7 @@ def calls(src: str, type_name: str, method_name: str, target: str) -> bool:
 # Divergence #4 -- comments and string literals are not code.
 # --------------------------------------------------------------------------------------- #
 
-COMMENTS = """
-class Subject {
-    void quiet() {
-        // notifyObservers();
-        /* fire(); */
-        String s = "update()";
-    }
-    void loud() {
-        notifyObservers();
-    }
-}
-"""
+COMMENTS = fixture("div4_comment_and_string_literal.java")
 
 
 def test_call_in_line_comment_is_not_a_call():
@@ -85,18 +89,7 @@ def test_the_same_call_written_as_code_is_still_found():
 # Divergence #6 -- a constructor call is not a method call.
 # --------------------------------------------------------------------------------------- #
 
-CONSTRUCTOR = """
-class Client {
-    void build() {
-        Wallet w = new Wallet();
-        w.open();
-    }
-}
-class Wallet {
-    void open() { }
-    void Wallet() { }
-}
-"""
+CONSTRUCTOR = fixture("div6_constructor_not_a_call.java")
 
 
 def test_constructor_call_is_not_a_method_call():
@@ -113,20 +106,7 @@ def test_an_ordinary_call_in_the_same_body_is_still_found():
 # Divergence #7 -- a declaration is not an invocation.
 # --------------------------------------------------------------------------------------- #
 
-DECLARATION = """
-class Host {
-    void run() {
-        class Helper {
-            void ping() { }
-        }
-        Runnable r = new Runnable() {
-            public void beep() { }
-            public void run() { }
-        };
-        r.run();
-    }
-}
-"""
+DECLARATION = fixture("div7_declaration_not_an_invocation.java")
 
 
 def test_local_class_method_declaration_is_not_a_call():
@@ -153,40 +133,8 @@ def test_a_real_invocation_of_a_declared_name_is_still_found():
 # belongs to that class. A CALL inside one still runs against the enclosing instance.
 # --------------------------------------------------------------------------------------- #
 
-ANONYMOUS = """
-class Logger implements Component {
-    private Component inner;
-    public void write(String s) {
-        Runnable r = new Runnable() {
-            public void run() { inner.write(s); }
-        };
-        r.run();
-    }
-}
-interface Component { void write(String s); }
-"""
-
-LOCAL_CLASS = """
-class Logger2 implements Component {
-    private Component inner;
-    public void write(String s) {
-        class Task { void go() { inner.write(s); } }
-        new Task().go();
-    }
-}
-interface Component { void write(String s); }
-"""
-
-LAMBDA = """
-class Logger3 implements Component {
-    private Component inner;
-    public void write(String s) {
-        Runnable r = () -> inner.write(s);
-        r.run();
-    }
-}
-interface Component { void write(String s); }
-"""
+DIV8 = fixture("div8_anonymous_class_descend.java")
+ANONYMOUS = LOCAL_CLASS = LAMBDA = DIV8
 
 
 def test_call_inside_anonymous_class_body_is_seen():
@@ -219,7 +167,7 @@ def test_scope_walk_still_stops_where_the_call_walk_descends():
     m = next(x for x in t.methods if x.name == "write")
     scope = PIQSChecker()._scope(t, m, types)
     assert "r" in m.locals, "the enclosing method's own local is in scope"
-    assert scope["inner"] == "Component", "the field is in scope"
+    assert scope["inner"] == "Sink", "the field is in scope"
     # the call walk saw into the anonymous class; the scope walk did not
     assert ("inner", "write") in m.calls
 
