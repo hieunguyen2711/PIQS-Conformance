@@ -40,6 +40,8 @@ TWO DESIGN DECISIONS THAT ARE NOT INCIDENTAL.
 from __future__ import annotations
 
 import argparse
+import dataclasses
+import hashlib
 import json
 import os
 import sys
@@ -70,6 +72,65 @@ def discover() -> list[str]:
     return sorted(out)
 
 
+# Fields deliberately NOT dumped, each with its reason. A DENYLIST is used rather than a
+# hand-written allowlist on purpose: a denylist someone has to edit is visible in review, while an
+# allowlist quietly falls behind every time a field is added. This guard was already blind once --
+# `traversals` was added to JavaMethod for step 3 and the hand-written dump did not include it, so
+# the snapshot could not see the very fact the step introduced.
+_DENY = {
+    # The whole file's text. Identical for every type in a file, and the file IS the input, so a
+    # change here is a change to the corpus rather than a parser fact.
+    ("JavaType", "content"),
+}
+
+# Long text spans recorded as (length, digest) rather than verbatim. They ARE parser facts -- a
+# brace-boundary regression would move them -- but dumping them raises the snapshot roughly
+# tenfold and buries the diffs that matter.
+_HASHED = {("JavaType", "body"), ("JavaMethod", "body")}
+
+
+def _canon(value):
+    """Sets -> sorted lists, tuples -> lists, so the JSON is stable across runs."""
+    if isinstance(value, set):
+        return sorted(value)
+    if isinstance(value, tuple):
+        return [_canon(v) for v in value]
+    if isinstance(value, list):
+        return [_canon(v) for v in value]
+    if isinstance(value, dict):
+        return {k: _canon(value[k]) for k in sorted(value)}
+    return value
+
+
+def _dump(obj) -> dict:
+    """Every dataclass field of `obj`, minus the denylist, derived from the class itself.
+
+    Adding a field to JavaMethod / JavaType / JavaField therefore appears in the snapshot
+    automatically, and the next --check fails loudly with the new field as a diff. What must not
+    happen again is a new field being silently absent.
+    """
+    cls = type(obj).__name__
+    out = {}
+    for f in dataclasses.fields(obj):
+        key = (cls, f.name)
+        if key in _DENY:
+            continue
+        value = getattr(obj, f.name)
+        if key in _HASHED:
+            text = value or ""
+            out[f.name] = {
+                "len": len(text),
+                "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()[:16],
+            }
+        elif f.name == "methods":
+            out[f.name] = [_dump(m) for m in value]
+        elif f.name == "fields":
+            out[f.name] = [_dump(x) for x in value]
+        else:
+            out[f.name] = _canon(value)
+    return out
+
+
 def facts_for(rel_path: str) -> dict:
     """The parser's facts for ONE file. Sets become sorted lists so the JSON is canonical."""
     with open(os.path.join(ROOT, rel_path), encoding="utf-8", errors="ignore") as fh:
@@ -77,41 +138,7 @@ def facts_for(rel_path: str) -> dict:
 
     # One file at a time -- see the module docstring.
     types = extract_types({os.path.basename(rel_path): content})
-
-    out = {}
-    for name, t in sorted(types.items()):
-        out[name] = {
-            "kind": t.kind,
-            "is_abstract": t.is_abstract,
-            "extends": t.extends,
-            "implements": list(t.implements),
-            "fields": [
-                {"name": f.name, "type": f.field_type, "modifiers": sorted(f.modifiers)}
-                for f in t.fields
-            ],
-            # Source order is preserved: it is stable and it is part of the contract.
-            "methods": [
-                {
-                    "name": m.name,
-                    "owner": m.owner,
-                    "return_type": m.return_type,
-                    "param_types": list(m.param_types),
-                    "param_names": list(m.param_names),
-                    "modifiers": sorted(m.modifiers),
-                    "is_constructor": m.is_constructor,
-                    "has_body": m.has_body,
-                    # The four phase-2 body maps.
-                    "locals": {k: m.locals[k] for k in sorted(m.locals)},
-                    "calls": [list(c) for c in m.calls],
-                    "mentions": sorted(m.mentions),
-                    "assignments": sorted(m.assignments),
-                    # Source order is meaningful and stable; do not sort.
-                    "traversals": [list(t) for t in m.traversals],
-                }
-                for m in t.methods
-            ],
-        }
-    return out
+    return {name: _dump(t) for name, t in sorted(types.items())}
 
 
 def build() -> dict:
