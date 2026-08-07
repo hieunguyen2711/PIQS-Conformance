@@ -442,6 +442,27 @@ suites stay green whichever behaviour is chosen. `tests/test_body_helpers_diverg
 only thing that distinguishes a correct migration from a wrong one, and each of its guards ships
 with the mutation that makes it fail. See the next section.
 
+## Observer notification loops — the rule for forms without their own repetition
+
+O3 asks whether the subject invokes the callback on **every** observer. One observer is not enough,
+so the detector must see repetition.
+
+Forms 1 and 3 carry it inside the matched node: an enhanced-for **is** a loop, `forEach` **is** a
+loop, and neither can run once by accident. Forms 2 and 6 do not — `get(i)` and `next()` are single
+calls, and the repetition lives in the `for`/`while` around them:
+
+| | traversal | not traversal |
+|---|---|---|
+| form 2 | `for (int i = 0; i < obs.size(); i++) obs.get(i).update();` | `obs.get(0).update();` |
+| form 6 | `while (it.hasNext()) it.next().update();` | `it.next().update();` |
+
+Each pair has the **same call shape**. Shape alone cannot separate them.
+
+**Rule: for forms 2 and 6, the enclosing loop is part of the pattern, not context.** The matched
+call must sit inside a `for_statement` (form 2) or a `while_statement` (form 6). Guarded by
+`tests/fixtures_parser/loopN4_single_call_no_loop.java`, whose expected O3 is 0 — none of the six
+positive fixtures can raise this alarm, because every one of them contains a loop.
+
 ## Rule: does a divergence REDEFINE the predicate, or REMOVE A FALSE POSITIVE?
 
 Every migration divergence is decided by this question, and it is the reason two divergences that

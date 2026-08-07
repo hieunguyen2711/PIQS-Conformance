@@ -259,6 +259,27 @@ Kim does not evaluate.
 
 
 
+
+### Correction: "Kim's corpus is old Java, so the other loop forms never occur"
+
+That sentence appeared in the handover and was repeated several times, including in this file. It
+was **never measured**. Measured across the 145 Kim files:
+
+| Form | Kim | Batteries |
+|---|---:|---:|
+| 1 enhanced-for | 27 | — |
+| 2 indexed `for` | **0** | 1 (`template_abstractlist_analogue`, a Template Method case) |
+| 3 `forEach` lambda | **6** | 0 |
+| 4 method reference | **1** | 0 |
+| 5 `stream().forEach` | **0** | 0 |
+| 6 iterator + `while` | **0** | 0 |
+
+Right about forms 2, 5 and 6; wrong about 3 and 4. Kim's corpus does contain Java-8 constructs.
+
+Same failure as the census: a number carried forward from a report, restated until it sounded
+established, and never divided. The 6 form-3 sites and the 1 form-4 site both turn out not to move
+any verdict — but for reasons that had to be traced, not assumed.
+
 ### Step 3 — decisions made BEFORE the work, so they are not made under sunk cost
 
 **The success signal inverts.** Steps 1 and 2 were parity work: predict zero movement, measure
@@ -603,7 +624,7 @@ cite lines 886 and 904–906. Find things by name instead:
 | `_assigns_field` is documented as signalling a step that **populates state**. `total += x` populates state and is not matched (the regex is `name\s*=(?!=)`; the `+` blocks it). Phase 2 preserves this deliberately — a mechanism change that also changes meaning makes any movement ambiguous. Candidate meaning change, own prediction. Corpus coverage: 0 sites. | after Step 2 |
 | Shadowing-aware resolution (a local shadowing a field should arguably fail `D3`) | Step 3 |
 
-| `Map<K,V>` element type invisible — `_base_name` strips it before the field model sees it | may fall out of Phase 2 |
+| **`Map<K,V>` element type — LOWER priority and HIGHER risk than it looked.** `_base_name` strips the type argument, and `elem_field_re` does not list `Map` at all, so the 6 Kim `forEach` sites (`wallets.forEach((currency, wallet) -> ...)`) cannot resolve an element type. Unblocking it is **not** simply recovering missed positives: **(a)** `Map.forEach` takes a `BiConsumer`, so the element is the **second** lambda parameter — adding `Map` to `elem_field_re` naively would resolve the element type to `String`, not `Wallet`, silently wrong; **(b)** iterating a wallet map is very likely not observer notification at all, so unblocking it may **create a false positive on Kim** rather than recover a missed one. Do not touch in Step 3. | deprioritised |
 | `run_scorer.py` calls `javac` and swallows the error — find out what it was for. Unrelated to the process exit code, which is correct (verified: exits 1 on failure). | before generation |
 | Add `compiles` + `compile_errors` to result records | before generation |
 | Rule: unknown supertypes analysed separately, not scored as failure | before generation |

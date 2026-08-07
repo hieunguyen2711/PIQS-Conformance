@@ -21958,6 +21958,746 @@
    ]
   }
  },
+ "tests/fixtures_parser/loopN1_not_a_notification.java": {
+  "ConcreteObserver": {
+   "extends": null,
+   "fields": [],
+   "implements": [
+    "Observer"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [
+      "public"
+     ],
+     "name": "update",
+     "owner": "ConcreteObserver",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void"
+    }
+   ]
+  },
+  "ConcreteSubject": {
+   "extends": null,
+   "fields": [
+    {
+     "modifiers": [
+      "private"
+     ],
+     "name": "observers",
+     "type": "List"
+    },
+    {
+     "modifiers": [
+      "private"
+     ],
+     "name": "names",
+     "type": "List"
+    }
+   ],
+   "implements": [
+    "Subject"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "calls": [
+      [
+       "observers",
+       "add"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "add",
+      "o",
+      "observers"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "attach",
+     "owner": "ConcreteSubject",
+     "param_names": [
+      "o"
+     ],
+     "param_types": [
+      "Observer"
+     ],
+     "return_type": "void"
+    },
+    {
+     "assignments": [],
+     "calls": [
+      [
+       "out",
+       "println"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {
+      "s": "String"
+     },
+     "mentions": [
+      "String",
+      "System",
+      "names",
+      "out",
+      "println",
+      "s"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "notifyObservers",
+     "owner": "ConcreteSubject",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void"
+    }
+   ]
+  },
+  "Observer": {
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "update",
+     "owner": "Observer",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void"
+    }
+   ]
+  },
+  "Subject": {
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "attach",
+     "owner": "Subject",
+     "param_names": [
+      "o"
+     ],
+     "param_types": [
+      "Observer"
+     ],
+     "return_type": "void"
+    },
+    {
+     "assignments": [],
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "notifyObservers",
+     "owner": "Subject",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void"
+    }
+   ]
+  }
+ },
+ "tests/fixtures_parser/loopN2_no_callback_call.java": {
+  "ConcreteObserver": {
+   "extends": null,
+   "fields": [],
+   "implements": [
+    "Observer"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [
+      "public"
+     ],
+     "name": "update",
+     "owner": "ConcreteObserver",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void"
+    }
+   ]
+  },
+  "ConcreteSubject": {
+   "extends": null,
+   "fields": [
+    {
+     "modifiers": [
+      "private"
+     ],
+     "name": "observers",
+     "type": "List"
+    }
+   ],
+   "implements": [
+    "Subject"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "calls": [
+      [
+       "observers",
+       "add"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "add",
+      "o",
+      "observers"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "attach",
+     "owner": "ConcreteSubject",
+     "param_names": [
+      "o"
+     ],
+     "param_types": [
+      "Observer"
+     ],
+     "return_type": "void"
+    },
+    {
+     "assignments": [],
+     "calls": [
+      [
+       "observers",
+       "forEach"
+      ],
+      [
+       null,
+       "log"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {
+      "o": null
+     },
+     "mentions": [
+      "forEach",
+      "log",
+      "o",
+      "observers"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "notifyObservers",
+     "owner": "ConcreteSubject",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void"
+    },
+    {
+     "assignments": [],
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [
+      "private"
+     ],
+     "name": "log",
+     "owner": "ConcreteSubject",
+     "param_names": [
+      "o"
+     ],
+     "param_types": [
+      "Observer"
+     ],
+     "return_type": "void"
+    }
+   ]
+  },
+  "Observer": {
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "update",
+     "owner": "Observer",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void"
+    }
+   ]
+  },
+  "Subject": {
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "attach",
+     "owner": "Subject",
+     "param_names": [
+      "o"
+     ],
+     "param_types": [
+      "Observer"
+     ],
+     "return_type": "void"
+    },
+    {
+     "assignments": [],
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "notifyObservers",
+     "owner": "Subject",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void"
+    }
+   ]
+  }
+ },
+ "tests/fixtures_parser/loopN3_wrong_element_type.java": {
+  "ConcreteObserver": {
+   "extends": null,
+   "fields": [],
+   "implements": [
+    "Observer"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [
+      "public"
+     ],
+     "name": "update",
+     "owner": "ConcreteObserver",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void"
+    }
+   ]
+  },
+  "ConcreteSubject": {
+   "extends": null,
+   "fields": [
+    {
+     "modifiers": [
+      "private"
+     ],
+     "name": "observers",
+     "type": "List"
+    },
+    {
+     "modifiers": [
+      "private"
+     ],
+     "name": "widgets",
+     "type": "List"
+    }
+   ],
+   "implements": [
+    "Subject"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "calls": [
+      [
+       "observers",
+       "add"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "add",
+      "o",
+      "observers"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "attach",
+     "owner": "ConcreteSubject",
+     "param_names": [
+      "o"
+     ],
+     "param_types": [
+      "Observer"
+     ],
+     "return_type": "void"
+    },
+    {
+     "assignments": [],
+     "calls": [
+      [
+       "widgets",
+       "forEach"
+      ],
+      [
+       "w",
+       "trim"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {
+      "w": null
+     },
+     "mentions": [
+      "forEach",
+      "trim",
+      "w",
+      "widgets"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "notifyObservers",
+     "owner": "ConcreteSubject",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void"
+    }
+   ]
+  },
+  "Observer": {
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "update",
+     "owner": "Observer",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void"
+    }
+   ]
+  },
+  "Subject": {
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "attach",
+     "owner": "Subject",
+     "param_names": [
+      "o"
+     ],
+     "param_types": [
+      "Observer"
+     ],
+     "return_type": "void"
+    },
+    {
+     "assignments": [],
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "notifyObservers",
+     "owner": "Subject",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void"
+    }
+   ]
+  }
+ },
+ "tests/fixtures_parser/loopN4_single_call_no_loop.java": {
+  "ConcreteObserver": {
+   "extends": null,
+   "fields": [],
+   "implements": [
+    "Observer"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [
+      "public"
+     ],
+     "name": "update",
+     "owner": "ConcreteObserver",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void"
+    }
+   ]
+  },
+  "ConcreteSubject": {
+   "extends": null,
+   "fields": [
+    {
+     "modifiers": [
+      "private"
+     ],
+     "name": "observers",
+     "type": "List"
+    }
+   ],
+   "implements": [
+    "Subject"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "calls": [
+      [
+       "observers",
+       "add"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "add",
+      "o",
+      "observers"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "attach",
+     "owner": "ConcreteSubject",
+     "param_names": [
+      "o"
+     ],
+     "param_types": [
+      "Observer"
+     ],
+     "return_type": "void"
+    },
+    {
+     "assignments": [],
+     "calls": [
+      [
+       null,
+       "update"
+      ],
+      [
+       "observers",
+       "get"
+      ],
+      [
+       "observers",
+       "iterator"
+      ],
+      [
+       null,
+       "update"
+      ],
+      [
+       "it",
+       "next"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {
+      "it": "Iterator"
+     },
+     "mentions": [
+      "Iterator",
+      "Observer",
+      "get",
+      "it",
+      "iterator",
+      "next",
+      "observers",
+      "update"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "notifyObservers",
+     "owner": "ConcreteSubject",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void"
+    }
+   ]
+  },
+  "Observer": {
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "update",
+     "owner": "Observer",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void"
+    }
+   ]
+  },
+  "Subject": {
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "attach",
+     "owner": "Subject",
+     "param_names": [
+      "o"
+     ],
+     "param_types": [
+      "Observer"
+     ],
+     "return_type": "void"
+    },
+    {
+     "assignments": [],
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "notifyObservers",
+     "owner": "Subject",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void"
+    }
+   ]
+  }
+ },
  "tests/fixtures_parser/nested_type_members.java": {
   "Inner": {
    "extends": null,
