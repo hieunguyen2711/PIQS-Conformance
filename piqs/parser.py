@@ -245,6 +245,73 @@ def _declared_in_body(node, src: bytes) -> dict[str, str | None]:
     return out
 
 
+def _qualifier(node, src: bytes) -> str | None:
+    """The receiver a call or assignment is written against, as the old regexes saw it.
+
+    One rule reproduces both `_delegates_to_field` and `_assigns_field` on every shape they
+    accept or reject:
+
+        identifier    -> its own text          f.op()        -> "f"
+        field_access  -> its FIELD's text      this.f.op()   -> "f"
+                                               f.g.op()      -> "g"   (not "f")
+        anything else -> None                  getX().op()   -> None
+                                               arr[0] = x    -> None
+
+    `f.g.op()` yielding "g" is not an accident: the regex needs `<name> . <ident> (`, and in
+    `f.g.op()` the text `g.op(` satisfies it while `f.op(` does not. Returning None there would
+    silently drop a real match.
+    """
+    if node is None:
+        return None
+    if node.type == "identifier":
+        return _text(node, src)
+    if node.type == "field_access":
+        field = node.child_by_field_name("field")
+        return _text(field, src) if field is not None else None
+    return None
+
+
+def _invocations(node, src: bytes) -> list[tuple[str | None, str]]:
+    """[(receiver, method_name)] for every method call in a method body.
+
+    Phase 2, step 2. Replaces `_calls_method`'s regex, which matched a bare identifier followed
+    by '(' anywhere in the body text. Four things that regex counted as a call are not one:
+
+      * text inside a COMMENT or STRING LITERAL. `// observers.add(o)` is not a call.
+      * a CONSTRUCTOR call. `new Wallet()` matched `_calls_method(body, "Wallet")`; an
+        object_creation_expression is not a method_invocation.
+      * a method DECLARATION inside the body -- a local or anonymous class declaring
+        `void ping(){}` matched "ping". This is the phantom-method problem phase 1 removed at
+        the type level, reappearing at the body level.
+      * nothing else: the walk does NOT stop at a nested type body.
+
+    That last point is deliberate and is the one place this walk differs from
+    `_declared_in_body`. A field of an anonymous class belongs to that class, so the SCOPE walk
+    stops there. A call written inside an anonymous class body still runs against the enclosing
+    instance's fields -- `new Runnable(){ public void run(){ inner.write(s); } }` really is the
+    enclosing class delegating to `inner` -- so the CALL walk descends. Reusing the scope
+    walker's boundary here would silently drop D3 for that shape.
+
+    Collecting only `method_invocation` nodes is what keeps declarations out, descent or not,
+    with no special case.
+    """
+    out: list[tuple[str | None, str]] = []
+
+    def walk(n) -> None:
+        if n.type == "method_invocation":
+            name_node = n.child_by_field_name("name")
+            if name_node is not None:
+                out.append(
+                    (_qualifier(n.child_by_field_name("object"), src), _text(name_node, src))
+                )
+        for c in n.children:
+            walk(c)
+
+    if node is not None:
+        walk(node)
+    return out
+
+
 def _build_method(decl, owner: str, src: bytes) -> JavaMethod:
     is_ctor = decl.type == "constructor_declaration"
     name_node = decl.child_by_field_name("name")
@@ -273,6 +340,7 @@ def _build_method(decl, owner: str, src: bytes) -> JavaMethod:
         is_constructor=is_ctor,
         has_body=has_body,
         locals=_declared_in_body(body_node, src) if has_body else {},
+        calls=_invocations(body_node, src) if has_body else [],
     )
 
 

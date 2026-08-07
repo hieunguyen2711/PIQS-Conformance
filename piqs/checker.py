@@ -98,6 +98,18 @@ class JavaMethod:
     # Block scope is not modelled -- the dict is flat, so two sibling blocks each declaring
     # `i` collapse to one entry (last wins). No predicate distinguishes them.
     locals: dict[str, str | None] = field(default_factory=dict)
+    # [(receiver, method_name)] for every call in this method's body, in source order. Built by
+    # piqs.parser from the AST; read through `PIQSChecker._calls_within`.
+    #
+    # `receiver` is the reference the call is written against -- "f" for `f.op()` and for
+    # `this.f.op()`, "g" for `f.g.op()`, None for `op()` and for a chain like `getX().op()`.
+    # None can never equal a field name, so chains and unqualified calls are rejected by
+    # comparison alone.
+    #
+    # Tree-sitter Nodes are deliberately NOT stored: a Node is only valid while its Tree is
+    # alive, so holding one past parse time gives a dangling reference that fails silently.
+    # Everything is extracted eagerly into plain data, which also keeps JavaMethod serializable.
+    calls: list[tuple[str | None, str]] = field(default_factory=list)
 
 
 @dataclass
@@ -207,12 +219,6 @@ class PIQSChecker:
         return extract_types(java_files)
 
     @staticmethod
-    def _calls_method(body: str, name: str) -> bool:
-        """Fix G: True if `body` invokes a method named exactly `name` -- a whole
-        identifier followed by '(' (so `pay` does not match inside `payment`)."""
-        return re.search(r"(?<![A-Za-z0-9_])" + re.escape(name) + r"\s*\(", body) is not None
-
-    @staticmethod
     def _mentions_token(body: str, name: str) -> bool:
         """Fix G: True if `name` occurs in `body` as a whole identifier, not a substring."""
         return re.search(r"(?<![A-Za-z0-9_])" + re.escape(name) + r"(?![A-Za-z0-9_])", body) is not None
@@ -260,13 +266,24 @@ class PIQSChecker:
     # ------------------------------------------------------------------ #
     # New AST helpers (RULE 1): the only two base predicates the codebase lacked.
     # ------------------------------------------------------------------ #
-    @classmethod
-    def _calls_within(cls, method: "JavaMethod", target: str) -> bool:
+    @staticmethod
+    def _calls_within(method: "JavaMethod", target: str) -> bool:
         """callsWithin(method, target): does `method`'s body invoke a method named exactly
-        `target`? Whole-token match (reuses the pass-3 precision rule via _calls_method), so
-        `read` never matches inside `readLine`. Used by D3 (delegation) and T3 (inversion of
-        control)."""
-        return cls._calls_method(method.body, target)
+        `target`? Used by Strategy (execute), D3 (delegation) and T3 (inversion of control).
+
+        Phase 2, step 2: this reads `method.calls`, precomputed from the AST, and the separate
+        `_calls_method(body, name)` regex it used to wrap is gone -- one source of truth. Exact
+        name matching is unchanged, so `read` still never matches inside `readLine`; that came
+        from the whole-token rule, which the tree gives for free.
+
+        Four things the regex counted as a call and this does not: text in a comment or string
+        literal, a constructor call (`new Wallet()` matched the name "Wallet"), a method
+        DECLARED in the body, and -- unchanged -- nothing else, because the walk descends into
+        anonymous and local class bodies exactly as the flat text did. Each is pinned by a
+        fixture in tests/test_body_helpers_divergences.py; none occurs in either corpus, so the
+        suites are not what protects them.
+        """
+        return any(name == target for _receiver, name in method.calls)
 
     @staticmethod
     def _field_of_type(jtype: "JavaType", type_name: str) -> bool:
@@ -684,8 +701,9 @@ class PIQSChecker:
             field_strategy = any(f.field_type in strategy_ifaces for f in c.fields)
             setter = any(self._has_verb_prefix(m.name, "set") and any(pt in strategy_ifaces for pt in m.param_types) for m in c.methods)
             # Fix G: invoke-by-whole-token, not `"pay" in body` (which matched "payment").
+            # Phase 2 step 2: the whole-token rule is now the tree's, via `method.calls`.
             execute = any(
-                any(self._calls_method(m.body, name) for name in strategy_method_names)
+                any(self._calls_within(m, name) for name in strategy_method_names)
                 for m in c.methods
             )
 

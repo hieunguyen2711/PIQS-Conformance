@@ -313,6 +313,69 @@ they are why a method-local collection of observers is detected at all today. An
 held fields only would therefore be a silent regression, not a no-op; see
 `tests/test_scope_table.py`.
 
+## Body predicates: text matching vs the AST (parser phase 2, step 2)
+
+The body helpers were regexes over method-body **text**. A query over the AST is not equivalent
+to one. Each difference below is a **recorded decision**, not an implementation accident.
+
+`_calls_method(body, name)` is retired. The call predicate is `_calls_within(method, target)`,
+reading `JavaMethod.calls` — `[(receiver, method_name)]`, precomputed at parse time. Exact-name
+matching is unchanged: `read` still never matches inside `readLine`, but that now falls out of the
+tree rather than from a look-behind assertion.
+
+| # | Construct | Decision | Why |
+|---|---|---|---|
+| 4 | Comments and string literals | **Not code.** `// observers.add(o)` is not a call | A model must not earn a property for a commented-out call. This is the one divergence the corpus exercises in bulk: 34,190 masked characters, 0 of 40 units moved |
+| 6 | `new Wallet()` | **Not a method call** | `callsWithin(method, target)` takes a *method* as its target. The regex matched a bare identifier followed by `(`, which a constructor also is |
+| 7 | A method **declared** in the body | **Not an invocation** | The phantom-method problem phase 1 removed at the type level, reappearing at the body level. Collecting only `method_invocation` excludes it with no special case |
+| 8 | Anonymous / local class bodies | **Descend** | A call written inside an anonymous class still runs against the *enclosing* instance's fields, so it really is the enclosing class delegating. This is the one place the call walk differs from the scope walk |
+
+**Divergence 8 is the subtle one.** `_declared_in_body` (the scope table) *stops* at a nested type
+body: a field of an anonymous class belongs to that class. `_invocations` *descends*: a call there
+belongs to the enclosing method. Reusing one walker for both would silently drop D3 for
+
+```java
+public void write(String s) {
+    Runnable r = new Runnable() { public void run() { inner.write(s); } };
+    r.run();
+}
+```
+
+A **lambda** body is not affected either way — it is a `block`, not a `class_body`, so the scope
+walk already descends into it. Only anonymous and local *classes* differ.
+
+**Receiver normalisation.** One rule reproduces the retired regexes on every shape they accept or
+reject, for call receivers and assignment targets alike:
+
+> `identifier` → its own text. `field_access` → its **field**'s text. Anything else → `None`.
+
+| Expression | Retired regex | Stored |
+|---|---|---|
+| `f.op()` | `f` delegates | `"f"` |
+| `this.f.op()` | `f` delegates | `"f"` |
+| `f.g.op()` | `g` delegates, `f` does **not** | `"g"` |
+| `getX().op()` | nothing delegates | `None` |
+| `op()` | nothing delegates | `None` |
+| `f = x` / `this.f = x` | `f` assigned | `"f"` |
+| `f.g = x` | `g` assigned, `f` not | `"g"` |
+| `arr[0] = x` | `arr` not assigned | `None` |
+
+`f.g.op()` stores `"g"`, **not** `None`: the regex needs `<name> . <ident> (`, which `g.op(`
+satisfies, so `_delegates_to_field("f.g.op();", "g")` was already True. `None` would drop it.
+Because `None` can never equal a field name, chains and unqualified calls are rejected by
+comparison alone.
+
+**No tree-sitter `Node` is stored on `JavaMethod`.** A `Node` is valid only while its `Tree` is
+alive; holding one past parse time gives a dangling reference that fails silently or crashes in a
+way a small test will not surface. Everything is extracted eagerly into plain Python data, which
+also keeps `JavaMethod` serializable for the result records.
+
+**Coverage warning.** Of these four divergences, three occur **zero** times in either corpus (#6,
+#7, #8 — and #8's near-miss, one lambda in 185 methods, is not even the affected shape). All four
+suites stay green whichever behaviour is chosen. `tests/test_body_helpers_divergences.py` is the
+only thing that distinguishes a correct migration from a wrong one, and each of its guards ships
+with the mutation that makes it fail. See the next section.
+
 ## What a green suite does not prove
 
 A recurring failure mode in this repo, recorded because it has now cost real work twice. "No

@@ -5,8 +5,8 @@ Working notes for whoever (human or agent) picks this repo up next.
 **Scope of this file:** engineering state only. Paper strategy, venue and schedule live outside
 the repo on purpose — see "What does not go in this file" at the end.
 
-Last updated: **2026-08-06**, branch `parser-phase2`, at commit `f163bba`
-(this file is added in the commit that follows it).
+Last updated: **2026-08-07**, branch `parser-phase2`. The commit that carries this revision
+is the one that migrates body helper 1; `git log --oneline -1` is authoritative.
 
 **This file supersedes `HANDOVER.md`**, which was created on this branch on 2026-08-06 and has
 been deleted. Two state files is the drift that made this one necessary. "Park it" and "update the
@@ -43,11 +43,12 @@ Run all four after **every** change. Never fewer.
 | Mutation battery | 12/12 |
 | BDT battery | 27/27 + 5/5 D6 |
 | Renaming invariance failures | **8** (5 × `C3`, 3 × `O1`) |
-| pytest | **140 passed, 8 failed** (148 collected) |
+| pytest | **157 passed, 8 failed** (165 collected) |
 
-pytest was 120 passed before the scope table; the +20 are `tests/test_scope_table.py`.
-Collected total by file: 81 invariance + 22 parity-harness + 20 method-extraction +
-20 scope-table + 3 parser-declarations + 2 D6 = 148.
+pytest was 120 before the scope table (+20 `tests/test_scope_table.py`) and 140 before body
+helper 1 (+17 `tests/test_body_helpers_divergences.py`). Collected by file: 81 invariance +
+22 parity-harness + 20 method-extraction + 20 scope-table + 17 body-divergences +
+3 parser-declarations + 2 D6 = 165.
 
 The 8 invariance failures are **known and expected**. `C3` and `O1` still read hardcoded names.
 They are fixed in Stage 3 and Stage 4, not before.
@@ -110,8 +111,8 @@ prove"):
 
 | File | `main` | `parser-phase2` |
 |---|---:|---:|
-| `piqs/checker.py` | **1516** | **1564** |
-| `piqs/parser.py` | **302** | **383** |
+| `piqs/checker.py` | **1516** | **1582** |
+| `piqs/parser.py` | **302** | **451** |
 
 **Parity harness limitation.** The regex side is deleted, so `validation/extractor_parity.py` can
 only compare the parser against itself, which passes trivially. It therefore **cannot** verify a
@@ -130,7 +131,7 @@ Goal: move method **body** analysis from regex to tree-sitter, and build a scope
 | Step | What | Status |
 |---|---|---|
 | 1 | Scope table: `{identifier → declared type}` per method | **DONE**, unmerged on `parser-phase2` |
-| 2 | Body helpers as tree queries | decisions fixed; no helper migrated yet |
+| 2 | Body helpers as tree queries | **1 of 4 done** — `_calls_method` + `_calls_within` migrated |
 | 3 | Traversal detection, six loop forms | not started — the payoff |
 
 ### Step 1 — what was built
@@ -180,12 +181,23 @@ Load-bearing check: `Receipt.toString` resolves `items → List` and `item → S
 
 Five helpers move, in this order — one at a time, four suites between each:
 
-| # | Helper | Divergences it decides |
-|---|---|---|
-| 1 | `_calls_method` **+ `_calls_within`** (a one-line delegate; cannot move separately) | 4, 6, 7, 8 |
-| 2 | `_mentions_token` | 1, 4 |
-| 3 | `_delegates_to_field` | 4, 5, 8 |
-| 4 | `_assigns_field` | 2, 3, 4 |
+| # | Helper | Divergences it decides | Status |
+|---|---|---|---|
+| 1 | `_calls_method` **+ `_calls_within`** (a one-line delegate; cannot move separately) | 4, 6, 7, 8 | **DONE** |
+| 2 | `_mentions_token` | 1, 4 | next — build the `this` fixture first |
+| 3 | `_delegates_to_field` | 4, 5, 8 | not started |
+| 4 | `_assigns_field` | 2, 3, 4 | not started |
+
+Helper 1 landed with zero movement on all four suites, as predicted; pytest 140 → 157.
+`_calls_method` is **deleted** — `_calls_within` reading `JavaMethod.calls` is the single API.
+`validation/synthetic_generality_tests.py` was the only consumer outside the four suites and now
+goes through a real parse rather than a bare string; it still reports 10/10.
+
+Its five guards, each proven by the mutation that makes it fail: revert to the old regex → the
+three comment/string tests plus both declaration tests fail (6 total); collect
+`object_creation_expression` → the constructor test fails; collect `method_declaration` → both
+declaration tests fail; reuse the scope walk's nested-type boundary → all three descent tests
+fail; take a `field_access`'s *object* instead of its *field* → the normalisation test fails.
 
 A tree query is not equivalent to a regex over body text. Each difference is a **decision**, not
 an accident.
@@ -330,7 +342,7 @@ Stage 3 (`O1`) needs that type. Do not lift it inside Phase 2 — it becomes its
 
 ### Do not use line numbers
 
-`checker.py` has changed size repeatedly (1516 on `main`, 1564 on `parser-phase2`). Older notes
+`checker.py` has changed size repeatedly (1516 on `main`, 1582 on `parser-phase2`). Older notes
 cite lines 886 and 904–906. Find things by name instead:
 
 | Old reference | Find this |
@@ -360,6 +372,7 @@ cite lines 886 and 904–906. Find things by name instead:
 | Add `compiles` + `compile_errors` to result records | before generation |
 | Rule: unknown supertypes analysed separately, not scored as failure | before generation |
 | The 36 PIQS pattern tests were never committed and are still missing | before generation |
+| `A-not-rebroken` case in `validation/synthetic_generality_tests.py` is vacuous — it repeats case A's assertion on case A's fixture. Needs a `ping` callback alongside a `pinger` local to become a real guard. That script is **not** one of the four suites. | any time |
 | `w_ops.setdefault` keeps the first overload — pre-existing looseness in `D6` | low priority |
 
 **Removed from this list, because it is done:** the stale-results guard. `compare.py` now refuses
@@ -367,9 +380,14 @@ to run when `results/kim_replication_raw.json` is older than `checker.py` or `pa
 committed, and proven to fire in all four branches (fresh → 0; touch `checker.py` → 1; touch
 `parser.py` → 1; results absent → 1).
 
-**Removed, because it does not exist:** the "`A-not-rebroken` test is vacuous" item. There is no
-such test in `tests/`; grep finds nothing. If it existed in the pre-migration repo it was never
-carried over. Re-add the item only with a path that resolves.
+**Located, not removed:** the "`A-not-rebroken` test is vacuous" item. It is **not** in `tests/` —
+it is the last case in `validation/synthetic_generality_tests.py`, which is a standalone script
+and **not one of the four suites**. The file flags the defect itself, in a comment: the case
+re-runs `props("observer", obs_named)` on the same fixture with the same assertion as case A, so
+it cannot fail unless case A also fails. To become a real guard it needs a fixture where the
+callback name is a **substring** of another identifier in the same body — a `ping` callback
+alongside a `pinger` local — which is the case whole-token matching could plausibly break.
+Still open; see section 8.
 
 ## 9. What does not go in this file
 
