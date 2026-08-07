@@ -313,6 +313,40 @@ they are why a method-local collection of observers is detected at all today. An
 held fields only would therefore be a silent regression, not a no-op; see
 `tests/test_scope_table.py`.
 
+## What a green suite does not prove
+
+A recurring failure mode in this repo, recorded because it has now cost real work twice. "No
+test breaks" tells you what the corpus and the test suite **contain**. It does not tell you the
+code is dead, nor that a test is doing its job.
+
+**Case 1 — the D6 guard (`_fully_delegates`, `not m.has_body`).** One line looked like dead code
+left over from the retired signature regex. Deleting it passes all four suites. It is still
+load-bearing for a different reason: an abstract decorator base may forward part of the component
+API and leave the rest abstract, and a bodyless declaration is not implemented. Without the skip
+a correct abstract base scores D6=0, moving PIQS from 100 to 86.67. No corpus file exercises it.
+`tests/test_decorator_d6_abstract_base.py` and its fixture are the only thing standing between
+that line and a deletion that looks safe.
+
+**Case 2 — the nested-class-field test (`tests/test_scope_table.py`).** The scope table walk stops
+at a nested type body, and two tests assert nothing from inside a local or anonymous class leaks
+into the enclosing method's scope. Removing the boundary was expected to fail both. It failed only
+`test_variable_inside_nested_class_body_is_not_in_enclosing_scope`.
+
+Reason: a nested class's field is a `field_declaration` node, and the walk reads
+`local_variable_declaration` and four other forms — never `field_declaration`. So
+`test_nested_class_field_is_not_in_enclosing_scope` could not fail from removing the boundary,
+because the boundary was not what stopped it. The test was passing for a reason other than the one
+it advertised.
+
+It was **kept**, not deleted, because a second mutation shows what it does catch: adding
+`field_declaration` to the walk — a plausible future "completeness" edit — fails both tests. The
+guard is real; it protects a different mutation from the one its name suggests.
+
+The lesson generalises: **a passing test is evidence only against the mutations you have actually
+tried.** Every guard added in this repo should come with the mutation that makes it fail, recorded
+alongside it. All four scope-table guards were verified this way (nested boundary, nested field
+harvesting, invented lambda type, reversed shadowing order).
+
 ## Oracle
 
 There is no Kim ground truth for these three patterns (Kim 2025 never covered them). The oracle is
