@@ -391,6 +391,55 @@ def _mentioned_tokens(node, src: bytes) -> set[str]:
     return out
 
 
+def _assignment_targets(node, src: bytes) -> set[str]:
+    """Names assigned in a method body, by the same rule the retired `_assigns_field` regex used.
+
+    Phase 2, step 2. The regex was ``name\\s*=(?!=)``, and three things follow from it:
+
+    * **Only the simple `=` counts.** A compound operator puts a character between the name and
+      the `=`, so the regex never matched one -- but tree-sitter gives EVERY compound form the
+      same `assignment_expression` node type, distinguished only by the `operator` field. Without
+      the filter below, parity breaks in TEN ways, not the one `+=` that divergence #2 is usually
+      described by: `+= -= *= /= %= &= |= ^= <<= >>= >>>=`. Measured with the filter removed: the
+      divergence fixture fails and all four suites stay green.
+
+      This is exact parity, deliberately. `_assigns_field` is documented as signalling a step
+      that POPULATES STATE, and `total += x` does populate state, so the regex is arguably wrong.
+      Preserving it keeps the migration a mechanism change: a movement caused by new meaning
+      would be indistinguishable from one caused by the tree. Parked in docs/STATE.md.
+
+    * **A DECLARATION is not an assignment** (divergence #3). `int count = 5;` matched the regex
+      and is a `local_variable_declaration` here, so it is excluded -- and unlike #2, the tree is
+      simply right: the declaration initialises a LOCAL that shadows the field, leaving the field
+      untouched. No node type has to be excluded for this; it is never collected in the first
+      place.
+
+    * **`f++` and `f == x` need no filter either** -- `update_expression` and `binary_expression`
+      are different node types.
+
+    The walk covers the whole subtree, not just `expression_statement`: `for (f = 0; ...)` is an
+    assignment_expression in the for-INIT, and the regex matched it. Constructor bodies are
+    covered too -- `_build_method` passes `constructor_body` here, and the Builder base predicate
+    `modifies(m,f)` reads constructors (63 of the corpus's 72 constructors name a field).
+    """
+    out: set[str] = set()
+
+    def walk(n) -> None:
+        if n.type == "assignment_expression":
+            op = n.child_by_field_name("operator")
+            # Simple `=` only. See the ten compound operators above.
+            if op is None or _text(op, src) == "=":
+                q = _qualifier(n.child_by_field_name("left"), src)
+                if q:
+                    out.add(q)
+        for c in n.children:
+            walk(c)
+
+    if node is not None:
+        walk(node)
+    return out
+
+
 def _build_method(decl, owner: str, src: bytes) -> JavaMethod:
     is_ctor = decl.type == "constructor_declaration"
     name_node = decl.child_by_field_name("name")
@@ -422,6 +471,7 @@ def _build_method(decl, owner: str, src: bytes) -> JavaMethod:
         has_body=has_body,
         locals=_declared_in_body(body_node, src) if has_body else {},
         mentions=_mentioned_tokens(body_node, src) if has_body else set(),
+        assignments=_assignment_targets(body_node, src) if has_body else set(),
         calls=_invocations(body_node, src) if has_body else [],
     )
 

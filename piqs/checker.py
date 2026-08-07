@@ -113,6 +113,9 @@ class JavaMethod:
     # Every whole token named in the body -- identifiers AND the `this` / `super`
     # keywords. Built by piqs.parser; read through `PIQSChecker._mentions_within`.
     mentions: set[str] = field(default_factory=set)
+    # Names assigned in the body via a simple `=`. Built by piqs.parser; read through
+    # `PIQSChecker._assigns_field`.
+    assignments: set[str] = field(default_factory=set)
 
 
 @dataclass
@@ -327,13 +330,12 @@ class PIQSChecker:
         return any(receiver == field_name for receiver, _name in method.calls)
 
     @staticmethod
-    def _assigns_field(body: str, field_name: str) -> bool:
-        """True if `body` assigns to the field `field_name` (`field = ...` or `this.field = ...`),
-        not an equality test. Signals a configuration/build-part step that populates state."""
-        return re.search(
-            r"(?<![A-Za-z0-9_])(?:this\s*\.\s*)?" + re.escape(field_name) + r"\s*=(?!=)",
-            body,
-        ) is not None
+    def _assigns_field(method: "JavaMethod", field_name: str) -> bool:
+        """True if `method` assigns to `field_name` -- `field = ...` or `this.field = ...`.
+
+        Phase 2, step 2. Reads `method.assignments`, precomputed from the AST.
+        """
+        return field_name in method.assignments
 
     def _effective_methods(self, t: "JavaType", types: dict[str, "JavaType"]) -> list["JavaMethod"]:
         """`t`'s own methods plus those inherited from its project-defined `extends` ancestors.
@@ -1215,7 +1217,7 @@ class PIQSChecker:
                 # Void build-part: a void concrete method that populates the product's state
                 # (assigns a field, or mutates a held field through a call on it).
                 if m.return_type == "void" and m.has_body:
-                    if any(self._assigns_field(m.body, fn) or self._delegates_to_field(m, fn) for fn in field_names):
+                    if any(self._assigns_field(m, fn) or self._delegates_to_field(m, fn) for fn in field_names):
                         void_steps.append(m)
                     continue
                 # Terminal: a concrete method returning a type distinct from the builder (and not
@@ -1310,7 +1312,7 @@ class PIQSChecker:
             "hasMethod(c,m)": any(t.methods for t in types.values()),
             "returns(m,t)": any(m.return_type for t in types.values() for m in t.methods if not m.is_constructor),
             "modifies(m,f)": any(
-                self._assigns_field(m.body, f.name)
+                self._assigns_field(m, f.name)
                 for t in types.values() for m in t.methods for f in t.fields
             ),
             "callsWithin(m,t)": bool(all_step_names) and director_exists,

@@ -43,7 +43,7 @@ Run all four after **every** change. Never fewer.
 | Mutation battery | 12/12 |
 | BDT battery | 27/27 + 5/5 D6 |
 | Renaming invariance failures | **8** (5 × `C3`, 3 × `O1`) |
-| pytest | **170 passed, 8 failed** (178 collected) |
+| pytest | **179 passed, 8 failed** (187 collected) |
 
 pytest was 120 before the scope table (+20 `tests/test_scope_table.py`) and 140 before body
 helper 1 (+17 `tests/test_body_helpers_divergences.py`). Collected by file: 81 invariance +
@@ -111,8 +111,8 @@ prove"):
 
 | File | `main` | `parser-phase2` |
 |---|---:|---:|
-| `piqs/checker.py` | **1516** | **1582** |
-| `piqs/parser.py` | **302** | **451** |
+| `piqs/checker.py` | **1516** | **1621** |
+| `piqs/parser.py` | **302** | **583** |
 
 **Parity harness limitation.** The regex side is deleted, so `validation/extractor_parity.py` can
 only compare the parser against itself, which passes trivially. It therefore **cannot** verify a
@@ -131,7 +131,7 @@ Goal: move method **body** analysis from regex to tree-sitter, and build a scope
 | Step | What | Status |
 |---|---|---|
 | 1 | Scope table: `{identifier → declared type}` per method | **DONE**, unmerged on `parser-phase2` |
-| 2 | Body helpers as tree queries | **3 of 4 done** — calls, mentions, delegation |
+| 2 | Body helpers as tree queries | **DONE** — all five helpers migrated |
 | 3 | Traversal detection, six loop forms | not started — the payoff |
 
 ### Step 1 — what was built
@@ -221,6 +221,63 @@ to the JDK while the other four wrote the structure themselves. This belongs wit
 changed and 0 verdicts changed" as a property of the tool rather than of the data: an aggregate
 computed at the wrong granularity can erase the very case it was built to detect.
 
+### The controlled pair: when a purpose-built fixture is load-bearing
+
+Two deliberate errors of comparable severity were introduced during step 2, one per helper, and
+measured before correction. What caught them differed:
+
+| Helper | Deliberate error | Caught by a PRE-EXISTING suite? | Caught by its new fixture? |
+|---|---|---|---|
+| 2 — mentions | omit the `this` / `super` keyword nodes | **Yes** — BDT battery, 3 mismatches, exit 1 | yes (4 fail) |
+| 3 — delegation | widen the receiver to the first identifier under the object | **No** — Kim, the mutation battery and BDT all stayed green | **yes, only** (4 fail) |
+| 4 — assignment | drop the `operator == "="` filter, so all ten compound forms count | **No** — all four suites green, BDT exit 0 | **yes, only** (1 fail) |
+
+Two of the three deliberate errors would have shipped with every validation suite green. The
+fixture was **load-bearing** for helpers 3 and 4, and merely **confirmatory** for helper 2 — and
+nothing tells you which case you are in except running the error and looking.
+
+The distinguishing variable is corpus coverage, not care: divergence #1 has 43 live call sites,
+divergence #5 has 0 of 41 (`).op(` appears in no `_delegates_to_field` body).
+
+**Corpus size did not predict detection power.** Kim is 145 files and caught neither error. The BDT
+battery is 27 files and caught helper 2's. What matters is whether a corpus contains the construct
+— Kim is 2015-era Java that never scores Builder at all, so the properties helper 2 broke are ones
+Kim does not evaluate.
+
+
+### Body-regex inventory — what Step 2 did NOT migrate
+
+Step 2 migrated the five general-purpose body helpers. **25 regexes still read `m.body` or
+`t.body` directly**, inside the evaluators. They are not helpers; each is a one-off pattern
+inlined into a property. Listed here because Step 3 and Stages 3–4 will touch several, and the
+inventory should exist before Step 2 closes. **None is in scope now.**
+
+| Line | Function | Reads | What it matches | Feeds |
+|---:|---|---|---|---|
+| 422, 428 | `_framework_roles_supplied` | `t.body` | collection-of-project-type | descriptive flag only, never a verdict |
+| 436, 437 | `_framework_roles_supplied` | `m.body` | a for-loop + any call | descriptive flag only |
+| 550, 565 | `_declared_parents` | `m.body` | `new X(` | Factory `F2`/`F3` creator detection |
+| 655, 673, 680 | `_returns_in_hierarchy` | `m.body` | `new X(` capture | Factory `F4` product detection |
+| 728 | `_evaluate_strategy` | `m.body` | any `.method(` | Strategy base predicate `calls` |
+| 820 | `_evaluate_composite` | `t.body` | `List<`/`Set<`/`Collection<` | `hasChildren(x)` derived |
+| 855, 868 | `_evaluate_composite` | `t.body` | collection element type | `C1`, `C4`, `C5` — **the loose `t.body` trap** |
+| 913, 928 | `_evaluate_observer` | `t.body` | collection element type | `O2`, `O3`, `O4` — **the loose `t.body` trap** |
+| 917, 937 | `_evaluate_observer` | `m.body` | enhanced-for only | `O3` — **the one loop form of six; Step 3's target** |
+| 941, 955 | `_evaluate_observer` | `m.body` | `<var>.<callback>(` | `O3`/`O4` callback harvesting |
+| 980, 981 | `_evaluate_observer` | `m.body` | `get[A-Z]` / `set[A-Z]` | base `reads` / `modifies` — **name-reading** |
+| 983, 988, 989 | `_evaluate_observer` | `m.body` | `.add(` / `.remove(` / `.clear(` | base `modifiesCollection`, `increases`, `decreases` |
+| 991 | `_evaluate_observer` | `m.body` | any `.method(` | base `calls` |
+| 1124 | `static_instance_of` | `m.body` | `new <Singleton>(` | `G1` |
+
+Three groups matter later:
+
+1. **The loose `t.body` element-type match** (855/868, 913/928) is the trap described above — it
+   cannot tell a field from a local or from a method signature. Replacing it is what Step 3 does,
+   and it moves Composite as well as Observer.
+2. **`foreach_re`** (917/937) matches one loop form of six. Step 3's payoff.
+3. **`get[A-Z]` / `set[A-Z]`** (980/981) read names, like `C3` and `O1`. Stage-4 territory. No
+   verdict depends on them alone — they are base predicates in the published evidence trace.
+
 ### Figure provenance — every number audited after the collapse bug
 
 `extract_types` keys its result by **simple name**. Calling it once over many files collapses
@@ -276,7 +333,7 @@ Five helpers move, in this order — one at a time, four suites between each:
 | 1 | `_calls_method` **+ `_calls_within`** (a one-line delegate; cannot move separately) | 4, 6, 7, 8 | **DONE** |
 | 2 | `_mentions_token` → `_mentions_within` | 1, 4 | **DONE** |
 | 3 | `_delegates_to_field` | 4, 5, 8 | **DONE** |
-| 4 | `_assigns_field` | 2, 3, 4 | not started |
+| 4 | `_assigns_field` | 2, 3, 4 | **DONE** |
 
 Helper 1 landed with zero movement on all four suites, as predicted; pytest 140 → 157.
 Attribution measured directly at both commits: `8b49bc4` (parent) 140 passed, `5ae1640` 157
@@ -475,7 +532,7 @@ Stage 3 (`O1`) needs that type. Do not lift it inside Phase 2 — it becomes its
 
 ### Do not use line numbers
 
-`checker.py` has changed size repeatedly (1516 on `main`, 1582 on `parser-phase2`). Older notes
+`checker.py` has changed size repeatedly (1516 on `main`, 1621 on `parser-phase2`). Older notes
 cite lines 886 and 904–906. Find things by name instead:
 
 | Old reference | Find this |

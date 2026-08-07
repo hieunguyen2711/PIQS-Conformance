@@ -163,6 +163,36 @@ the flat `(receiver, method_name)` shape does not carry.
 scores differently today. This is a generated-code risk, not a current one — 2026 Java uses
 anonymous classes and lambdas far more than Kim's corpus does.
 
+### Known limitation — assignment to a local that shadows a field (recorded, not fixed)
+
+```java
+void shadowedWrite(Object other, Object another) {
+    Object held = other;   // declares a LOCAL that shadows the field `held`
+    held = another;        // assigns the LOCAL -- the field is never touched
+}
+```
+
+`_assigns_field(method, "held")` reports **True**. The declaration is correctly excluded
+(divergence #3 — it is a `local_variable_declaration`), but the second line is a genuine
+`assignment_expression` whose target is the bare name `held`, and nothing at that point knows the
+name has been rebound to a local.
+
+**Not fixed in phase 2, on purpose.** The retired regex behaved identically, so this is exact
+parity. `JavaMethod.locals` now exists and could resolve it — a name declared in the body shadows
+the field for the rest of the method — but using it here would turn a mechanism change into a
+meaning change, and any resulting movement would be unattributable. It is a **Step 3** question
+with its own prediction.
+
+The same reasoning distinguishes the two assignment divergences. **#2** (compound operators)
+preserves the regex even though the regex is arguably wrong, because fixing it changes which
+programs satisfy a property. **#3** (declarations) takes the tree's answer, because the regex's
+answer was never correct for any program — it removes a false positive rather than redefining the
+predicate.
+
+**Coverage: zero.** No `_assigns_field` call site in either corpus has a local shadowing the
+queried field name. Pinned by `tests/fixtures_parser/div3_declaration_not_assignment.java`, whose
+final case asserts the limitation rather than the correct answer, and says so.
+
 ---
 
 ## Template Method — critical set {T3}

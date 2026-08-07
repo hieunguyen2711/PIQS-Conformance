@@ -353,3 +353,70 @@ def test_two_level_access_delegates_to_the_inner_field_only():
     instead of the field's would be wrong in both directions at once."""
     assert delegates("twoLevel", "g") is True
     assert delegates("twoLevel", "f") is False
+
+
+# --------------------------------------------------------------------------------------- #
+# Divergence #2 -- compound assignment is not an assignment (exact parity).
+# Divergence #3 -- a local declaration is not an assignment to the field it shadows.
+#
+# Both have zero corpus coverage, so all four suites stay green whichever way they are decided.
+# --------------------------------------------------------------------------------------- #
+
+COMPOUND = fixture("div2_compound_assignment.java")
+DECLARES = fixture("div3_declaration_not_assignment.java")
+
+
+def assigns(src: str, type_name: str, method_name: str, field: str) -> bool:
+    return PIQSChecker._assigns_field(method(src, type_name, method_name), field)
+
+
+def test_simple_assignment_is_an_assignment():
+    """Anti-vacuity for everything below."""
+    assert assigns(COMPOUND, "Compound", "simple", "plain") is True
+
+
+def test_compound_operators_are_not_assignments():
+    """TEN operators are `assignment_expression` in the tree and none matched the regex. Five
+    distinct ones are checked, because "we handled +=" is the half-fix that a one-operator test
+    would pass."""
+    for fld in ("add", "sub", "mul", "shift", "mask"):
+        assert assigns(COMPOUND, "Compound", "compounds", fld) is False, fld
+
+
+def test_increment_and_decrement_are_not_assignments():
+    """`update_expression`, a different node type -- no operator filter needed."""
+    assert assigns(COMPOUND, "Compound", "updates", "plain") is False
+    assert assigns(COMPOUND, "Compound", "updates", "add") is False
+
+
+def test_equality_is_not_assignment():
+    """`binary_expression`. The regex blocked these with `(?!=)`."""
+    assert assigns(COMPOUND, "Compound", "compare", "plain") is False
+    assert assigns(COMPOUND, "Compound", "compare", "add") is False
+
+
+def test_assignment_in_a_for_init_is_found():
+    """`for (plain = 0; ...)` is an assignment_expression that is NOT inside an
+    expression_statement. A walk restricted to expression_statement would miss it."""
+    assert assigns(COMPOUND, "Compound", "loopInit", "plain") is True
+
+
+def test_local_declaration_is_not_an_assignment_to_the_shadowed_field():
+    """Divergence #3. `int count = 5;` is a local_variable_declaration; the field is untouched.
+    Here the tree is simply right and the regex was wrong."""
+    assert assigns(DECLARES, "Declares", "declaresLocal", "count") is False
+
+
+def test_real_field_assignment_is_still_found():
+    assert assigns(DECLARES, "Declares", "assignsField", "count") is True
+
+
+def test_this_qualified_assignment_is_found():
+    assert assigns(DECLARES, "Declares", "assignsViaThis", "count") is True
+
+
+def test_assignment_to_a_shadowing_local_is_a_recorded_limitation():
+    """NOT a correctness assertion -- a parity one. `held = another;` assigns the LOCAL, but both
+    the regex and the tree report the FIELD as assigned. `m.locals` could resolve it; using it
+    here would be a meaning change belonging to Step 3. See docs/PROPERTY_SPEC.md."""
+    assert assigns(DECLARES, "Declares", "shadowedWrite", "held") is True
