@@ -258,6 +258,39 @@ battery is 27 files and caught helper 2's. What matters is whether a corpus cont
 Kim does not evaluate.
 
 
+
+### Step 3 — decisions made BEFORE the work, so they are not made under sunk cost
+
+**The success signal inverts.** Steps 1 and 2 were parity work: predict zero movement, measure
+zero, any movement is a defect. Step 3 moves verdicts **on purpose**, so:
+
+| | Steps 1–2 | Step 3 |
+|---|---|---|
+| Movement | a defect | expected — but every movement needs a **named construct and a fixture** |
+| No movement | success | **a warning sign** — either the detection never fired, or it fired and nothing depended on it |
+
+Unexplained movement is still a defect. So is a suspiciously quiet run.
+
+**The stopping rule.** If forms 2 (indexed) and 6 (iterator) stall, ship forms 1, 3, 4 and 5,
+record 2 and 6 as known limitations in `docs/PROPERTY_SPEC.md` with the reason, and move on.
+Enhanced-for plus `forEach`-lambda covers most real Java. **Do not spend a second session on the
+indexed and iterator forms.**
+
+**Out of scope for Step 3's loop work.** `_evaluate_observer`'s `coll_fields` text matching must
+NOT change in the same commit as the loop forms. It is the `t.body` trap, and through `elem_re`
+(lines 855/868) it moves **Composite** as well as Observer. If loop detection needs the collection
+identified differently, that is a separate change with its own prediction — and by the rule in
+PROPERTY_SPEC.md it **redefines the predicate** rather than removing a false positive.
+
+**After every form: run the four suites AND `golden_facts.py --check`, and report both.** The
+snapshot is load-bearing from here on:
+
+| Verdict moved | `--check` | Reading |
+|---|---|---|
+| yes | clean | the new detection fired — what we want |
+| yes | dirty | **the parser changed underneath you**; the movement is not what you think it is |
+| no | clean | detection did not fire, or nothing depended on it — investigate |
+
 ### Body-regex inventory — what Step 2 did NOT migrate
 
 Step 2 migrated the five general-purpose body helpers. **25 regexes still read `m.body` or
@@ -577,6 +610,14 @@ cite lines 886 and 904–906. Find things by name instead:
 | The 36 PIQS pattern tests were never committed and are still missing | before generation |
 | `A-not-rebroken` case in `validation/synthetic_generality_tests.py` is vacuous — it repeats case A's assertion on case A's fixture. Needs a `ping` callback alongside a `pinger` local to become a real guard. That script is **not** one of the four suites. | any time |
 | `w_ops.setdefault` keeps the first overload — pre-existing looseness in `D6` | low priority |
+
+**Snapshot scope decision (settled, do not narrow).** `golden_facts.py` covers
+`tests/fixtures_parser/` as well as the 184-file corpus — 197 files in total. Those 13
+fixtures are the ONLY place several constructs exist at all: interface default methods, the
+shadowed inherited field, and one file per migration divergence. Leaving them out would make
+the guard blind to exactly the cases it was built for. "Adding a fixture requires a
+`--write`" is a feature, not a cost: a fixture change appearing in a diff is what makes it
+reviewable.
 
 **Removed from this list, because it is done:** the golden-fact snapshot — `validation/golden_facts.py` + `results/parser_golden.json`, 197 files / 267 types / 552 methods, proven to go red on six deliberate faults (field type, dropped method, a `calls` entry, an `assignments` entry, an empty corpus, an unparseable file) and green unmodified. `requirements.txt` now carries the version-bump procedure instead of a note saying none exists.
 
