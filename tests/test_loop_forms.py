@@ -129,7 +129,7 @@ FORMS = [
     ("loop6_iterator", "while (it.hasNext()) it.next().update();"),
 ]
 
-DETECTED: set[str] = {"loop1_enhanced_for"}
+DETECTED: set[str] = {"loop1_enhanced_for", "loop3_lambda"}
 
 
 @pytest.mark.parametrize("slug,shape", FORMS)

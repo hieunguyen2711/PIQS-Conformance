@@ -30,7 +30,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     }
    ]
   }
@@ -66,7 +67,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     }
    ]
   }
@@ -132,7 +134,8 @@
       "String",
       "double"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -150,7 +153,8 @@
      "owner": "Item",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -168,7 +172,8 @@
      "owner": "Item",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -186,7 +191,8 @@
      "owner": "Item",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     }
    ]
   }
@@ -242,7 +248,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -279,7 +286,8 @@
       "Item",
       "int"
      ],
-     "return_type": "boolean"
+     "return_type": "boolean",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -328,7 +336,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -409,7 +418,8 @@
      "owner": "POS",
      "param_names": [],
      "param_types": [],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [
@@ -437,7 +447,8 @@
      "owner": "POS",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [
@@ -485,7 +496,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -517,7 +529,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [
@@ -555,7 +568,8 @@
      "owner": "POS",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     },
     {
      "assignments": [
@@ -590,7 +604,8 @@
       "double",
       "String"
      ],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   }
@@ -758,7 +773,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -830,7 +846,8 @@
       "Sale",
       "Payment"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -947,7 +964,8 @@
      "owner": "Receipt",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   }
@@ -1002,7 +1020,8 @@
      "owner": "Register",
      "param_names": [],
      "param_types": [],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [
@@ -1079,7 +1098,8 @@
       "double",
       "String"
      ],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -1108,7 +1128,8 @@
      "param_types": [
       "ByCreditCard"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -1137,7 +1158,8 @@
      "param_types": [
       "Sale"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -1169,7 +1191,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -1201,7 +1224,8 @@
       "Item",
       "int"
      ],
-     "return_type": "boolean"
+     "return_type": "boolean",
+     "traversals": []
     }
    ]
   }
@@ -1250,7 +1274,8 @@
      "owner": "Sale",
      "param_names": [],
      "param_types": [],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -1268,7 +1293,8 @@
      "owner": "Sale",
      "param_names": [],
      "param_types": [],
-     "return_type": "ArrayList"
+     "return_type": "ArrayList",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -1320,7 +1346,8 @@
      "param_types": [
       "SaleLineItem"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -1375,7 +1402,8 @@
       "Item",
       "int"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -1400,7 +1428,8 @@
      "owner": "SaleLineItem",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -1424,7 +1453,8 @@
      "owner": "SaleLineItem",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -1442,7 +1472,8 @@
      "owner": "SaleLineItem",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     }
    ]
   }
@@ -1495,7 +1526,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -1538,7 +1570,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -1569,7 +1602,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -1598,7 +1632,8 @@
      "param_types": [
       "InventoryObserver"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -1616,7 +1651,8 @@
      "param_types": [
       "InventoryObserver"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -1636,7 +1672,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -1702,7 +1739,8 @@
       "String",
       "double"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -1720,7 +1758,8 @@
      "owner": "Item",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -1738,7 +1777,8 @@
      "owner": "Item",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -1756,7 +1796,8 @@
      "owner": "Item",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     }
    ]
   }
@@ -1813,7 +1854,8 @@
      "param_types": [
       "InventoryObserver"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -1842,7 +1884,8 @@
      "param_types": [
       "InventoryObserver"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -1878,7 +1921,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -1920,7 +1964,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -1957,7 +2002,8 @@
       "Item",
       "int"
      ],
-     "return_type": "boolean"
+     "return_type": "boolean",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -2011,7 +2057,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -2054,7 +2101,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "PaymentStrategy"
+     "return_type": "PaymentStrategy",
+     "traversals": []
     }
    ]
   }
@@ -2083,7 +2131,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -2155,7 +2204,8 @@
       "PaymentStrategy",
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -2295,7 +2345,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -2343,7 +2394,8 @@
      "param_types": [
       "SaleComponent"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -2379,7 +2431,8 @@
      "owner": "Sale",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -2407,7 +2460,8 @@
      "owner": "Sale",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -2435,7 +2489,8 @@
      "owner": "SaleComponent",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -2452,7 +2507,8 @@
      "owner": "SaleComponent",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -2507,7 +2563,8 @@
       "Item",
       "int"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -2532,7 +2589,8 @@
      "owner": "SaleLineItem",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -2569,7 +2627,8 @@
      "owner": "SaleLineItem",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -2615,7 +2674,8 @@
      "param_types": [
       "int"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -2654,7 +2714,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -2697,7 +2758,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -2728,7 +2790,8 @@
      "owner": "CashPaymentFactory",
      "param_names": [],
      "param_types": [],
-     "return_type": "PaymentStrategy"
+     "return_type": "PaymentStrategy",
+     "traversals": []
     }
    ]
   }
@@ -2775,7 +2838,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -2806,7 +2870,8 @@
      "owner": "CreditCardPaymentFactory",
      "param_names": [],
      "param_types": [],
-     "return_type": "PaymentStrategy"
+     "return_type": "PaymentStrategy",
+     "traversals": []
     }
    ]
   }
@@ -2852,7 +2917,8 @@
      "param_types": [
       "int"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -2891,7 +2957,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -2922,7 +2989,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -2988,7 +3056,8 @@
       "String",
       "double"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -3006,7 +3075,8 @@
      "owner": "Item",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -3024,7 +3094,8 @@
      "owner": "Item",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -3042,7 +3113,8 @@
      "owner": "Item",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     }
    ]
   }
@@ -3097,7 +3169,8 @@
      "param_types": [
       "InventoryObserver"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -3126,7 +3199,8 @@
      "param_types": [
       "InventoryObserver"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -3162,7 +3236,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -3216,7 +3291,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -3253,7 +3329,8 @@
       "Item",
       "int"
      ],
-     "return_type": "boolean"
+     "return_type": "boolean",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -3307,7 +3384,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -3362,7 +3440,8 @@
      "owner": "POS",
      "param_names": [],
      "param_types": [],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -3394,7 +3473,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [
@@ -3429,7 +3509,8 @@
      "owner": "POS",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -3482,7 +3563,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -3506,7 +3588,8 @@
      "owner": "POS",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -3541,7 +3624,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -3566,7 +3650,8 @@
      "owner": "PaymentFactory",
      "param_names": [],
      "param_types": [],
-     "return_type": "PaymentStrategy"
+     "return_type": "PaymentStrategy",
+     "traversals": []
     }
    ]
   }
@@ -3595,7 +3680,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -3709,7 +3795,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -3764,7 +3851,8 @@
      "owner": "Register",
      "param_names": [],
      "param_types": [],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -3796,7 +3884,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -3828,7 +3917,8 @@
       "Item",
       "int"
      ],
-     "return_type": "boolean"
+     "return_type": "boolean",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -3860,7 +3950,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -3889,7 +3980,8 @@
      "param_types": [
       "Sale"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [
@@ -3942,7 +4034,8 @@
       "double",
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -3992,7 +4085,8 @@
      "param_types": [
       "SaleComponent"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -4028,7 +4122,8 @@
      "owner": "Sale",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -4088,7 +4183,8 @@
      "owner": "Sale",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -4106,7 +4202,8 @@
      "owner": "Sale",
      "param_names": [],
      "param_types": [],
-     "return_type": "List"
+     "return_type": "List",
+     "traversals": []
     }
    ]
   }
@@ -4131,7 +4228,8 @@
      "owner": "SaleComponent",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -4145,7 +4243,8 @@
      "owner": "SaleComponent",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -4202,7 +4301,8 @@
       "Item",
       "int"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -4227,7 +4327,8 @@
      "owner": "SaleLineItem",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -4270,7 +4371,8 @@
      "owner": "SaleLineItem",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -4294,7 +4396,8 @@
      "owner": "SaleLineItem",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -4312,7 +4415,8 @@
      "owner": "SaleLineItem",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     }
    ]
   }
@@ -4355,7 +4459,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -4398,7 +4503,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -4429,7 +4535,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -4495,7 +4602,8 @@
       "String",
       "double"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -4513,7 +4621,8 @@
      "owner": "Item",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -4531,7 +4640,8 @@
      "owner": "Item",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -4549,7 +4659,8 @@
      "owner": "Item",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     }
    ]
   }
@@ -4604,7 +4715,8 @@
      "param_types": [
       "InventoryObserver"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -4633,7 +4745,8 @@
      "param_types": [
       "InventoryObserver"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -4675,7 +4788,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -4712,7 +4826,8 @@
       "Item",
       "int"
      ],
-     "return_type": "boolean"
+     "return_type": "boolean",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -4766,7 +4881,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -4802,7 +4918,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -4883,7 +5000,8 @@
      "owner": "POS",
      "param_names": [],
      "param_types": [],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [
@@ -4911,7 +5029,8 @@
      "owner": "POS",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [
@@ -4964,7 +5083,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -4996,7 +5116,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [
@@ -5034,7 +5155,8 @@
      "owner": "POS",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     },
     {
      "assignments": [
@@ -5069,7 +5191,8 @@
       "double",
       "String"
      ],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   }
@@ -5098,7 +5221,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -5141,7 +5265,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "Payment"
+     "return_type": "Payment",
+     "traversals": []
     }
    ]
   }
@@ -5213,7 +5338,8 @@
       "Sale",
       "Payment"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -5330,7 +5456,8 @@
      "owner": "Receipt",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   }
@@ -5482,7 +5609,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -5545,7 +5673,8 @@
      "owner": "Register",
      "param_names": [],
      "param_types": [],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -5617,7 +5746,8 @@
       "double",
       "String"
      ],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -5646,7 +5776,8 @@
      "param_types": [
       "Sale"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -5678,7 +5809,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -5710,7 +5842,8 @@
       "Item",
       "int"
      ],
-     "return_type": "boolean"
+     "return_type": "boolean",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -5748,7 +5881,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -5792,7 +5926,8 @@
      "owner": "Sale",
      "param_names": [],
      "param_types": [],
-     "return_type": "List"
+     "return_type": "List",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -5849,7 +5984,8 @@
      "param_types": [
       "SaleLineItem"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -5904,7 +6040,8 @@
       "Item",
       "int"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -5929,7 +6066,8 @@
      "owner": "SaleLineItem",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -5953,7 +6091,8 @@
      "owner": "SaleLineItem",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -5971,7 +6110,8 @@
      "owner": "SaleLineItem",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     }
    ]
   }
@@ -6017,7 +6157,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -6043,7 +6184,8 @@
      "owner": "ByCash",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -6089,7 +6231,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -6115,7 +6258,8 @@
      "owner": "ByCreditCard",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -6151,7 +6295,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": "Payment"
+     "return_type": "Payment",
+     "traversals": []
     }
    ]
   }
@@ -6187,7 +6332,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": "Payment"
+     "return_type": "Payment",
+     "traversals": []
     }
    ]
   }
@@ -6218,7 +6364,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -6273,7 +6420,8 @@
      "param_types": [
       "InventoryObserver"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -6302,7 +6450,8 @@
      "param_types": [
       "InventoryObserver"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -6356,7 +6505,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -6392,7 +6542,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -6429,7 +6580,8 @@
       "Item",
       "int"
      ],
-     "return_type": "boolean"
+     "return_type": "boolean",
+     "traversals": []
     }
    ]
   }
@@ -6454,7 +6606,8 @@
      "owner": "Payment",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -6483,7 +6636,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": "Payment"
+     "return_type": "Payment",
+     "traversals": []
     }
    ]
   }
@@ -6524,7 +6678,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -6583,7 +6738,8 @@
      "param_types": [
       "ItemInventory"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [
@@ -6636,7 +6792,8 @@
       "double",
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -6674,7 +6831,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -6703,7 +6861,8 @@
      "param_types": [
       "Sale"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -6735,7 +6894,8 @@
       "Item",
       "int"
      ],
-     "return_type": "boolean"
+     "return_type": "boolean",
+     "traversals": []
     }
    ]
   }
@@ -6783,7 +6943,8 @@
      "param_types": [
       "SaleLineItem"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -6813,7 +6974,8 @@
      "owner": "Sale",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     }
    ]
   }
@@ -6868,7 +7030,8 @@
       "Item",
       "int"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -6893,7 +7056,8 @@
      "owner": "SaleLineItem",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     }
    ]
   }
@@ -6936,7 +7100,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -6979,7 +7144,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -7030,7 +7196,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -7061,7 +7228,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -7090,7 +7258,8 @@
      "param_types": [
       "InventoryObserver"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -7108,7 +7277,8 @@
      "param_types": [
       "InventoryObserver"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -7128,7 +7298,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -7194,7 +7365,8 @@
       "String",
       "double"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -7212,7 +7384,8 @@
      "owner": "Item",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -7230,7 +7403,8 @@
      "owner": "Item",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -7248,7 +7422,8 @@
      "owner": "Item",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     }
    ]
   }
@@ -7305,7 +7480,8 @@
      "param_types": [
       "InventoryObserver"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -7334,7 +7510,8 @@
      "param_types": [
       "InventoryObserver"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -7370,7 +7547,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -7412,7 +7590,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -7449,7 +7628,8 @@
       "Item",
       "int"
      ],
-     "return_type": "boolean"
+     "return_type": "boolean",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -7503,7 +7683,8 @@
       "Item",
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -7532,7 +7713,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -7561,7 +7743,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "Payment"
+     "return_type": "Payment",
+     "traversals": []
     }
    ]
   }
@@ -7605,7 +7788,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "Payment"
+     "return_type": "Payment",
+     "traversals": []
     }
    ]
   }
@@ -7649,7 +7833,8 @@
      "param_types": [
       "Payment"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -7678,7 +7863,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -7834,7 +8020,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -7884,7 +8071,8 @@
      "param_types": [
       "SaleComponent"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -7914,7 +8102,8 @@
      "owner": "Sale",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     }
    ]
   }
@@ -7939,7 +8128,8 @@
      "owner": "SaleComponent",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     }
    ]
   }
@@ -7996,7 +8186,8 @@
       "Item",
       "int"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -8021,7 +8212,8 @@
      "owner": "SaleLineItem",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     }
    ]
   }
@@ -8068,7 +8260,8 @@
       "Transaction",
       "Wallet"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -8131,7 +8324,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -8161,7 +8355,8 @@
      "owner": "AuditLog",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -8219,7 +8414,8 @@
      "owner": "CurrencyConverter",
      "param_names": [],
      "param_types": [],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -8238,7 +8434,8 @@
      "owner": "CurrencyConverter",
      "param_names": [],
      "param_types": [],
-     "return_type": "CurrencyConverter"
+     "return_type": "CurrencyConverter",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -8277,7 +8474,8 @@
       "String",
       "double"
      ],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     }
    ]
   }
@@ -8325,7 +8523,8 @@
       "Transaction",
       "Wallet"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -8354,7 +8553,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -8472,7 +8672,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -8554,7 +8755,8 @@
       "String",
       "TransactionStrategy"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -8595,7 +8797,8 @@
      "owner": "Transaction",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   }
@@ -8626,7 +8829,8 @@
       "Transaction",
       "Wallet"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -8700,7 +8904,8 @@
       "String",
       "Observer"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -8729,7 +8934,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "boolean"
+     "return_type": "boolean",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -8773,7 +8979,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -8802,7 +9009,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "Wallet"
+     "return_type": "Wallet",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -8836,7 +9044,8 @@
      "owner": "User",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -8893,7 +9102,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -8933,7 +9143,8 @@
       "String",
       "TransactionStrategy"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -8969,7 +9180,8 @@
      "owner": "Wallet",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -8999,7 +9211,8 @@
      "owner": "Wallet",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -9055,7 +9268,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -9085,7 +9299,8 @@
      "owner": "AuditLog",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -9144,7 +9359,8 @@
      "owner": "CurrencyConverter",
      "param_names": [],
      "param_types": [],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [
@@ -9167,7 +9383,8 @@
      "owner": "CurrencyConverter",
      "param_names": [],
      "param_types": [],
-     "return_type": "CurrencyConverter"
+     "return_type": "CurrencyConverter",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -9206,7 +9423,8 @@
       "String",
       "double"
      ],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     }
    ]
   }
@@ -9270,7 +9488,8 @@
       "Wallet",
       "double"
      ],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   }
@@ -9299,7 +9518,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -9367,7 +9587,8 @@
       "Wallet",
       "double"
      ],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   }
@@ -9501,7 +9722,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -9537,7 +9759,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "Wallet"
+     "return_type": "Wallet",
+     "traversals": []
     }
    ]
   }
@@ -9585,7 +9808,8 @@
      "param_types": [
       "Observer"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -9614,7 +9838,8 @@
      "param_types": [
       "Observer"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -9647,7 +9872,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -9734,7 +9960,8 @@
       "double",
       "String"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -9775,7 +10002,8 @@
      "owner": "Transaction",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   }
@@ -9806,7 +10034,8 @@
       "Wallet",
       "double"
      ],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   }
@@ -9889,7 +10118,8 @@
       "String",
       "WalletFactory"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -9918,7 +10148,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "boolean"
+     "return_type": "boolean",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -9963,7 +10194,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -9992,7 +10224,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "Wallet"
+     "return_type": "Wallet",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -10026,7 +10259,8 @@
      "owner": "User",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -10111,7 +10345,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -10129,7 +10364,8 @@
      "owner": "Wallet",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     },
     {
      "assignments": [
@@ -10154,7 +10390,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -10172,7 +10409,8 @@
      "owner": "Wallet",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -10201,7 +10439,8 @@
      "param_types": [
       "Transaction"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -10248,7 +10487,8 @@
       "String",
       "double"
      ],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -10284,7 +10524,8 @@
      "owner": "Wallet",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -10314,7 +10555,8 @@
      "owner": "Wallet",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -10343,7 +10585,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "Wallet"
+     "return_type": "Wallet",
+     "traversals": []
     }
    ]
   }
@@ -10410,7 +10653,8 @@
       "double",
       "Wallet"
      ],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   }
@@ -10464,7 +10708,8 @@
      "param_types": [
       "Transaction"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -10499,7 +10744,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -10529,7 +10775,8 @@
      "owner": "AuditLog",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -10563,7 +10810,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "Wallet"
+     "return_type": "Wallet",
+     "traversals": []
     }
    ]
   }
@@ -10600,7 +10848,8 @@
      "owner": "CurrencyConverter",
      "param_names": [],
      "param_types": [],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -10620,7 +10869,8 @@
      "owner": "CurrencyConverter",
      "param_names": [],
      "param_types": [],
-     "return_type": "CurrencyConverter"
+     "return_type": "CurrencyConverter",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -10659,7 +10909,8 @@
       "String",
       "double"
      ],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     }
    ]
   },
@@ -10748,7 +10999,8 @@
       "double",
       "Wallet"
      ],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   }
@@ -10896,7 +11148,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -10983,7 +11236,8 @@
       "double",
       "String"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -11024,7 +11278,8 @@
      "owner": "Transaction",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   }
@@ -11053,7 +11308,8 @@
      "param_types": [
       "Transaction"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -11084,7 +11340,8 @@
       "double",
       "Wallet"
      ],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   }
@@ -11176,7 +11433,8 @@
       "String",
       "WalletFactory"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -11205,7 +11463,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "boolean"
+     "return_type": "boolean",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -11260,7 +11519,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -11289,7 +11549,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "Wallet"
+     "return_type": "Wallet",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -11323,7 +11584,8 @@
      "owner": "User",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -11393,7 +11655,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -11447,7 +11710,8 @@
       "double",
       "TransactionStrategy"
      ],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -11465,7 +11729,8 @@
      "owner": "Wallet",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     },
     {
      "assignments": [
@@ -11490,7 +11755,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -11508,7 +11774,8 @@
      "owner": "Wallet",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -11537,7 +11804,8 @@
      "param_types": [
       "Transaction"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -11573,7 +11841,8 @@
      "owner": "Wallet",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -11603,7 +11872,8 @@
      "owner": "Wallet",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -11632,7 +11902,8 @@
      "param_types": [
       "TransactionObserver"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -11665,7 +11936,8 @@
      "param_types": [
       "Transaction"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -11697,7 +11969,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "Wallet"
+     "return_type": "Wallet",
+     "traversals": []
     }
    ]
   }
@@ -11752,7 +12025,8 @@
      "param_types": [
       "AuditLogObserver"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -11781,7 +12055,8 @@
      "param_types": [
       "AuditLogObserver"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -11826,7 +12101,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -11856,7 +12132,8 @@
      "owner": "AuditLog",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -11885,7 +12162,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -11928,7 +12206,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -11985,7 +12264,8 @@
      "owner": "CurrencyConverter",
      "param_names": [],
      "param_types": [],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [
@@ -12007,7 +12287,8 @@
      "owner": "CurrencyConverter",
      "param_names": [],
      "param_types": [],
-     "return_type": "CurrencyConverter"
+     "return_type": "CurrencyConverter",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -12047,7 +12328,8 @@
       "String",
       "double"
      ],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     }
    ]
   }
@@ -12083,7 +12365,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "Wallet"
+     "return_type": "Wallet",
+     "traversals": []
     }
    ]
   }
@@ -12131,7 +12414,8 @@
       "Wallet",
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -12180,7 +12464,8 @@
       "Wallet",
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -12304,7 +12589,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -12391,7 +12677,8 @@
       "double",
       "String"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -12432,7 +12719,8 @@
      "owner": "Transaction",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   }
@@ -12463,7 +12751,8 @@
       "Wallet",
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -12555,7 +12844,8 @@
       "String",
       "WalletFactory"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -12584,7 +12874,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "boolean"
+     "return_type": "boolean",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -12630,7 +12921,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -12659,7 +12951,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "Wallet"
+     "return_type": "Wallet",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -12693,7 +12986,8 @@
      "owner": "User",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -12768,7 +13062,8 @@
       "String",
       "TransactionStrategy"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -12798,7 +13093,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -12837,7 +13133,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -12873,7 +13170,8 @@
      "owner": "Wallet",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -12903,7 +13201,8 @@
      "owner": "Wallet",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -12932,7 +13231,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "Wallet"
+     "return_type": "Wallet",
+     "traversals": []
     }
    ]
   }
@@ -12976,7 +13276,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -13033,7 +13334,8 @@
      "owner": "CurrencyConverter",
      "param_names": [],
      "param_types": [],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [
@@ -13055,7 +13357,8 @@
      "owner": "CurrencyConverter",
      "param_names": [],
      "param_types": [],
-     "return_type": "CurrencyConverter"
+     "return_type": "CurrencyConverter",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -13094,7 +13397,8 @@
       "String",
       "double"
      ],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     }
    ]
   }
@@ -13138,7 +13442,8 @@
       "Wallet",
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -13182,7 +13487,8 @@
       "Wallet",
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -13295,7 +13601,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -13382,7 +13689,8 @@
       "double",
       "String"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -13423,7 +13731,8 @@
      "owner": "Transaction",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   }
@@ -13454,7 +13763,8 @@
       "Wallet",
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -13552,7 +13862,8 @@
       "String",
       "String"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -13598,7 +13909,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "Wallet"
+     "return_type": "Wallet",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -13627,7 +13939,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "Wallet"
+     "return_type": "Wallet",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -13661,7 +13974,8 @@
      "owner": "User",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -13731,7 +14045,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -13763,7 +14078,8 @@
       "TransactionStrategy",
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -13795,7 +14111,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -13827,7 +14144,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -13863,7 +14181,8 @@
      "owner": "Wallet",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -13893,7 +14212,8 @@
      "owner": "Wallet",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -13947,7 +14267,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -13977,7 +14298,8 @@
      "owner": "AuditLog",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -14038,7 +14360,8 @@
       "String",
       "double"
      ],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     }
    ]
   }
@@ -14147,7 +14470,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -14234,7 +14558,8 @@
       "double",
       "String"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -14275,7 +14600,8 @@
      "owner": "Transaction",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   }
@@ -14356,7 +14682,8 @@
       "String",
       "String"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -14385,7 +14712,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "boolean"
+     "return_type": "boolean",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -14426,7 +14754,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -14455,7 +14784,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "Wallet"
+     "return_type": "Wallet",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -14489,7 +14819,8 @@
      "owner": "User",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -14552,7 +14883,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -14584,7 +14916,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -14616,7 +14949,8 @@
      "param_types": [
       "double"
      ],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -14652,7 +14986,8 @@
      "owner": "Wallet",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -14682,7 +15017,8 @@
      "owner": "Wallet",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -14741,7 +15077,8 @@
      "owner": "ShapeFactory",
      "param_names": [],
      "param_types": [],
-     "return_type": "Report"
+     "return_type": "Report",
+     "traversals": []
     }
    ]
   }
@@ -14770,7 +15107,8 @@
      "owner": "Factory",
      "param_names": [],
      "param_types": [],
-     "return_type": "Product"
+     "return_type": "Product",
+     "traversals": []
     }
    ]
   },
@@ -14825,7 +15163,8 @@
      "owner": "WalletFactory",
      "param_names": [],
      "param_types": [],
-     "return_type": "Wallet"
+     "return_type": "Wallet",
+     "traversals": []
     }
    ]
   }
@@ -14857,7 +15196,8 @@
      "owner": "Fake",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     }
    ]
   },
@@ -14892,7 +15232,8 @@
      "owner": "Bill",
      "param_names": [],
      "param_types": [],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -14912,7 +15253,8 @@
      "owner": "Bill",
      "param_names": [],
      "param_types": [],
-     "return_type": "Bill"
+     "return_type": "Bill",
+     "traversals": []
     }
    ]
   },
@@ -14966,7 +15308,8 @@
      "owner": "Classic",
      "param_names": [],
      "param_types": [],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [
@@ -14988,7 +15331,8 @@
      "owner": "Classic",
      "param_names": [],
      "param_types": [],
-     "return_type": "Classic"
+     "return_type": "Classic",
+     "traversals": []
     }
    ]
   }
@@ -15018,7 +15362,8 @@
      "owner": "Kind",
      "param_names": [],
      "param_types": [],
-     "return_type": "Widget"
+     "return_type": "Widget",
+     "traversals": []
     }
    ]
   },
@@ -15053,7 +15398,8 @@
      "owner": "Single",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -15080,7 +15426,8 @@
      "owner": "NewEach",
      "param_names": [],
      "param_types": [],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -15099,7 +15446,8 @@
      "owner": "NewEach",
      "param_names": [],
      "param_types": [],
-     "return_type": "NewEach"
+     "return_type": "NewEach",
+     "traversals": []
     }
    ]
   }
@@ -15135,7 +15483,8 @@
      "owner": "Pub",
      "param_names": [],
      "param_types": [],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [
@@ -15157,7 +15506,8 @@
      "owner": "Pub",
      "param_names": [],
      "param_types": [],
-     "return_type": "Pub"
+     "return_type": "Pub",
+     "traversals": []
     }
    ]
   }
@@ -15196,7 +15546,8 @@
      "param_types": [
       "Strategy"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -15223,7 +15574,8 @@
      "owner": "Impl",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -15246,7 +15598,8 @@
      "owner": "Strategy",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -15290,7 +15643,8 @@
      "param_types": [
       "Strategy"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -15314,7 +15668,8 @@
      "owner": "Context",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -15341,7 +15696,8 @@
      "owner": "Impl",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -15364,7 +15720,8 @@
      "owner": "Strategy",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -15415,7 +15772,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "Builder"
+     "return_type": "Builder",
+     "traversals": []
     },
     {
      "assignments": [
@@ -15440,7 +15798,8 @@
      "param_types": [
       "boolean"
      ],
-     "return_type": "Builder"
+     "return_type": "Builder",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -15459,7 +15818,8 @@
      "owner": "Builder",
      "param_names": [],
      "param_types": [],
-     "return_type": "Pizza"
+     "return_type": "Pizza",
+     "traversals": []
     }
    ]
   },
@@ -15513,7 +15873,8 @@
      "param_types": [
       "Builder"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -15531,7 +15892,8 @@
      "owner": "Pizza",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -15549,7 +15911,8 @@
      "owner": "Pizza",
      "param_names": [],
      "param_types": [],
-     "return_type": "boolean"
+     "return_type": "boolean",
+     "traversals": []
     }
    ]
   }
@@ -15593,7 +15956,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "FluentThing"
+     "return_type": "FluentThing",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -15611,7 +15975,8 @@
      "owner": "FluentThing",
      "param_names": [],
      "param_types": [],
-     "return_type": "FluentThing"
+     "return_type": "FluentThing",
+     "traversals": []
     }
    ]
   }
@@ -15647,7 +16012,8 @@
      "owner": "Builder",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -15664,7 +16030,8 @@
      "owner": "Builder",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -15682,7 +16049,8 @@
      "owner": "Builder",
      "param_names": [],
      "param_types": [],
-     "return_type": "Product"
+     "return_type": "Product",
+     "traversals": []
     }
    ]
   },
@@ -15715,7 +16083,8 @@
      "owner": "ConcreteBuilder",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -15739,7 +16108,8 @@
      "owner": "ConcreteBuilder",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -15781,7 +16151,8 @@
      "param_types": [
       "Builder"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -15810,7 +16181,8 @@
      "owner": "Director",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -15860,7 +16232,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [
@@ -15886,7 +16259,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -15905,7 +16279,8 @@
      "owner": "Product",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   }
@@ -15956,7 +16331,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [
@@ -15981,7 +16357,8 @@
      "param_types": [
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -16026,7 +16403,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "TextBuilder"
+     "return_type": "TextBuilder",
+     "traversals": []
     },
     {
      "assignments": [
@@ -16052,7 +16430,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "TextBuilder"
+     "return_type": "TextBuilder",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -16070,7 +16449,8 @@
      "owner": "TextBuilder",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   }
@@ -16122,7 +16502,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -16140,7 +16521,8 @@
      "owner": "ArrayMyList",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     }
    ]
   },
@@ -16167,7 +16549,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -16181,7 +16564,8 @@
      "owner": "MyList",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     }
    ]
   },
@@ -16226,7 +16610,8 @@
      "param_types": [
       "MyList"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -16256,7 +16641,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -16281,7 +16667,8 @@
      "owner": "SynchronizedMyList",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     }
    ]
   }
@@ -16315,7 +16702,8 @@
      "param_types": [
       "InputStream"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -16342,7 +16730,8 @@
      "owner": "BufferedInputStream",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     }
    ]
   },
@@ -16377,7 +16766,8 @@
      "owner": "FileInputStream",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     }
    ]
   },
@@ -16419,7 +16809,8 @@
      "param_types": [
       "InputStream"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -16443,7 +16834,8 @@
      "owner": "FilterInputStream",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     }
    ]
   },
@@ -16469,7 +16861,8 @@
      "owner": "InputStream",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     }
    ]
   }
@@ -16512,7 +16905,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -16557,7 +16951,8 @@
      "param_types": [
       "Logger"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -16586,7 +16981,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -16613,7 +17009,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -16638,7 +17035,8 @@
      "owner": "Coffee",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     }
    ]
   },
@@ -16663,7 +17061,8 @@
      "owner": "MilkCoffee",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -16679,7 +17078,8 @@
      "owner": "MilkCoffee",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   },
@@ -16706,7 +17106,8 @@
      "owner": "SimpleCoffee",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     }
    ]
   }
@@ -16757,7 +17158,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "Config"
+     "return_type": "Config",
+     "traversals": []
     },
     {
      "assignments": [
@@ -16782,7 +17184,8 @@
      "param_types": [
       "int"
      ],
-     "return_type": "Config"
+     "return_type": "Config",
+     "traversals": []
     }
    ]
   }
@@ -16823,7 +17226,8 @@
      "owner": "Gadget",
      "param_names": [],
      "param_types": [],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -16841,7 +17245,8 @@
      "owner": "Gadget",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   },
@@ -16883,7 +17288,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "GadgetBuilder"
+     "return_type": "GadgetBuilder",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -16901,7 +17307,8 @@
      "owner": "GadgetBuilder",
      "param_names": [],
      "param_types": [],
-     "return_type": "Gadget"
+     "return_type": "Gadget",
+     "traversals": []
     }
    ]
   }
@@ -16926,7 +17333,8 @@
      "owner": "Coffee",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -16940,7 +17348,8 @@
      "owner": "Coffee",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   },
@@ -16967,7 +17376,8 @@
      "owner": "Espresso",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -16983,7 +17393,8 @@
      "owner": "Espresso",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   },
@@ -17028,7 +17439,8 @@
      "param_types": [
       "Coffee"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -17055,7 +17467,8 @@
      "owner": "MilkDecorator",
      "param_names": [],
      "param_types": [],
-     "return_type": "double"
+     "return_type": "double",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -17079,7 +17492,8 @@
      "owner": "MilkDecorator",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   }
@@ -17126,7 +17540,8 @@
      "param_types": [
       "Service"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -17150,7 +17565,8 @@
      "owner": "PartialDecorator",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -17166,7 +17582,8 @@
      "owner": "PartialDecorator",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     }
    ]
   },
@@ -17193,7 +17610,8 @@
      "owner": "RealService",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -17209,7 +17627,8 @@
      "owner": "RealService",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     }
    ]
   },
@@ -17232,7 +17651,8 @@
      "owner": "Service",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -17246,7 +17666,8 @@
      "owner": "Service",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     }
    ]
   }
@@ -17282,7 +17703,8 @@
      "owner": "Chess",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -17307,7 +17729,8 @@
      "owner": "Chess",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -17333,7 +17756,8 @@
      "owner": "Game",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -17358,7 +17782,8 @@
      "owner": "Game",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -17387,7 +17812,8 @@
      "owner": "Game",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -17422,7 +17848,8 @@
      "owner": "Processor",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -17447,7 +17874,8 @@
      "owner": "Processor",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -17464,7 +17892,8 @@
      "owner": "Processor",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -17489,7 +17918,8 @@
      "owner": "RealProcessor",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -17543,7 +17973,8 @@
      "param_types": [
       "int"
      ],
-     "return_type": "HouseBuilder"
+     "return_type": "HouseBuilder",
+     "traversals": []
     },
     {
      "assignments": [
@@ -17569,7 +18000,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "HouseBuilder"
+     "return_type": "HouseBuilder",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -17589,7 +18021,8 @@
      "owner": "ConcreteHouseBuilder",
      "param_names": [],
      "param_types": [],
-     "return_type": "House"
+     "return_type": "House",
+     "traversals": []
     }
    ]
   },
@@ -17644,7 +18077,8 @@
       "int",
       "String"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     }
    ]
   },
@@ -17671,7 +18105,8 @@
      "param_types": [
       "int"
      ],
-     "return_type": "HouseBuilder"
+     "return_type": "HouseBuilder",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -17689,7 +18124,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "HouseBuilder"
+     "return_type": "HouseBuilder",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -17703,7 +18139,8 @@
      "owner": "HouseBuilder",
      "param_names": [],
      "param_types": [],
-     "return_type": "House"
+     "return_type": "House",
+     "traversals": []
     }
    ]
   }
@@ -17760,7 +18197,8 @@
       "String",
       "int"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     }
    ]
   },
@@ -17787,7 +18225,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -17805,7 +18244,8 @@
      "param_types": [
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -17819,7 +18259,8 @@
      "owner": "CarBuilder",
      "param_names": [],
      "param_types": [],
-     "return_type": "Car"
+     "return_type": "Car",
+     "traversals": []
     }
    ]
   },
@@ -17871,7 +18312,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [
@@ -17897,7 +18339,8 @@
      "param_types": [
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -17917,7 +18360,8 @@
      "owner": "StandardCarBuilder",
      "param_names": [],
      "param_types": [],
-     "return_type": "Car"
+     "return_type": "Car",
+     "traversals": []
     }
    ]
   }
@@ -17948,7 +18392,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -17991,7 +18436,8 @@
      "param_types": [
       "Notifier"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -18027,7 +18473,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -18057,7 +18504,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -18090,7 +18538,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -18135,7 +18584,8 @@
      "param_types": [
       "Notifier"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -18171,7 +18621,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -18198,7 +18649,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -18223,7 +18675,8 @@
      "owner": "Image",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -18275,7 +18728,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [
@@ -18303,7 +18757,8 @@
      "owner": "ProxyImage",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -18348,7 +18803,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -18374,7 +18830,8 @@
      "owner": "RealImage",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -18399,7 +18856,8 @@
      "owner": "Report",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -18413,7 +18871,8 @@
      "owner": "Report",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -18441,7 +18900,8 @@
      "owner": "Report",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   },
@@ -18468,7 +18928,8 @@
      "owner": "SalesReport",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -18484,7 +18945,8 @@
      "owner": "SalesReport",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   }
@@ -18535,7 +18997,8 @@
      "param_types": [
       "int"
      ],
-     "return_type": "Builder"
+     "return_type": "Builder",
+     "traversals": []
     },
     {
      "assignments": [
@@ -18560,7 +19023,8 @@
      "param_types": [
       "int"
      ],
-     "return_type": "Builder"
+     "return_type": "Builder",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -18579,7 +19043,8 @@
      "owner": "Builder",
      "param_names": [],
      "param_types": [],
-     "return_type": "Point"
+     "return_type": "Point",
+     "traversals": []
     }
    ]
   },
@@ -18633,7 +19098,8 @@
      "param_types": [
       "Builder"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -18651,7 +19117,8 @@
      "owner": "Point",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -18669,7 +19136,8 @@
      "owner": "Point",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     }
    ]
   }
@@ -18700,7 +19168,8 @@
      "param_types": [
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -18739,7 +19208,8 @@
      "param_types": [
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -18760,7 +19230,8 @@
      "param_types": [
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -18799,7 +19270,8 @@
      "owner": "PdfReport",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -18815,7 +19287,8 @@
      "owner": "PdfReport",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -18831,7 +19304,8 @@
      "owner": "PdfReport",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -18857,7 +19331,8 @@
      "owner": "ReportGenerator",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -18874,7 +19349,8 @@
      "owner": "ReportGenerator",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -18891,7 +19367,8 @@
      "owner": "ReportGenerator",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -18923,7 +19400,8 @@
      "param_types": [
       "int"
      ],
-     "return_type": "Object"
+     "return_type": "Object",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -18940,7 +19418,8 @@
      "owner": "AbstractList",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -18982,7 +19461,8 @@
      "param_types": [
       "Object"
      ],
-     "return_type": "boolean"
+     "return_type": "boolean",
+     "traversals": []
     }
    ]
   },
@@ -19022,7 +19502,8 @@
      "param_types": [
       "int"
      ],
-     "return_type": "Object"
+     "return_type": "Object",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -19041,7 +19522,8 @@
      "owner": "MyList",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     }
    ]
   }
@@ -19082,7 +19564,8 @@
       "Request",
       "Response"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -19112,7 +19595,8 @@
       "Request",
       "Response"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -19158,7 +19642,8 @@
       "Request",
       "Response"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -19197,7 +19682,8 @@
       "Request",
       "Response"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -19238,7 +19724,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -19265,7 +19752,8 @@
      "owner": "RealTask",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -19281,7 +19769,8 @@
      "owner": "RealTask",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -19307,7 +19796,8 @@
      "owner": "Task",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -19324,7 +19814,8 @@
      "owner": "Task",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -19349,7 +19840,8 @@
      "owner": "Task",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -19378,7 +19870,8 @@
      "owner": "BaseComponent",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -19394,7 +19887,8 @@
      "owner": "BaseComponent",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   },
@@ -19417,7 +19911,8 @@
      "owner": "Component",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -19431,7 +19926,8 @@
      "owner": "Component",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   },
@@ -19473,7 +19969,8 @@
      "param_types": [
       "Component"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -19497,7 +19994,8 @@
      "owner": "ComponentDecorator",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -19514,7 +20012,8 @@
      "owner": "ComponentDecorator",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   },
@@ -19544,7 +20043,8 @@
      "param_types": [
       "Component"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     },
     {
      "assignments": [],
@@ -19573,7 +20073,8 @@
      "owner": "LoudDecorator",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     }
    ]
   }
@@ -19609,7 +20110,8 @@
      "owner": "Assembler",
      "param_names": [],
      "param_types": [],
-     "return_type": "Loaf"
+     "return_type": "Loaf",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -19636,7 +20138,8 @@
      "param_types": [
       "Assembler"
      ],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -19653,7 +20156,8 @@
      "owner": "Assembler",
      "param_names": [],
      "param_types": [],
-     "return_type": "Marker"
+     "return_type": "Marker",
+     "traversals": []
     },
     {
      "assignments": [
@@ -19683,7 +20187,8 @@
      "param_types": [
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -19708,7 +20213,8 @@
      "owner": "Assembler",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -19722,7 +20228,8 @@
      "owner": "Assembler",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -19738,7 +20245,8 @@
      "owner": "Assembler",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     }
    ]
   },
@@ -19765,7 +20273,8 @@
      "param_types": [
       "Assembler"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     }
    ]
   },
@@ -19792,7 +20301,8 @@
      "param_types": [
       "Assembler"
      ],
-     "return_type": null
+     "return_type": null,
+     "traversals": []
     }
    ]
   }
@@ -19871,7 +20381,8 @@
      "owner": "Compound",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -19891,7 +20402,8 @@
      "owner": "Compound",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -19908,7 +20420,8 @@
      "owner": "Compound",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -19926,7 +20439,8 @@
      "owner": "Compound",
      "param_names": [],
      "param_types": [],
-     "return_type": "boolean"
+     "return_type": "boolean",
+     "traversals": []
     },
     {
      "assignments": [
@@ -19945,7 +20459,8 @@
      "owner": "Compound",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -19997,7 +20512,8 @@
      "owner": "Declares",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [
@@ -20015,7 +20531,8 @@
      "owner": "Declares",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [
@@ -20038,7 +20555,8 @@
      "param_types": [
       "int"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [
@@ -20067,7 +20585,8 @@
       "Object",
       "Object"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -20097,7 +20616,8 @@
      "owner": "Subject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -20118,7 +20638,8 @@
      "owner": "Subject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -20132,7 +20653,8 @@
      "owner": "Subject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -20146,7 +20668,8 @@
      "owner": "Subject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -20160,7 +20683,8 @@
      "owner": "Subject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -20208,7 +20732,8 @@
      "owner": "Chained",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -20231,7 +20756,8 @@
      "owner": "Chained",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -20257,7 +20783,8 @@
      "owner": "Chained",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -20279,7 +20806,8 @@
      "owner": "Chained",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -20302,7 +20830,8 @@
      "owner": "Chained",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -20318,7 +20847,8 @@
      "owner": "Chained",
      "param_names": [],
      "param_types": [],
-     "return_type": "Held"
+     "return_type": "Held",
+     "traversals": []
     }
    ]
   },
@@ -20351,7 +20881,8 @@
      "owner": "Held",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -20374,7 +20905,8 @@
      "owner": "Op",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -20410,7 +20942,8 @@
      "owner": "Client",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -20433,7 +20966,8 @@
      "owner": "Wallet",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -20447,7 +20981,8 @@
      "owner": "Wallet",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -20472,7 +21007,8 @@
      "owner": "Helper",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -20509,7 +21045,8 @@
      "owner": "Host",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -20538,7 +21075,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -20595,7 +21133,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -20649,7 +21188,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -20706,7 +21246,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -20738,7 +21279,8 @@
      "owner": "Task",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -20767,7 +21309,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -20845,7 +21388,8 @@
      "owner": "Report",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -20859,7 +21403,8 @@
      "owner": "Report",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -20887,7 +21432,8 @@
      "owner": "Report",
      "param_names": [],
      "param_types": [],
-     "return_type": "String"
+     "return_type": "String",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -20903,7 +21449,8 @@
      "owner": "Report",
      "param_names": [],
      "param_types": [],
-     "return_type": "Report"
+     "return_type": "Report",
+     "traversals": []
     }
    ]
   }
@@ -20932,7 +21479,8 @@
      "owner": "ConcreteObserver",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -20980,7 +21528,8 @@
      "param_types": [
       "Observer"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -21008,7 +21557,8 @@
      "owner": "ConcreteSubject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -21031,7 +21581,8 @@
      "owner": "Observer",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -21058,7 +21609,8 @@
      "param_types": [
       "Observer"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -21072,7 +21624,8 @@
      "owner": "Subject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -21101,7 +21654,8 @@
      "owner": "ConcreteObserver",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -21149,7 +21703,8 @@
      "param_types": [
       "Observer"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -21186,7 +21741,8 @@
      "owner": "ConcreteSubject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -21209,7 +21765,8 @@
      "owner": "Observer",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -21236,7 +21793,8 @@
      "param_types": [
       "Observer"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -21250,7 +21808,8 @@
      "owner": "Subject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -21279,7 +21838,8 @@
      "owner": "ConcreteObserver",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -21327,7 +21887,8 @@
      "param_types": [
       "Observer"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -21359,7 +21920,13 @@
      "owner": "ConcreteSubject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": [
+      [
+       "observers",
+       "update"
+      ]
+     ]
     }
    ]
   },
@@ -21382,7 +21949,8 @@
      "owner": "Observer",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -21409,7 +21977,8 @@
      "param_types": [
       "Observer"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -21423,7 +21992,8 @@
      "owner": "Subject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -21452,7 +22022,8 @@
      "owner": "ConcreteObserver",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -21500,7 +22071,8 @@
      "param_types": [
       "Observer"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -21526,7 +22098,8 @@
      "owner": "ConcreteSubject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -21549,7 +22122,8 @@
      "owner": "Observer",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -21576,7 +22150,8 @@
      "param_types": [
       "Observer"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -21590,7 +22165,8 @@
      "owner": "Subject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -21619,7 +22195,8 @@
      "owner": "ConcreteObserver",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -21667,7 +22244,8 @@
      "param_types": [
       "Observer"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -21704,7 +22282,8 @@
      "owner": "ConcreteSubject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -21727,7 +22306,8 @@
      "owner": "Observer",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -21754,7 +22334,8 @@
      "param_types": [
       "Observer"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -21768,7 +22349,8 @@
      "owner": "Subject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -21797,7 +22379,8 @@
      "owner": "ConcreteObserver",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -21845,7 +22428,8 @@
      "param_types": [
       "Observer"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -21889,7 +22473,8 @@
      "owner": "ConcreteSubject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -21912,7 +22497,8 @@
      "owner": "Observer",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -21939,7 +22525,8 @@
      "param_types": [
       "Observer"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -21953,7 +22540,8 @@
      "owner": "Subject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -21982,7 +22570,8 @@
      "owner": "ConcreteObserver",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -22037,14 +22626,15 @@
      "param_types": [
       "Observer"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
      "calls": [
       [
-       "out",
-       "println"
+       "s",
+       "trim"
       ]
      ],
      "has_body": true,
@@ -22054,11 +22644,9 @@
      },
      "mentions": [
       "String",
-      "System",
       "names",
-      "out",
-      "println",
-      "s"
+      "s",
+      "trim"
      ],
      "modifiers": [
       "public"
@@ -22067,7 +22655,8 @@
      "owner": "ConcreteSubject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -22090,7 +22679,8 @@
      "owner": "Observer",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -22117,7 +22707,8 @@
      "param_types": [
       "Observer"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -22131,7 +22722,8 @@
      "owner": "Subject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -22160,7 +22752,8 @@
      "owner": "ConcreteObserver",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -22208,7 +22801,8 @@
      "param_types": [
       "Observer"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -22240,7 +22834,8 @@
      "owner": "ConcreteSubject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -22260,7 +22855,8 @@
      "param_types": [
       "Observer"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -22283,7 +22879,8 @@
      "owner": "Observer",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -22310,7 +22907,8 @@
      "param_types": [
       "Observer"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -22324,7 +22922,8 @@
      "owner": "Subject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -22353,7 +22952,8 @@
      "owner": "ConcreteObserver",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -22408,7 +23008,8 @@
      "param_types": [
       "Observer"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -22440,7 +23041,13 @@
      "owner": "ConcreteSubject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": [
+      [
+       "widgets",
+       "trim"
+      ]
+     ]
     }
    ]
   },
@@ -22463,7 +23070,8 @@
      "owner": "Observer",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -22490,7 +23098,8 @@
      "param_types": [
       "Observer"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -22504,7 +23113,8 @@
      "owner": "Subject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -22533,7 +23143,8 @@
      "owner": "ConcreteObserver",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -22581,7 +23192,8 @@
      "param_types": [
       "Observer"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -22629,7 +23241,8 @@
      "owner": "ConcreteSubject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -22652,7 +23265,8 @@
      "owner": "Observer",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -22679,7 +23293,8 @@
      "param_types": [
       "Observer"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -22693,7 +23308,253 @@
      "owner": "Subject",
      "param_names": [],
      "param_types": [],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
+    }
+   ]
+  }
+ },
+ "tests/fixtures_parser/loopN5_stream_map_changes_type.java": {
+  "ConcreteObserver": {
+   "extends": null,
+   "fields": [
+    {
+     "modifiers": [
+      "private"
+     ],
+     "name": "tag",
+     "type": "Tag"
+    }
+   ],
+   "implements": [
+    "Observer"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [
+      "public"
+     ],
+     "name": "update",
+     "owner": "ConcreteObserver",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "tag"
+     ],
+     "modifiers": [],
+     "name": "getTag",
+     "owner": "ConcreteObserver",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "Tag",
+     "traversals": []
+    }
+   ]
+  },
+  "ConcreteSubject": {
+   "extends": null,
+   "fields": [
+    {
+     "modifiers": [
+      "private"
+     ],
+     "name": "observers",
+     "type": "List"
+    }
+   ],
+   "implements": [
+    "Subject"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "calls": [
+      [
+       "observers",
+       "add"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "add",
+      "o",
+      "observers"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "attach",
+     "owner": "ConcreteSubject",
+     "param_names": [
+      "o"
+     ],
+     "param_types": [
+      "Observer"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "calls": [
+      [
+       null,
+       "forEach"
+      ],
+      [
+       null,
+       "map"
+      ],
+      [
+       "observers",
+       "stream"
+      ],
+      [
+       "o",
+       "getTag"
+      ],
+      [
+       "t",
+       "update"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {
+      "o": null,
+      "t": null
+     },
+     "mentions": [
+      "forEach",
+      "getTag",
+      "map",
+      "o",
+      "observers",
+      "stream",
+      "t",
+      "update"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "notifyObservers",
+     "owner": "ConcreteSubject",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ]
+  },
+  "Observer": {
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "update",
+     "owner": "Observer",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ]
+  },
+  "Subject": {
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "attach",
+     "owner": "Subject",
+     "param_names": [
+      "o"
+     ],
+     "param_types": [
+      "Observer"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "notifyObservers",
+     "owner": "Subject",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ]
+  },
+  "Tag": {
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "update",
+     "owner": "Tag",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }
@@ -22738,7 +23599,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "Inner"
+     "return_type": "Inner",
+     "traversals": []
     },
     {
      "assignments": [],
@@ -22756,7 +23618,8 @@
      "owner": "Inner",
      "param_names": [],
      "param_types": [],
-     "return_type": "Outer"
+     "return_type": "Outer",
+     "traversals": []
     }
    ]
   },
@@ -22791,7 +23654,8 @@
      "owner": "Outer",
      "param_names": [],
      "param_types": [],
-     "return_type": "int"
+     "return_type": "int",
+     "traversals": []
     }
    ]
   }
@@ -22836,7 +23700,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   },
@@ -22884,7 +23749,8 @@
      "param_types": [
       "String"
      ],
-     "return_type": "void"
+     "return_type": "void",
+     "traversals": []
     }
    ]
   }

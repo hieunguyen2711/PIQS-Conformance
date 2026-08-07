@@ -10,7 +10,7 @@ indistinguishable at the verdict level:
     (b) the parser silently regressed          -- a defect
 
 The four suites report verdicts, so they cannot separate these. This records the FACTS the
-parser extracts -- every type, field, method, and the four body-level maps -- so a change to the
+parser extracts -- every type, field, method, and every body-level map -- so a change to the
 parser shows up as a fact diff regardless of whether any verdict moved.
 
 It is a FIFTH command, not a replacement:
@@ -105,6 +105,8 @@ def facts_for(rel_path: str) -> dict:
                     "calls": [list(c) for c in m.calls],
                     "mentions": sorted(m.mentions),
                     "assignments": sorted(m.assignments),
+                    # Source order is meaningful and stable; do not sort.
+                    "traversals": [list(t) for t in m.traversals],
                 }
                 for m in t.methods
             ],

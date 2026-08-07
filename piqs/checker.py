@@ -116,6 +116,11 @@ class JavaMethod:
     # Names assigned in the body via a simple `=`. Built by piqs.parser; read through
     # `PIQSChecker._assigns_field`.
     assignments: set[str] = field(default_factory=set)
+    # [(collection identifier, callback name)] for each notification loop the parser
+    # recognises in this body. The ELEMENT TYPE is not resolved here -- the checker does
+    # that from `coll_fields`, unchanged, so loop shapes can be added without touching
+    # the `t.body` text matching that also feeds Composite.
+    traversals: list[tuple[str, str]] = field(default_factory=list)
 
 
 @dataclass
@@ -943,6 +948,17 @@ class PIQSChecker:
                         observer_type_names.add(elem)
                         callback_names.update(calls)
                         notifies_loop = True
+                # (a2) Phase 2 step 3: loop forms the enhanced-for regex above cannot express.
+                # The parser reports (collection, callback); the element type is resolved HERE,
+                # from the same `coll_fields` the enhanced-for branch uses, so no new way of
+                # identifying a collection is introduced.
+                for (coll, cb) in m.traversals:
+                    elem = coll_fields.get(coll)
+                    if not elem or elem not in types:
+                        continue
+                    observer_type_names.add(elem)
+                    callback_names.add(cb)
+                    notifies_loop = True
                 # (b) single held observer of an abstract type that has a concrete impl
                 for fname, ftype in single_obs_fields.items():
                     has_impl = any(

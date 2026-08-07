@@ -440,6 +440,104 @@ def _assignment_targets(node, src: bytes) -> set[str]:
     return out
 
 
+def _callback_on(node, receiver: str, src: bytes) -> str | None:
+    """The name of the first method invoked ON `receiver` inside `node`.
+
+    RECEIVER, not merely mentioned. `observers.forEach(o -> log(o))` names the element and
+    iterates the right collection but never invokes anything on it -- `o` is an argument. O3 asks
+    whether the subject CALLS the callback on each observer, so that is not a notification.
+    Guarded by tests/fixtures_parser/loopN2_no_callback_call.java.
+    """
+    found: list[str] = []
+
+    def walk(n) -> None:
+        if found:
+            return
+        if n.type == "method_invocation":
+            obj = n.child_by_field_name("object")
+            nm = n.child_by_field_name("name")
+            if obj is not None and nm is not None and obj.type == "identifier":
+                if _text(obj, src) == receiver:
+                    found.append(_text(nm, src))
+                    return
+        for c in n.children:
+            walk(c)
+
+    if node is not None:
+        walk(node)
+    return found[0] if found else None
+
+
+def _single_lambda_param(lam, src: bytes) -> str | None:
+    """The lambda's parameter name, if it takes EXACTLY ONE.
+
+    `Collection.forEach` takes a `Consumer` -- one parameter. `Map.forEach` takes a `BiConsumer`
+    -- two. Requiring exactly one is therefore the shape check that separates a collection
+    traversal from a map traversal, and it is why the six `wallets.forEach((currency, wallet) ->
+    ...)` sites in Kim are rejected here rather than later at element-type resolution.
+    """
+    params = lam.child_by_field_name("parameters")
+    if params is None:
+        return None
+    if params.type == "identifier":
+        return _text(params, src)  # `o -> ...`
+    named = [c for c in params.named_children if c.type in {"formal_parameter", "identifier"}]
+    if len(named) != 1:
+        return None  # `(a, b) -> ...` is a BiConsumer, not a Consumer
+    p = named[0]
+    name_node = p.child_by_field_name("name") if p.type == "formal_parameter" else p
+    return _text(name_node, src) if name_node is not None else None
+
+
+def _traversals(node, src: bytes) -> list[tuple[str, str]]:
+    """[(collection identifier, callback name)] for each notification loop in a method body.
+
+    Phase 2, step 3. `foreach_re` in `_evaluate_observer` recognises ONE loop form of six, and the
+    other five are silently missed -- which looks exactly like a model that failed to write
+    Observer at all, the confound this checker exists to remove.
+
+    This reports only the (collection, callback) PAIR. The element type is still resolved by the
+    checker from `coll_fields`, unchanged, so this adds loop shapes without touching the `t.body`
+    text matching that also feeds Composite.
+
+    Implemented so far:
+
+        form 3   `observers.forEach(o -> o.update())`
+
+    Still on `foreach_re` in the checker: form 1 (enhanced-for). Not yet implemented: forms 5
+    (stream), 4 (method reference), 2 (indexed) and 6 (iterator).
+    """
+    out: list[tuple[str, str]] = []
+
+    def walk(n) -> None:
+        if n.type == "method_invocation":
+            nm = n.child_by_field_name("name")
+            obj = n.child_by_field_name("object")
+            args = n.child_by_field_name("arguments")
+            if (
+                nm is not None
+                and obj is not None
+                and args is not None
+                and _text(nm, src) == "forEach"
+                # Form 3 only: the receiver is the collection itself. A chained receiver
+                # (`observers.stream().forEach`) is form 5 and is not handled yet.
+                and obj.type == "identifier"
+            ):
+                lams = [c for c in args.named_children if c.type == "lambda_expression"]
+                if len(lams) == 1:
+                    param = _single_lambda_param(lams[0], src)
+                    if param:
+                        cb = _callback_on(lams[0].child_by_field_name("body"), param, src)
+                        if cb:
+                            out.append((_text(obj, src), cb))
+        for c in n.children:
+            walk(c)
+
+    if node is not None:
+        walk(node)
+    return out
+
+
 def _build_method(decl, owner: str, src: bytes) -> JavaMethod:
     is_ctor = decl.type == "constructor_declaration"
     name_node = decl.child_by_field_name("name")
@@ -472,6 +570,7 @@ def _build_method(decl, owner: str, src: bytes) -> JavaMethod:
         locals=_declared_in_body(body_node, src) if has_body else {},
         mentions=_mentioned_tokens(body_node, src) if has_body else set(),
         assignments=_assignment_targets(body_node, src) if has_body else set(),
+        traversals=_traversals(body_node, src) if has_body else [],
         calls=_invocations(body_node, src) if has_body else [],
     )
 
