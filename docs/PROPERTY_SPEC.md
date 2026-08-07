@@ -135,6 +135,34 @@ component, delegates, but its added logic *controls access* — it creates the r
 first use). The checker recognises it as a Decorator (D2=1, D3=1, PIQS 100). The case carries an
 in-source `// KNOWN LIMITATION` comment so reviewers see the accepted-Proxy fact directly.
 
+### Known limitation — `this` inside an anonymous class (recorded, not fixed)
+
+In Java, `this` inside an anonymous class refers to the **anonymous class**, not the enclosing
+one. Under divergence #8 the call walk descends into anonymous class bodies, so
+
+```java
+class Logger implements Sink {
+    private Sink inner;
+    public void write(String s) {
+        Runnable r = new Runnable() { public void run() { this.inner.op(); } };
+        r.run();
+    }
+}
+```
+
+credits **`Logger`** with delegating to `inner`, when `this.inner` inside the anonymous class does
+not name `Logger`'s field at all. (Written without `this`, `inner.op()` *would* correctly resolve
+to the enclosing instance's field — it is the explicit `this` qualifier that is misread.)
+
+**Not fixed in phase 2, on purpose.** The retired regex behaved the same way, so this is exact
+parity: fixing it would be a meaning change smuggled inside a mechanism change, and any resulting
+movement would be unattributable. Fixing it properly needs the receiver's *enclosing type*, which
+the flat `(receiver, method_name)` shape does not carry.
+
+**Coverage: zero.** The corpus contains 0 anonymous class bodies in 422 method bodies, so nothing
+scores differently today. This is a generated-code risk, not a current one — 2026 Java uses
+anonymous classes and lambdas far more than Kim's corpus does.
+
 ---
 
 ## Template Method — critical set {T3}

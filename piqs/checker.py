@@ -305,13 +305,26 @@ class PIQSChecker:
         return any(f.field_type == type_name for f in jtype.fields)
 
     @staticmethod
-    def _delegates_to_field(body: str, field_name: str) -> bool:
-        """True if `body` invokes a method on the reference `field_name` -- `field.op(...)` or
-        `this.field.op(...)` as a whole token. The structural signature of delegation (D3)."""
-        return re.search(
-            r"(?<![A-Za-z0-9_])(?:this\s*\.\s*)?" + re.escape(field_name) + r"\s*\.\s*[A-Za-z_]\w*\s*\(",
-            body,
-        ) is not None
+    def _delegates_to_field(method: "JavaMethod", field_name: str) -> bool:
+        """delegatesTo(method, field): does `method` invoke something on the reference
+        `field_name`? The structural signature of delegation (D3).
+
+        Phase 2, step 2. Reads `method.calls`, whose receiver was normalised at parse time by
+        `_qualifier`. The retired regex required `<name> . <ident> (`, optionally preceded by
+        `this.`, and that narrowness is the meaning: D3 asks whether the wrapper forwards to THE
+        HELD REFERENCE, so a chain through a call (`getX().op()`) or an array element
+        (`arr[0].op()`) is not delegation to a field.
+
+        A method_invocation query is naturally WIDER than that. Nothing here re-narrows it --
+        the uniform qualifier rule does, by storing None for any receiver that is not a simple
+        reference. None never equals a field name, so chains are rejected by comparison alone
+        and there is no chain-detection branch anywhere.
+
+        The sharp case is `f.g.op()`, which delegates to `g` and NOT to `f`: the old regex is
+        satisfied by the text `g.op(` and not by `f.op(`. Pinned by
+        tests/fixtures_parser/div5_chain_not_delegation.java; zero corpus coverage.
+        """
+        return any(receiver == field_name for receiver, _name in method.calls)
 
     @staticmethod
     def _assigns_field(body: str, field_name: str) -> bool:
@@ -1202,7 +1215,7 @@ class PIQSChecker:
                 # Void build-part: a void concrete method that populates the product's state
                 # (assigns a field, or mutates a held field through a call on it).
                 if m.return_type == "void" and m.has_body:
-                    if any(self._assigns_field(m.body, fn) or self._delegates_to_field(m.body, fn) for fn in field_names):
+                    if any(self._assigns_field(m.body, fn) or self._delegates_to_field(m, fn) for fn in field_names):
                         void_steps.append(m)
                     continue
                 # Terminal: a concrete method returning a type distinct from the builder (and not
@@ -1366,7 +1379,7 @@ class PIQSChecker:
         # D3 -- decorator delegates to the wrapped reference in its component methods. CRITICAL.
         d3 = any(
             any(
-                self._delegates_to_field(m.body, f.name)
+                self._delegates_to_field(m, f.name)
                 for m in w.methods
                 for (f, _c) in wrapped_fields
             )
@@ -1440,7 +1453,7 @@ class PIQSChecker:
                 comp_ops = {m.name for m in comp.methods if not m.is_constructor}
                 implemented = [op for op in comp_ops if op in w_ops]
                 if implemented and all(
-                    self._delegates_to_field(w_ops[op].body, f.name) for op in implemented
+                    self._delegates_to_field(w_ops[op], f.name) for op in implemented
                 ):
                     return True
             return False

@@ -43,7 +43,7 @@ Run all four after **every** change. Never fewer.
 | Mutation battery | 12/12 |
 | BDT battery | 27/27 + 5/5 D6 |
 | Renaming invariance failures | **8** (5 × `C3`, 3 × `O1`) |
-| pytest | **165 passed, 8 failed** (173 collected) |
+| pytest | **170 passed, 8 failed** (178 collected) |
 
 pytest was 120 before the scope table (+20 `tests/test_scope_table.py`) and 140 before body
 helper 1 (+17 `tests/test_body_helpers_divergences.py`). Collected by file: 81 invariance +
@@ -131,7 +131,7 @@ Goal: move method **body** analysis from regex to tree-sitter, and build a scope
 | Step | What | Status |
 |---|---|---|
 | 1 | Scope table: `{identifier → declared type}` per method | **DONE**, unmerged on `parser-phase2` |
-| 2 | Body helpers as tree queries | **2 of 4 done** — calls and mentions migrated |
+| 2 | Body helpers as tree queries | **3 of 4 done** — calls, mentions, delegation |
 | 3 | Traversal detection, six loop forms | not started — the payoff |
 
 ### Step 1 — what was built
@@ -205,6 +205,22 @@ For the paper: *"Across 51 programs / 184 files / 237 types / 492 methods, the s
 averages 2.71 over all 492 methods (max 12)."*
 
 
+### A finding that whole-corpus extraction DELETES
+
+`extract_types` keys its result by simple name, so extracting many programs in one call makes a
+class present in several of them collapse to a single entry, last one wins. Applied to the
+framework-inheritance detector, `AuditLog` — the one type in the corpus that obtains its Observer
+structure from `java.util.Observable` — collapses with a same-named class from another program,
+and the survivor does not extend `Observable`.
+
+The count therefore reads **0 framework-inheriting types instead of 1**, with nothing to indicate
+a type was dropped: the corpus simply looks uniform.
+
+What would have been lost is a result, not a statistic — that one of five models delegated Observer
+to the JDK while the other four wrote the structure themselves. This belongs with "11 predicates
+changed and 0 verdicts changed" as a property of the tool rather than of the data: an aggregate
+computed at the wrong granularity can erase the very case it was built to detect.
+
 ### Figure provenance — every number audited after the collapse bug
 
 `extract_types` keys its result by **simple name**. Calling it once over many files collapses
@@ -259,7 +275,7 @@ Five helpers move, in this order — one at a time, four suites between each:
 |---|---|---|---|
 | 1 | `_calls_method` **+ `_calls_within`** (a one-line delegate; cannot move separately) | 4, 6, 7, 8 | **DONE** |
 | 2 | `_mentions_token` → `_mentions_within` | 1, 4 | **DONE** |
-| 3 | `_delegates_to_field` | 4, 5, 8 | not started |
+| 3 | `_delegates_to_field` | 4, 5, 8 | **DONE** |
 | 4 | `_assigns_field` | 2, 3, 4 | not started |
 
 Helper 1 landed with zero movement on all four suites, as predicted; pytest 140 → 157.
@@ -276,10 +292,36 @@ measured before correcting:
 | BDT battery | **3 mismatches, exit 1** | 27/27 + 5/5, exit 0 |
 | Kim | 90.6% — **unmoved** | 90.6% |
 
-`builder_bloch_fluent_static_nested` and `t5_builder_immutable_product` both flip `B1=1 → 0`,
-PIQS 100 → 20. Builder B1 accepts a terminal only if its body consumes configured state, and one
-route is passing `this` to the product constructor. **Kim never scores Builder**, so only the BDT
-battery could ever have caught this — the corpus that matters is not always the big one.
+`builder_bloch_fluent_static_nested` and `t5_builder_immutable_product` both go from
+`(1,1,1,1,1,1)` to `(0,1,0,0,0,0)` — **five** properties move, not one. PSR 100 → 16.67,
+CPC 100 → 25.0, PIQS 100 → 20.0.
+
+The cascade: a terminal is accepted only if its body consumes configured state, one route being
+`this` passed to the product constructor. Lose `this`, and `terminals` is empty, so `real_builders`
+is empty — and **B1, B3, B4, B5 and B6 all route through `real_builders`**. Only B2 reads
+`builder_infos` directly, where `fluent_steps` is still non-empty, which is why B2 alone survives.
+
+**Kim never scores Builder**, so only the BDT battery could ever have caught this — the corpus that
+matters is not always the big one.
+
+**Helper 3** (`_delegates_to_field`, signature now `(method, field_name)`) is the mirror image of
+helper 2, and just as instructive. Built with a deliberately WIDE qualifier — the first identifier
+anywhere under the call's object — and measured:
+
+| | wide | correct (uniform rule) |
+|---|---|---|
+| divergence fixtures | **4 fail** | 29 pass |
+| Kim | 90.6% | 90.6% |
+| Mutation battery | 12/12 | 12/12 |
+| BDT battery | 27/27 + 5/5 | 27/27 + 5/5 |
+
+**Every suite stayed green while the implementation was wrong.** Divergence #5 has zero corpus
+coverage, so the fixtures are the only thing that distinguishes a correct migration from a broken
+one. Compare helper 2, where the BDT battery caught it immediately — the difference is coverage,
+not care.
+
+Nothing re-narrows the query: `_qualifier` stores `None` for any receiver that is not a simple
+reference, and `None` never equals a field name. There is no chain-detection branch.
 `_calls_method` is **deleted** — `_calls_within` reading `JavaMethod.calls` is the single API.
 `validation/synthetic_generality_tests.py` was the only consumer outside the four suites and now
 goes through a real parse rather than a bare string; it still reports 10/10.

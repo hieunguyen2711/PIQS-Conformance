@@ -306,3 +306,50 @@ def test_ordinary_identifiers_still_resolve():
     a mention, and a substring is still not one."""
     assert mentions("handOff", "size") is True
     assert mentions("handOff", "siz") is False
+
+
+# --------------------------------------------------------------------------------------- #
+# Divergence #5 -- a chain is not delegation to a field.
+#
+# D3 asks whether a wrapper forwards to THE HELD REFERENCE. The retired regex required
+# `<name> . <ident> (`, so a call or an array element as receiver was rejected. A
+# method_invocation query is naturally wider; the uniform qualifier rule is what keeps it narrow,
+# with no chain-detection branch anywhere.
+#
+# Zero corpus coverage: 0 of 41 real call sites have a body containing `).op(`.
+# --------------------------------------------------------------------------------------- #
+
+CHAIN = fixture("div5_chain_not_delegation.java")
+
+
+def delegates(method_name: str, field_name: str) -> bool:
+    return PIQSChecker._delegates_to_field(method(CHAIN, "Chained", method_name), field_name)
+
+
+def test_plain_field_receiver_is_delegation():
+    """Anti-vacuity: an implementation rejecting everything would pass every negative below."""
+    assert delegates("direct", "f") is True
+
+
+def test_this_qualified_field_receiver_is_delegation():
+    assert delegates("viaThis", "f") is True
+
+
+def test_call_receiver_is_not_delegation():
+    """`getF().op()` -- the receiver is a call expression, not a reference. A naive query taking
+    the first identifier under the object would answer True for "getF"."""
+    assert delegates("throughCall", "getF") is False
+    assert delegates("throughCall", "f") is False
+
+
+def test_array_element_receiver_is_not_delegation():
+    """`arr[0].op()` -- an element is not the array reference."""
+    assert delegates("throughIndex", "arr") is False
+
+
+def test_two_level_access_delegates_to_the_inner_field_only():
+    """The sharp case. `f.g.op()` delegates to `g`, NOT to `f` -- the old regex needed
+    `<name> . <ident> (`, which `g.op(` satisfies and `f.op(` does not. Taking the object's text
+    instead of the field's would be wrong in both directions at once."""
+    assert delegates("twoLevel", "g") is True
+    assert delegates("twoLevel", "f") is False
