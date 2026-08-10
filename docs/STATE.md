@@ -644,8 +644,18 @@ satisfy D2, so it got its own branch, its own prediction, and its own measuremen
 | Does Kim move? | cannot — Kim has **no Decorator scoring units** (10 factory, 10 strategy, 10 observer, 5 composite, 5 singleton) | 90.6% (145/160), 30/40 unchanged |
 | Effect on the Decorator/Proxy limitation? | none — both hold the type they conform to | unchanged |
 
-**Corpus exposure measured, not assumed:** across 212 single-file programs and all 27 BDT confirmed
-cases, wrappers accepted by the loose rule and rejected by the same-C rule: **0**.
+**Corpus exposure — remeasured 2026-08-10, one PROGRAM at a time.** `validation/decorator_rule_effect.py`
+over 82 units (12 Kim programs with all their files together, 12 mutation battery, 28 BDT, 30
+parser fixtures): 2 ADMISSION LOST, 1 FIELD LIST NARROWED, **all three are the fixtures e2acb66
+added for this rule**, and **0 pre-existing corpus programs** are affected.
+
+> **The original claim, "0 across 212 single-file programs", was right by accident.** Kim has no
+> single-file programs — all 12 are multi-file. Scanning file by file, a class whose interface is
+> in a sibling file gets `conformed = {}` and is skipped before the rule is reached, so that scan
+> **could not** have found an affected Kim wrapper. The rewrite was wrong on its first run in the
+> other direction: it dropped the `if not conformed: continue` gate that the loose rule **also**
+> had, and reported 16. Both failures are the same shape — the comparison changed something other
+> than the one thing under test. See §5b.
 
 **The filter is on the FIELD LIST, not only on admission.** Gating admission alone leaves every
 component-typed field in `wrapped_fields`, which D3/D4/D6 all read — so a class conforming to `C`,
@@ -666,6 +676,32 @@ matching no marker was **dropped from the suite without a word** — green, and 
 compared against the directory rather than a hardcoded count so it cannot go stale, and so the fix
 is never "edit the number". Proven by dropping a marker-less file into the directory and watching
 it fail.
+
+## 5b. The measurement was wrong twice, in opposite directions
+
+Both errors gave the *same kind* of wrong answer for the *same underlying reason*, and neither was
+caught by a suite. The rule they teach is the mutation rule again, pointed at measurement rather
+than at tests:
+
+> **A script that compares two versions of a rule must hold everything except the one difference
+> identical — otherwise it measures itself.**
+
+| | What it did | What it reported | Why it was wrong |
+|---|---|---|---|
+| v0 — the file-by-file scan | one `.java` file at a time across the whole tree | "0 affected across 212 single-file programs" | **Kim has no single-file programs.** All 12 are multi-file (6–16 files). A class whose interface is declared in a sibling file gets `conformed = {}` and is skipped before the rule is reached, so the scan could not have found an affected Kim wrapper even if one existed. The answer was right; nothing about the method made it right. |
+| v1 — `decorator_rule_effect.py`, first run | one program at a time, but modelled only the field list | **16** affected wrappers | It dropped `if not conformed: continue`, which the **loose rule had too**. Classes conforming to no abstract type were never candidates under either rule, so they had no admission to lose. Every `Context`-holds-a-`Strategy` and `Director`-holds-a-`Builder` in the corpus was counted as an effect of a change that never touched it. |
+| v2 — corrected | one program at a time, both gates modelled | 2 + 1, all three planted | matches the prediction |
+
+**The v1 failure is the more dangerous shape**, because it fails *loud*: a scary non-zero number
+that invites a fix to the checker rather than to the script. v0 failed *quiet*, which is worse for
+a reader and better for the code. Neither was a suite failure — no suite scores these programs as
+Decorator, so no verdict ever moved and all four stayed green throughout. §2's rule applies
+directly: **green suites mean the corpus lacks the case.**
+
+**A measurement that returns zero must be shown capable of returning non-zero.**
+`decorator_rule_effect.py` now carries a named positive control — the three fixtures `e2acb66`
+added for this rule — and prints a warning if the control does not fire. Without it, "0 affected"
+and "the script is broken" are the same output.
 
 ## 6. Traps in the current code
 

@@ -133,12 +133,38 @@ own fixture (`decorator_delegates_to_unrelated_component.java`); it is the only 
 two forms of the rule disagree, because every corpus program holds exactly one component-typed
 field.
 
-**Measured effect: nothing in the corpus moved.** Across 212 single-file programs and all BDT
-confirmed cases, the number of wrappers the loose rule accepted and the same-C rule rejects is
-**0**. Kim cannot move for a structural reason rather than a measured one: it has no Decorator
-scoring units (its 40 units are factory-method 10, strategy 10, observer 10, composite 5,
-singleton 5). `t3_decorator_lazy_proxy_KNOWN_LIMITATION` still passes, as it must — a Proxy
-conforms to the type it holds, so same-C is satisfied.
+**Measured effect: nothing in the pre-existing corpus moved.** Measured **one program at a time**
+by `validation/decorator_rule_effect.py` over **82 units** — 12 Kim programs (all of their files
+together), 12 mutation-battery files, 28 BDT files, 30 parser fixtures.
+
+| | count |
+|---|---|
+| ADMISSION LOST — was a candidate, is not now | 2 |
+| FIELD LIST NARROWED — still a candidate, D3/D4/D6 see fewer fields | 1 |
+| of those, fixtures added by `e2acb66` **for this rule** | 3 |
+| **pre-existing corpus programs affected** | **0** |
+
+The three hits are the script's **positive control**. A scan that can only ever return zero
+proves nothing about the corpus; because this one finds the fixtures planted for the rule, its
+zero for everything else is a measurement rather than a silence.
+
+> **Correction (2026-08-10).** This paragraph previously read *"across 212 single-file programs"*.
+> The conclusion was right and the method could not support it. **Kim has no single-file
+> programs** — all 12 are multi-file, 6 to 16 files each. `_component_type_names` only sees the
+> types in the dict it is handed, so scanning file by file a class whose interface is declared in
+> a sibling file gets `conformed = {}` and is skipped before the rule is reached. A file-by-file
+> scan **cannot** find an affected Kim wrapper whether or not one exists.
+>
+> The replacement script was wrong on its first run too, in the opposite direction: it omitted the
+> `if not conformed: continue` gate that the **loose rule also had**, and reported 16 affected
+> wrappers — counting every `Context`-holds-a-`Strategy` in the corpus as an effect of a change
+> that never touched it. A script comparing two rules has to hold everything except the one
+> difference identical, or it measures itself.
+
+Kim cannot move for a structural reason on top of the measured one: it has no Decorator scoring
+units (its 40 units are factory-method 10, strategy 10, observer 10, composite 5, singleton 5).
+`t3_decorator_lazy_proxy_KNOWN_LIMITATION` still passes, as it must — a Proxy conforms to the type
+it holds, so same-C is satisfied.
 
 **Consequence: D1 is now tautological.** `wrapped_fields` contains only conformed types, so D1 is
 true exactly when `decorators` is non-empty: `D1 == D2` for every program. No number moved (D1 was

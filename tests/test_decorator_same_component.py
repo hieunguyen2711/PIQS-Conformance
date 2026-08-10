@@ -32,7 +32,7 @@ That generalises, and the general form is now a rule in PROPERTY_SPEC.md:
 D1 IS NOW TAUTOLOGICAL. This is deliberate and recorded rather than hidden. D1 says "conforms
 to the same component type as what it wraps", which is now exactly the admission test, so
 D1 == D2 for every program. No existing number moved -- D1 was already 1 wherever D2 was 1
-across all 212 single-file programs and all BDT cases -- but the Decorator property set is now
+across all 82 program units measured by validation/decorator_rule_effect.py -- but the set is now
 five independent properties scored as six. `test_d1_is_now_implied_by_d2` pins that, so it
 cannot be forgotten, and it is an open decision rather than a settled one.
 """
