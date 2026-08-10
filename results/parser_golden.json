@@ -4767,7 +4767,13 @@
      "param_names": [],
      "param_types": [],
      "return_type": "void",
-     "traversals": []
+     "traversals": [
+      [
+       "components",
+       "print",
+       "SaleComponent"
+      ]
+     ]
     },
     {
      "assignments": [],
@@ -25531,7 +25537,8 @@
      "traversals": [
       [
        "observers",
-       "update"
+       "update",
+       null
       ]
      ]
     }
@@ -25750,7 +25757,13 @@
      "param_names": [],
      "param_types": [],
      "return_type": "void",
-     "traversals": []
+     "traversals": [
+      [
+       "observers",
+       "update",
+       "Observer"
+      ]
+     ]
     }
    ],
    "name": "ConcreteSubject"
@@ -25981,7 +25994,8 @@
      "traversals": [
       [
        "observers",
-       "update"
+       "update",
+       null
       ]
      ]
     }
@@ -26925,7 +26939,8 @@
      "traversals": [
       [
        "widgets",
-       "trim"
+       "trim",
+       null
       ]
      ]
     }
@@ -27561,6 +27576,273 @@
     }
    ],
    "name": "Tag"
+  }
+ },
+ "tests/fixtures_parser/loopN6_method_ref_element_is_argument.java": {
+  "ConcreteObserver": {
+   "body": {
+    "len": 34,
+    "sha256": "5cd697e865191095"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [
+    "Observer"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 5,
+      "sha256": "4dc501d66cd78903"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [
+      "public"
+     ],
+     "name": "update",
+     "owner": "ConcreteObserver",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "ConcreteObserver"
+  },
+  "ConcreteSubject": {
+   "body": {
+    "len": 257,
+    "sha256": "1a690a89f465f8d6"
+   },
+   "extends": null,
+   "fields": [
+    {
+     "field_type": "List",
+     "modifiers": [
+      "private"
+     ],
+     "name": "observers"
+    },
+    {
+     "field_type": "Logger",
+     "modifiers": [
+      "private"
+     ],
+     "name": "logger"
+    }
+   ],
+   "implements": [
+    "Subject"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 31,
+      "sha256": "41493bcbe072d2ba"
+     },
+     "calls": [
+      [
+       "observers",
+       "add"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "add",
+      "o",
+      "observers"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "attach",
+     "owner": "ConcreteSubject",
+     "param_names": [
+      "o"
+     ],
+     "param_types": [
+      "Observer"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 48,
+      "sha256": "e651f406acf5239f"
+     },
+     "calls": [
+      [
+       "observers",
+       "forEach"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "forEach",
+      "logger",
+      "observers",
+      "record"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "notifyObservers",
+     "owner": "ConcreteSubject",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": [
+      [
+       "observers",
+       "record",
+       "logger"
+      ]
+     ]
+    }
+   ],
+   "name": "ConcreteSubject"
+  },
+  "Logger": {
+   "body": {
+    "len": 37,
+    "sha256": "9e55707beef64cbe"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 5,
+      "sha256": "4dc501d66cd78903"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "record",
+     "owner": "Logger",
+     "param_names": [
+      "o"
+     ],
+     "param_types": [
+      "Observer"
+     ],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Logger"
+  },
+  "Observer": {
+   "body": {
+    "len": 20,
+    "sha256": "d6728e100d504cbf"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "update",
+     "owner": "Observer",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Observer"
+  },
+  "Subject": {
+   "body": {
+    "len": 59,
+    "sha256": "97a9a6bfa8e44eef"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "attach",
+     "owner": "Subject",
+     "param_names": [
+      "o"
+     ],
+     "param_types": [
+      "Observer"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "notifyObservers",
+     "owner": "Subject",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Subject"
   }
  },
  "tests/fixtures_parser/nested_type_members.java": {

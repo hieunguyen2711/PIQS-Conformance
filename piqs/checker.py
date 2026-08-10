@@ -120,7 +120,7 @@ class JavaMethod:
     # recognises in this body. The ELEMENT TYPE is not resolved here -- the checker does
     # that from `coll_fields`, unchanged, so loop shapes can be added without touching
     # the `t.body` text matching that also feeds Composite.
-    traversals: list[tuple[str, str]] = field(default_factory=list)
+    traversals: list[tuple[str, str, str | None]] = field(default_factory=list)
 
 
 @dataclass
@@ -952,9 +952,17 @@ class PIQSChecker:
                 # The parser reports (collection, callback); the element type is resolved HERE,
                 # from the same `coll_fields` the enhanced-for branch uses, so no new way of
                 # identifying a collection is introduced.
-                for (coll, cb) in m.traversals:
+                for (coll, cb, qual) in m.traversals:
                     elem = coll_fields.get(coll)
                     if not elem or elem not in types:
+                        continue
+                    # A method reference is a notification only when its qualifier NAMES the
+                    # element type. `observers.forEach(logger::record)` passes each observer as an
+                    # ARGUMENT to something else -- the loopN2 failure mode in method-reference
+                    # clothes. Exact match, deliberately: a qualifier naming a SUPERTYPE of the
+                    # element is legal Java and is recorded as a known limitation rather than
+                    # accepted, because narrower is safe where the corpus cannot decide.
+                    if qual is not None and qual != elem:
                         continue
                     observer_type_names.add(elem)
                     callback_names.add(cb)

@@ -85,6 +85,8 @@ NEGATIVES = [
     "loopN2_no_callback_call",
     "loopN3_wrong_element_type",
     "loopN4_single_call_no_loop",
+    "loopN5_stream_map_changes_type",
+    "loopN6_method_ref_element_is_argument",
 ]
 
 
@@ -104,6 +106,18 @@ def test_single_call_without_a_loop_is_not_traversal():
     the loop is part of the pattern.
     """
     assert vector("loopN4_single_call_no_loop")["O3"] == 0
+
+
+def test_method_reference_qualifier_must_name_the_element_type():
+    """`observers.forEach(logger::record)` passes each observer as an ARGUMENT to something else
+    -- the loopN2 failure mode in method-reference clothes. Only `Observer::update`, whose
+    qualifier NAMES the element type, is a notification.
+
+    The check is a name comparison in the checker, not a node-kind test in the parser:
+    tree-sitter reports an `identifier` for the qualifier of both `Observer::update` and
+    `logger::record`, because Java resolves type-vs-variable semantically.
+    """
+    assert vector("loopN6_method_ref_element_is_argument")["O3"] == 0
 
 
 def test_element_must_be_the_receiver_not_merely_present():
@@ -129,7 +143,7 @@ FORMS = [
     ("loop6_iterator", "while (it.hasNext()) it.next().update();"),
 ]
 
-DETECTED: set[str] = {"loop1_enhanced_for", "loop3_lambda", "loop5_stream"}
+DETECTED: set[str] = {"loop1_enhanced_for", "loop3_lambda", "loop4_method_ref", "loop5_stream"}
 
 
 @pytest.mark.parametrize("slug,shape", FORMS)

@@ -463,6 +463,24 @@ call must sit inside a `for_statement` (form 2) or a `while_statement` (form 6).
 `tests/fixtures_parser/loopN4_single_call_no_loop.java`, whose expected O3 is 0 — none of the six
 positive fixtures can raise this alarm, because every one of them contains a loop.
 
+### Known limitation — a method-reference qualifier naming a SUPERTYPE (recorded, not fixed)
+
+Form 4 accepts `observers.forEach(Observer::update)` only when the qualifier is an EXACT match for
+the resolved element type. Legal Java can name a supertype instead:
+
+```java
+List<ConcreteObserver> obs;
+obs.forEach(Observer::update);      // qualifier is the SUPERTYPE of the element -- rejected today
+```
+
+Exact match is the deliberate default: narrower is safe where the corpus cannot decide between
+readings. `_conforms_to` already walks the project's type graph and would resolve it, so this is a
+small change when it is wanted — but widening a NEW detector without a corpus case to measure
+against is how false positives get in.
+
+The Kim site (`components.forEach(SaleComponent::print)`, `List<SaleComponent> components`) is an
+exact match, so nothing in either corpus exercises the supertype form.
+
 ### Known limitation — Map iteration is not detected as notification (recorded, not fixed)
 
 The two idiomatic ways to iterate a `Map`'s values are

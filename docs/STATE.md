@@ -258,6 +258,11 @@ forms 2 and 6, and nothing implements those, so there is no code to widen and no
 flip it. It is proven when form 2 lands. **If the stopping rule drops forms 2 and 6, delete N4**
 rather than leaving a guard for shipped-nothing.
 
+**A MUTATION MUST CHANGE EXACTLY ONE THING.** The first attempt at the table above patched both
+element-type checks at once, so it could not tell N1 from N3 and made one look redundant. A
+mutation that changes two things measures neither. This is "one change at a time" applied to the
+test-the-test step, and it is as easy to get wrong there as anywhere else.
+
 **Mutation-testing method note.** Results from rapid successive in-place patches proved
 unreliable: stale `__pycache__` survived rewrites and produced two contradictory readings of the
 same mutation. Mutation runs now clear bytecode and verify the on-disk content immediately before
@@ -269,6 +274,18 @@ not affected.
 | 2 — mentions | omit the `this` / `super` keyword nodes | **Yes** — BDT battery, 3 mismatches, exit 1 | yes (4 fail) |
 | 3 — delegation | widen the receiver to the first identifier under the object | **No** — Kim, the mutation battery and BDT all stayed green | **yes, only** (4 fail) |
 | 4 — assignment | drop the `operator == "="` filter, so all ten compound forms count | **No** — all four suites green, BDT exit 0 | **yes, only** (1 fail) |
+
+**Re-verified 2026-08-08 under controlled conditions** (bytecode cleared, on-disk content checked
+immediately before each run), because these results are a paper claim and mutation runs are
+exactly what stale bytecode corrupted. All three reproduce: helper 2 -> BDT 3 mismatches exit 1;
+helper 3 -> all four suites green, 4 divergence fixtures fail; helper 4 -> all four suites green,
+1 divergence fixture fails.
+
+**A refinement the re-run produced, and the claim should carry it.** A *different* too-wide
+receiver rule for helper 3 -- taking a `field_access`'s OBJECT rather than its FIELD -- **is**
+caught, by 2 BDT mismatches. So the finding is not "any wrong implementation of helper 3 escapes
+the suites". It is that **a plausible wrong implementation did**. Detection here is a property of
+the specific error, not of the helper, and the paper sentence should say so.
 
 Two of the three deliberate errors would have shipped with every validation suite green. The
 fixture was **load-bearing** for helpers 3 and 4, and merely **confirmatory** for helper 2 — and

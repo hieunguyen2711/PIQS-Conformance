@@ -540,27 +540,36 @@ def _collection_of(node, src: bytes) -> str | None:
     return None
 
 
-def _traversals(node, src: bytes) -> list[tuple[str, str]]:
-    """[(collection identifier, callback name)] for each notification loop in a method body.
+def _traversals(node, src: bytes) -> list[tuple[str, str, str | None]]:
+    """[(collection identifier, callback name, required qualifier)] per notification loop.
 
     Phase 2, step 3. `foreach_re` in `_evaluate_observer` recognises ONE loop form of six, and the
     other five are silently missed -- which looks exactly like a model that failed to write
     Observer at all, the confound this checker exists to remove.
 
-    This reports only the (collection, callback) PAIR. The element type is still resolved by the
-    checker from `coll_fields`, unchanged, so this adds loop shapes without touching the `t.body`
-    text matching that also feeds Composite.
+    The element type is still resolved by the CHECKER from `coll_fields`, unchanged, so this adds
+    loop shapes without touching the `t.body` text matching that also feeds Composite.
+
+    `required qualifier` is None for the lambda forms, which carry no type name. For a method
+    reference it is the text before `::`, and the checker requires it to EQUAL the resolved
+    element type. That check cannot live here: tree-sitter reports an `identifier` for the
+    qualifier in both `Observer::update` and `logger::record`, because Java resolves type-vs-
+    variable semantically and the parser does no semantic resolution. It is a NAME COMPARISON
+    against the element type, made where the element type is known.
 
     Implemented so far:
 
         form 3   `observers.forEach(o -> o.update())`
         form 5   `observers.stream().forEach(o -> o.update())`, and any chain of
                  element-preserving operations -- see `_ELEMENT_PRESERVING`
+        form 4   `observers.forEach(Observer::update)` -- accepted only when the qualifier names
+                 the element type; `observers.forEach(logger::record)` passes the element as an
+                 ARGUMENT and is not a notification
 
-    Still on `foreach_re` in the checker: form 1 (enhanced-for). Not yet implemented: forms 4
-    (method reference), 2 (indexed) and 6 (iterator).
+    Still on `foreach_re` in the checker: form 1 (enhanced-for). Not yet implemented: forms 2
+    (indexed) and 6 (iterator).
     """
-    out: list[tuple[str, str]] = []
+    out: list[tuple[str, str, str | None]] = []
 
     def walk(n) -> None:
         if n.type == "method_invocation":
@@ -572,12 +581,22 @@ def _traversals(node, src: bytes) -> list[tuple[str, str]]:
                 # element-preserving operations back to it. Anything else -> None -> rejected.
                 coll = _collection_of(obj, src)
                 lams = [c for c in args.named_children if c.type == "lambda_expression"]
+                refs = [c for c in args.named_children if c.type == "method_reference"]
                 if coll and len(lams) == 1:
                     param = _single_lambda_param(lams[0], src)
                     if param:
                         cb = _callback_on(lams[0].child_by_field_name("body"), param, src)
                         if cb:
-                            out.append((coll, cb))
+                            out.append((coll, cb, None))
+                elif coll and len(refs) == 1:
+                    # Form 4. A method_reference is `<qualifier> :: <name>`; a CONSTRUCTOR
+                    # reference (`Observer::new`) has the keyword `new` there and is not a call
+                    # on the element, so it is excluded.
+                    parts = [c for c in refs[0].children if c.type not in {"::"}]
+                    if len(parts) == 2 and parts[1].type == "identifier":
+                        qual, name = _text(parts[0], src), _text(parts[1], src)
+                        if qual and name:
+                            out.append((coll, name, qual))
         for c in n.children:
             walk(c)
 
