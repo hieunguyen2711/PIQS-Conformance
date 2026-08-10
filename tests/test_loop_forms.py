@@ -87,6 +87,9 @@ NEGATIVES = [
     "loopN4_single_call_no_loop",
     "loopN5_stream_map_changes_type",
     "loopN6_method_ref_element_is_argument",
+    "loopN7_constant_index_in_loop",
+    "loopN8_iterator_element_is_argument",
+    "loopN9_two_iterators_wrong_collection",
 ]
 
 
@@ -96,6 +99,25 @@ def test_negative_control_is_not_detected_as_notification(slug):
     v = vector(slug)
     assert v == {"O1": 1, "O2": 0, "O3": 0, "O4": 0}, f"{slug} moved -- the widening is too wide"
     assert piqs(slug) == 22.27
+
+
+def test_enclosing_loop_is_necessary_but_not_sufficient():
+    """`for (int i = 0; i < 10; i++) observers.get(0).update();` sits inside a loop and notifies
+    the SAME observer ten times. The index must be the for-init's declared variable."""
+    assert vector("loopN7_constant_index_in_loop")["O3"] == 0
+
+
+def test_iterator_element_must_be_the_receiver():
+    """`while (it.hasNext()) log(it.next());` -- form 6's version of the loopN2 failure mode.
+    Three separate code paths (lambda, method reference, iterator); a fix on one does not imply
+    a fix on the others."""
+    assert vector("loopN8_iterator_element_is_argument")["O3"] == 0
+
+
+def test_iterator_sources_are_keyed_by_identifier():
+    """Two iterators in one method. A single per-method value makes the second declaration
+    overwrite the first, so a loop over `names` scores as a notification over `Observer`."""
+    assert vector("loopN9_two_iterators_wrong_collection")["O3"] == 0
 
 
 def test_single_call_without_a_loop_is_not_traversal():
@@ -143,7 +165,7 @@ FORMS = [
     ("loop6_iterator", "while (it.hasNext()) it.next().update();"),
 ]
 
-DETECTED: set[str] = {"loop1_enhanced_for", "loop3_lambda", "loop4_method_ref", "loop5_stream"}
+DETECTED: set[str] = {s for s, _ in FORMS}   # all six forms detected as of 2026-08-10
 
 
 @pytest.mark.parametrize("slug,shape", FORMS)

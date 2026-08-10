@@ -14,6 +14,50 @@ state file" both mean this file.
 
 ---
 
+## 0. PLAN ORDER — reordered 2026-08-10, and why
+
+**Generation is the schedule bottleneck, and generation needs PROMPTS, not a finished scorer.**
+Prompts need the 12 pattern rule tables. The scorer only has to be right by the time results are
+scored, which is *after* generation runs. So the four missing patterns outrank the remaining
+checker stages.
+
+| # | Work | Why here |
+|---|---|---|
+| 1 | **Adapter** | The separator is one type comparison, and D4 already encodes it ("implements a DIFFERENT type from the one held"). Cheapest of the four, and it proves the porting process before we commit to all four. |
+| 2 | **State** | Separator is "the field is ASSIGNED from inside a method" — `_assigns_field` on the context's own field, which phase 2 just migrated. |
+| 3 | **Abstract Factory** | — |
+| 4 | **Proxy** | Blocked on a new property definition; see below. |
+| 5 | Stage 3 (`O1` structural) | Without it the checker demonstrably reads names for `O1`, which is fatal to the paper's method claim. |
+| 6 | Stage 4 (`C3` structural) | Same, for `C3`. |
+
+**Stages 5 and 6 are DEFERRED, not dropped.**
+
+| Stage | Reason for deferral |
+|---|---|
+| 5 — derived predicates read names | Its finding — *11 predicates changed, 0 verdicts changed* — is already recorded and IS the paper content. Fixing it adds nothing to the experiment. |
+| 6 — obfuscator receiver-awareness | The 28 `update` collisions were already verified by hand. |
+
+### The Proxy blocker — read before planning Proxy
+
+`docs/PROPERTY_SPEC.md` already records that Decorator and Proxy are **structurally identical**
+under static analysis, and `t3_decorator_lazy_proxy_KNOWN_LIMITATION` proves it: a real Proxy
+scores as a Decorator at PIQS 100.
+
+Conflict pair B is Decorator/Proxy. If both rule sets can be satisfied at once, every X output
+scores "both" — and by the experiment design that means the separator is broken and **the pair is
+invalid before a single prompt is written**.
+
+The narrow fix, which IS decidable:
+
+| | Where the wrapped object comes from |
+|---|---|
+| Decorator | arrives through the **constructor** (injected) |
+| Proxy | is created **inside** the class |
+
+This does not solve Decorator-vs-Proxy in general. It makes **pair B's separator** decidable. It is
+a NEW property definition, not a pattern port, so it gets its own budget and its own prediction.
+Do not start Proxy until Adapter and State have landed.
+
 ## 1. What this repo does
 
 One job: decide whether Java source **structurally** conforms to a GoF design pattern, and prove
@@ -145,7 +189,7 @@ Goal: move method **body** analysis from regex to tree-sitter, and build a scope
 |---|---|---|
 | 1 | Scope table: `{identifier → declared type}` per method | **DONE**, unmerged on `parser-phase2` |
 | 2 | Body helpers as tree queries | **DONE** — all five helpers migrated |
-| 3 | Traversal detection, six loop forms | not started — the payoff |
+| 3 | Traversal detection, six loop forms | **DONE** — all six detected |
 
 ### Step 1 — what was built
 
@@ -234,125 +278,60 @@ to the JDK while the other four wrote the structure themselves. This belongs wit
 changed and 0 verdicts changed" as a property of the tool rather than of the data: an aggregate
 computed at the wrong granularity can erase the very case it was built to detect.
 
-### The controlled pair: when a purpose-built fixture is load-bearing
+### When a purpose-built fixture is load-bearing: a within-helper pair
 
-Two deliberate errors of comparable severity were introduced during step 2, one per helper, and
-measured before correction. What caught them differed:
+**The primary evidence is two wrong implementations of the SAME helper.** Same code, same suites,
+same author, same week — only the error differs, which isolates the variable in a way the
+across-helper comparison never quite did.
 
-**Step 3 negative controls — independence proven by disjoint mutation sets.** N1 and N3 both guard
-the element-type check, but on *different code paths*, so a mutation of one leaves the other
-untouched:
+`_delegates_to_field` (helper 3) resolves a call's receiver. Two plausible ways to get it wrong:
 
-| Mutation | N1 | N2 | N3 |
+| Wrong receiver rule | Kim | Battery | BDT | Its own fixture |
+|---|---|---|---|---|
+| first identifier **anywhere under** the object | green | green | **green** | **4 fail** |
+| a `field_access`'s **object** instead of its **field** | green | green | **2 mismatches, exit 1** | fails |
+
+One is caught by a pre-existing suite; the other is caught by nothing except the fixture written
+for it. **Detection here is a property of the specific error, not of the helper.**
+
+### Corroboration: the across-helper triple
+
+| Helper | Deliberate error | Pre-existing suite? | Its fixture? |
 |---|---|---|---|
-| element-type check dropped on the **form-1** branch | **flips** | held | held |
-| element-type check dropped on the **form-3** branch | held | held | **flips** |
-| element MENTIONED rather than the receiver | held | **flips** | held |
-| element type taken from any observer-typed field | held | held | **flips** |
+| 2 — mentions | omit `this` / `super` | **yes** — BDT, 3 mismatches, exit 1 | yes (4 fail) |
+| 3 — delegation | widen the receiver | **no** — all four green | **only** (4 fail) |
+| 4 — assignment | drop the `operator == "="` filter | **no** — all four green | **only** (1 fail) |
 
-N1 = {A1}, N2 = {B}, N3 = {A3, C} — disjoint. An earlier table patched both branches at once,
-which made N1's set look like a subset of N3's and the two look redundant.
+Re-verified 2026-08-08 under controlled conditions (bytecode cleared, on-disk content checked
+immediately before each run), because mutation runs are exactly what stale bytecode corrupts. All
+three reproduce.
 
-**N4 is UNPROVEN and must not be counted as a guard yet.** It guards the enclosing-loop rule for
-forms 2 and 6, and nothing implements those, so there is no code to widen and no mutation that can
-flip it. It is proven when form 2 lands. **If the stopping rule drops forms 2 and 6, delete N4**
-rather than leaving a guard for shipped-nothing.
+### How to state this, and how NOT to
 
-**A MUTATION MUST CHANGE EXACTLY ONE THING.** The first attempt at the table above patched both
-element-type checks at once, so it could not tell N1 from N3 and made one look redundant. A
-mutation that changes two things measures neither. This is "one change at a time" applied to the
-test-the-test step, and it is as easy to get wrong there as anywhere else.
+**Wrong implementations actually tried: helper 2 → 1, helper 3 → 2, helper 4 → 1.** Four in total.
+Helper 3's second one was written by accident while re-verifying, not as a designed probe.
 
-**Mutation-testing method note.** Results from rapid successive in-place patches proved
-unreliable: stale `__pycache__` survived rewrites and produced two contradictory readings of the
-same mutation. Mutation runs now clear bytecode and verify the on-disk content immediately before
-evaluating. Earlier single-mutation runs in this project were separated by full suite runs and are
-not affected.
+The claim is an **existence proof**:
 
-| Helper | Deliberate error | Caught by a PRE-EXISTING suite? | Caught by its new fixture? |
-|---|---|---|---|
-| 2 — mentions | omit the `this` / `super` keyword nodes | **Yes** — BDT battery, 3 mismatches, exit 1 | yes (4 fail) |
-| 3 — delegation | widen the receiver to the first identifier under the object | **No** — Kim, the mutation battery and BDT all stayed green | **yes, only** (4 fail) |
-| 4 — assignment | drop the `operator == "="` filter, so all ten compound forms count | **No** — all four suites green, BDT exit 0 | **yes, only** (1 fail) |
+> At least one plausible wrong implementation of two of the three helpers escaped every validation
+> suite, and was caught only by a purpose-built fixture.
 
-**Re-verified 2026-08-08 under controlled conditions** (bytecode cleared, on-disk content checked
-immediately before each run), because these results are a paper claim and mutation runs are
-exactly what stale bytecode corrupted. All three reproduce: helper 2 -> BDT 3 mismatches exit 1;
-helper 3 -> all four suites green, 4 divergence fixtures fail; helper 4 -> all four suites green,
-1 divergence fixture fails.
+**Never a rate.** Not "N of M errors escape", not a percentage. Four hand-written errors chosen by
+the person who wrote the code is not a sample, and there is no denominator — the space of wrong
+implementations is unbounded and unenumerated.
 
-**A refinement the re-run produced, and the claim should carry it.** A *different* too-wide
-receiver rule for helper 3 -- taking a `field_access`'s OBJECT rather than its FIELD -- **is**
-caught, by 2 BDT mismatches. So the finding is not "any wrong implementation of helper 3 escapes
-the suites". It is that **a plausible wrong implementation did**. Detection here is a property of
-the specific error, not of the helper, and the paper sentence should say so.
+**Corpus size did not predict detection power.** Kim is 145 files and caught none of the four
+errors. The BDT battery is 27 files and caught two. What matters is whether a corpus contains the
+construct: Kim never scores Builder at all, so the properties helper 2 broke are ones Kim does not
+evaluate.
 
-Two of the three deliberate errors would have shipped with every validation suite green. The
-fixture was **load-bearing** for helpers 3 and 4, and merely **confirmatory** for helper 2 — and
-nothing tells you which case you are in except running the error and looking.
+**A MUTATION MUST CHANGE EXACTLY ONE THING.** An early table patched both element-type checks at
+once and could not tell N1 from N3 apart, making one look redundant. A mutation that changes two
+things measures neither. This is "one change at a time" applied to the test-the-test step.
 
-The distinguishing variable is corpus coverage, not care: divergence #1 has 43 live call sites,
-divergence #5 has 0 of 41 (`).op(` appears in no `_delegates_to_field` body).
-
-**Corpus size did not predict detection power.** Kim is 145 files and caught neither error. The BDT
-battery is 27 files and caught helper 2's. What matters is whether a corpus contains the construct
-— Kim is 2015-era Java that never scores Builder at all, so the properties helper 2 broke are ones
-Kim does not evaluate.
-
-
-
-
-### Correction: "Kim's corpus is old Java, so the other loop forms never occur"
-
-That sentence appeared in the handover and was repeated several times, including in this file. It
-was **never measured**. Measured across the 145 Kim files:
-
-| Form | Kim | Batteries |
-|---|---:|---:|
-| 1 enhanced-for | 27 | — |
-| 2 indexed `for` | **0** | 1 (`template_abstractlist_analogue`, a Template Method case) |
-| 3 `forEach` lambda | **6** | 0 |
-| 4 method reference | **1** | 0 |
-| 5 `stream().forEach` | **0** | 0 |
-| 6 iterator + `while` | **0** | 0 |
-
-Right about forms 2, 5 and 6; wrong about 3 and 4. Kim's corpus does contain Java-8 constructs.
-
-Same failure as the census: a number carried forward from a report, restated until it sounded
-established, and never divided. The 6 form-3 sites and the 1 form-4 site both turn out not to move
-any verdict — but for reasons that had to be traced, not assumed.
-
-### Step 3 — decisions made BEFORE the work, so they are not made under sunk cost
-
-**The success signal inverts.** Steps 1 and 2 were parity work: predict zero movement, measure
-zero, any movement is a defect. Step 3 moves verdicts **on purpose**, so:
-
-| | Steps 1–2 | Step 3 |
-|---|---|---|
-| Movement | a defect | expected — but every movement needs a **named construct and a fixture** |
-| No movement | success | **a warning sign** — either the detection never fired, or it fired and nothing depended on it |
-
-Unexplained movement is still a defect. So is a suspiciously quiet run.
-
-**The stopping rule.** If forms 2 (indexed) and 6 (iterator) stall, ship forms 1, 3, 4 and 5,
-record 2 and 6 as known limitations in `docs/PROPERTY_SPEC.md` with the reason, and move on.
-Enhanced-for plus `forEach`-lambda covers most real Java. **Do not spend a second session on the
-indexed and iterator forms.**
-
-**Out of scope for Step 3's loop work.** `_evaluate_observer`'s `coll_fields` text matching must
-NOT change in the same commit as the loop forms. It is the `t.body` trap, and through `elem_re`
-(lines 855/868) it moves **Composite** as well as Observer. If loop detection needs the collection
-identified differently, that is a separate change with its own prediction — and by the rule in
-PROPERTY_SPEC.md it **redefines the predicate** rather than removing a false positive.
-
-**After every form: run the four suites AND `golden_facts.py --check`, and report both.** The
-snapshot is load-bearing from here on:
-
-| Verdict moved | `--check` | Reading |
-|---|---|---|
-| yes | clean | the new detection fired — what we want |
-| yes | dirty | **the parser changed underneath you**; the movement is not what you think it is |
-| no | clean | detection did not fire, or nothing depended on it — investigate |
+**Mutation-testing method note.** Rapid successive in-place patches proved unreliable: stale
+`__pycache__` survived rewrites and produced two contradictory readings of the same mutation. Runs
+now clear bytecode and verify on-disk content immediately before evaluating.
 
 ### Body-regex inventory — what Step 2 did NOT migrate
 

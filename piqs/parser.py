@@ -540,6 +540,95 @@ def _collection_of(node, src: bytes) -> str | None:
     return None
 
 
+
+_LOOP_NODES = {"while_statement", "for_statement", "enhanced_for_statement", "do_statement"}
+
+
+def _for_init_vars(node, src: bytes) -> set[str]:
+    """Names declared in a `for` statement's INIT clause.
+
+    Form 2 needs them because an enclosing loop is NECESSARY BUT NOT SUFFICIENT:
+
+        for (int i = 0; i < observers.size(); i++) observers.get(i).update();   traversal
+        for (int i = 0; i < 10; i++)               observers.get(0).update();   the SAME observer
+
+    Both sit inside a for_statement. Only the first indexes BY the loop variable. Requiring the
+    argument of `get(...)` to be a for-init variable separates them, and gives reverse iteration
+    (`for (int i = n-1; i >= 0; i--)`) for free. Guarded by loopN7.
+    """
+    out: set[str] = set()
+    for child in node.children:
+        if child.type == "local_variable_declaration":
+            for d in child.named_children:
+                if d.type == "variable_declarator":
+                    nm = d.child_by_field_name("name")
+                    if nm is not None:
+                        out.add(_text(nm, src))
+        elif child.type in {"(", ")"}:
+            continue
+        elif child.type in _LOOP_NODES or child.type == "block":
+            break  # past the header, into the body
+    return out
+
+
+def _iterator_sources(node, src: bytes) -> dict[str, str]:
+    """{iterator variable -> the collection it was taken from}, KEYED BY IDENTIFIER.
+
+    A single per-method value would be wrong, not merely imprecise:
+
+        Iterator<String>   it2 = names.iterator();
+        Iterator<Observer> it1 = observers.iterator();
+
+    Last-wins would make `it2` resolve to `observers`, and a loop that never touches an observer
+    would score as a notification. Guarded by loopN9.
+    """
+    out: dict[str, str] = {}
+
+    def walk(n) -> None:
+        if n.type == "local_variable_declaration":
+            for d in n.named_children:
+                if d.type != "variable_declarator":
+                    continue
+                nm, val = d.child_by_field_name("name"), d.child_by_field_name("value")
+                if nm is None or val is None or val.type != "method_invocation":
+                    continue
+                vn, vo = val.child_by_field_name("name"), val.child_by_field_name("object")
+                if vn is not None and _text(vn, src) == "iterator" and vo is not None:
+                    coll = _collection_of(vo, src)
+                    if coll:
+                        out[_text(nm, src)] = coll
+        for c in n.children:
+            walk(c)
+
+    if node is not None:
+        walk(node)
+    return out
+
+
+def _indexed_source(obj, src: bytes, for_vars: set[str]) -> str | None:
+    """`observers.get(i)` -> "observers", when `i` is a for-init variable. Else None."""
+    if obj is None or obj.type != "method_invocation":
+        return None
+    nm = obj.child_by_field_name("name")
+    if nm is None or _text(nm, src) != "get":
+        return None
+    args = obj.child_by_field_name("arguments")
+    idx = [c for c in args.named_children] if args is not None else []
+    if len(idx) != 1 or idx[0].type != "identifier" or _text(idx[0], src) not in for_vars:
+        return None
+    return _collection_of(obj.child_by_field_name("object"), src)
+
+
+def _iterator_next_source(obj, src: bytes, iters: dict[str, str]) -> str | None:
+    """`it.next()` -> the collection `it` came from, else None."""
+    if obj is None or obj.type != "method_invocation":
+        return None
+    nm, o = obj.child_by_field_name("name"), obj.child_by_field_name("object")
+    if nm is None or _text(nm, src) != "next" or o is None or o.type != "identifier":
+        return None
+    return iters.get(_text(o, src))
+
+
 def _traversals(node, src: bytes) -> list[tuple[str, str, str | None]]:
     """[(collection identifier, callback name, required qualifier)] per notification loop.
 
@@ -565,13 +654,29 @@ def _traversals(node, src: bytes) -> list[tuple[str, str, str | None]]:
         form 4   `observers.forEach(Observer::update)` -- accepted only when the qualifier names
                  the element type; `observers.forEach(logger::record)` passes the element as an
                  ARGUMENT and is not a notification
+        form 2   `for (int i = 0; i < observers.size(); i++) observers.get(i).update()`
+        form 6   `Iterator<Observer> it = observers.iterator(); while (it.hasNext())
+                 it.next().update()`
 
-    Still on `foreach_re` in the checker: form 1 (enhanced-for). Not yet implemented: forms 2
-    (indexed) and 6 (iterator).
+    Forms 2 and 6 differ from the rest: `get(i)` and `next()` yield ONE element and carry no
+    repetition, so the ENCLOSING LOOP IS PART OF THE PATTERN. Form 2 additionally requires the
+    index to be a for-init variable (an enclosing loop alone accepts `observers.get(0).update()`
+    ten times over). Form 6 accepts a `while` OR a `for` header, because
+    `for (Iterator it = c.iterator(); it.hasNext(); )` is the older and still common idiom and
+    costs nothing extra to allow.
+
+    Still on `foreach_re` in the checker: form 1 (enhanced-for).
     """
     out: list[tuple[str, str, str | None]] = []
+    iters = _iterator_sources(node, src)
 
-    def walk(n) -> None:
+    def walk(n, for_vars: frozenset, in_loop: bool) -> None:
+        if n.type == "for_statement":
+            for_vars = for_vars | _for_init_vars(n, src)
+            in_loop = True
+        elif n.type in _LOOP_NODES:
+            in_loop = True
+
         if n.type == "method_invocation":
             nm = n.child_by_field_name("name")
             obj = n.child_by_field_name("object")
@@ -597,11 +702,20 @@ def _traversals(node, src: bytes) -> list[tuple[str, str, str | None]]:
                         qual, name = _text(parts[0], src), _text(parts[1], src)
                         if qual and name:
                             out.append((coll, name, qual))
+            # Forms 2 and 6. Both call the callback on an expression that yields ONE element --
+            # `observers.get(i)` or `it.next()` -- so neither carries repetition of its own. The
+            # enclosing loop is therefore PART OF THE PATTERN, not context; without it,
+            # `observers.get(0).update()` has an identical call shape and notifies one observer.
+            elif nm is not None and in_loop:
+                obj2 = n.child_by_field_name("object")
+                coll2 = _indexed_source(obj2, src, for_vars) or _iterator_next_source(obj2, src, iters)
+                if coll2:
+                    out.append((coll2, _text(nm, src), None))
         for c in n.children:
-            walk(c)
+            walk(c, for_vars, in_loop)
 
     if node is not None:
-        walk(node)
+        walk(node, frozenset(), False)
     return out
 
 

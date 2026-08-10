@@ -25311,7 +25311,13 @@
      "param_names": [],
      "param_types": [],
      "return_type": "void",
-     "traversals": []
+     "traversals": [
+      [
+       "observers",
+       "update",
+       null
+      ]
+     ]
     }
    ],
    "name": "ConcreteSubject"
@@ -26232,7 +26238,13 @@
      "param_names": [],
      "param_types": [],
      "return_type": "void",
-     "traversals": []
+     "traversals": [
+      [
+       "observers",
+       "update",
+       null
+      ]
+     ]
     }
    ],
    "name": "ConcreteSubject"
@@ -27754,6 +27766,745 @@
     }
    ],
    "name": "Logger"
+  },
+  "Observer": {
+   "body": {
+    "len": 20,
+    "sha256": "d6728e100d504cbf"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "update",
+     "owner": "Observer",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Observer"
+  },
+  "Subject": {
+   "body": {
+    "len": 59,
+    "sha256": "97a9a6bfa8e44eef"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "attach",
+     "owner": "Subject",
+     "param_names": [
+      "o"
+     ],
+     "param_types": [
+      "Observer"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "notifyObservers",
+     "owner": "Subject",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Subject"
+  }
+ },
+ "tests/fixtures_parser/loopN7_constant_index_in_loop.java": {
+  "ConcreteObserver": {
+   "body": {
+    "len": 34,
+    "sha256": "5cd697e865191095"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [
+    "Observer"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 5,
+      "sha256": "4dc501d66cd78903"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [
+      "public"
+     ],
+     "name": "update",
+     "owner": "ConcreteObserver",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "ConcreteObserver"
+  },
+  "ConcreteSubject": {
+   "body": {
+    "len": 260,
+    "sha256": "c5d5e66508c9854c"
+   },
+   "extends": null,
+   "fields": [
+    {
+     "field_type": "List",
+     "modifiers": [
+      "private"
+     ],
+     "name": "observers"
+    }
+   ],
+   "implements": [
+    "Subject"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 31,
+      "sha256": "41493bcbe072d2ba"
+     },
+     "calls": [
+      [
+       "observers",
+       "add"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "add",
+      "o",
+      "observers"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "attach",
+     "owner": "ConcreteSubject",
+     "param_names": [
+      "o"
+     ],
+     "param_types": [
+      "Observer"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 93,
+      "sha256": "03ae17e94f8ee4b7"
+     },
+     "calls": [
+      [
+       null,
+       "update"
+      ],
+      [
+       "observers",
+       "get"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {
+      "i": "int"
+     },
+     "mentions": [
+      "get",
+      "i",
+      "observers",
+      "update"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "notifyObservers",
+     "owner": "ConcreteSubject",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "ConcreteSubject"
+  },
+  "Observer": {
+   "body": {
+    "len": 20,
+    "sha256": "d6728e100d504cbf"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "update",
+     "owner": "Observer",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Observer"
+  },
+  "Subject": {
+   "body": {
+    "len": 59,
+    "sha256": "97a9a6bfa8e44eef"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "attach",
+     "owner": "Subject",
+     "param_names": [
+      "o"
+     ],
+     "param_types": [
+      "Observer"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "notifyObservers",
+     "owner": "Subject",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Subject"
+  }
+ },
+ "tests/fixtures_parser/loopN8_iterator_element_is_argument.java": {
+  "ConcreteObserver": {
+   "body": {
+    "len": 34,
+    "sha256": "5cd697e865191095"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [
+    "Observer"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 5,
+      "sha256": "4dc501d66cd78903"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [
+      "public"
+     ],
+     "name": "update",
+     "owner": "ConcreteObserver",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "ConcreteObserver"
+  },
+  "ConcreteSubject": {
+   "body": {
+    "len": 337,
+    "sha256": "3030b49ba32ce8be"
+   },
+   "extends": null,
+   "fields": [
+    {
+     "field_type": "List",
+     "modifiers": [
+      "private"
+     ],
+     "name": "observers"
+    }
+   ],
+   "implements": [
+    "Subject"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 31,
+      "sha256": "41493bcbe072d2ba"
+     },
+     "calls": [
+      [
+       "observers",
+       "add"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "add",
+      "o",
+      "observers"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "attach",
+     "owner": "ConcreteSubject",
+     "param_names": [
+      "o"
+     ],
+     "param_types": [
+      "Observer"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 5,
+      "sha256": "4dc501d66cd78903"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [
+      "private"
+     ],
+     "name": "log",
+     "owner": "ConcreteSubject",
+     "param_names": [
+      "o"
+     ],
+     "param_types": [
+      "Observer"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 128,
+      "sha256": "3f0e301a13ad180e"
+     },
+     "calls": [
+      [
+       "observers",
+       "iterator"
+      ],
+      [
+       "it",
+       "hasNext"
+      ],
+      [
+       null,
+       "log"
+      ],
+      [
+       "it",
+       "next"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {
+      "it": "Iterator"
+     },
+     "mentions": [
+      "Iterator",
+      "Observer",
+      "hasNext",
+      "it",
+      "iterator",
+      "log",
+      "next",
+      "observers"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "notifyObservers",
+     "owner": "ConcreteSubject",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "ConcreteSubject"
+  },
+  "Observer": {
+   "body": {
+    "len": 20,
+    "sha256": "d6728e100d504cbf"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "update",
+     "owner": "Observer",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Observer"
+  },
+  "Subject": {
+   "body": {
+    "len": 59,
+    "sha256": "97a9a6bfa8e44eef"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "attach",
+     "owner": "Subject",
+     "param_names": [
+      "o"
+     ],
+     "param_types": [
+      "Observer"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "notifyObservers",
+     "owner": "Subject",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Subject"
+  }
+ },
+ "tests/fixtures_parser/loopN9_two_iterators_wrong_collection.java": {
+  "ConcreteObserver": {
+   "body": {
+    "len": 34,
+    "sha256": "5cd697e865191095"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [
+    "Observer"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 5,
+      "sha256": "4dc501d66cd78903"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [
+      "public"
+     ],
+     "name": "update",
+     "owner": "ConcreteObserver",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "ConcreteObserver"
+  },
+  "ConcreteSubject": {
+   "body": {
+    "len": 401,
+    "sha256": "05847d375b01ace7"
+   },
+   "extends": null,
+   "fields": [
+    {
+     "field_type": "List",
+     "modifiers": [
+      "private"
+     ],
+     "name": "observers"
+    },
+    {
+     "field_type": "List",
+     "modifiers": [
+      "private"
+     ],
+     "name": "names"
+    }
+   ],
+   "implements": [
+    "Subject"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 31,
+      "sha256": "41493bcbe072d2ba"
+     },
+     "calls": [
+      [
+       "observers",
+       "add"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "add",
+      "o",
+      "observers"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "attach",
+     "owner": "ConcreteSubject",
+     "param_names": [
+      "o"
+     ],
+     "param_types": [
+      "Observer"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 182,
+      "sha256": "5ff8995c14eab340"
+     },
+     "calls": [
+      [
+       "names",
+       "iterator"
+      ],
+      [
+       "observers",
+       "iterator"
+      ],
+      [
+       "it2",
+       "hasNext"
+      ],
+      [
+       null,
+       "trim"
+      ],
+      [
+       "it2",
+       "next"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {
+      "it1": "Iterator",
+      "it2": "Iterator"
+     },
+     "mentions": [
+      "Iterator",
+      "Observer",
+      "String",
+      "hasNext",
+      "it1",
+      "it2",
+      "iterator",
+      "names",
+      "next",
+      "observers",
+      "trim"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "notifyObservers",
+     "owner": "ConcreteSubject",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": [
+      [
+       "names",
+       "trim",
+       null
+      ]
+     ]
+    }
+   ],
+   "name": "ConcreteSubject"
   },
   "Observer": {
    "body": {
