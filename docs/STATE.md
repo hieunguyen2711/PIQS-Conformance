@@ -23,7 +23,7 @@ checker stages.
 
 | # | Work | Why here |
 |---|---|---|
-| 1 | **Adapter** | The separator is one type comparison, and D4 already encodes it ("implements a DIFFERENT type from the one held"). Cheapest of the four, and it proves the porting process before we commit to all four. |
+| 1 | **Adapter** | The separator is one type comparison. Cheapest of the four, and it proves the porting process before we commit to all four. **Corrected 2026-08-10:** this row used to add "and D4 already encodes it". D4 *stated* the comparison but is weight 2 and non-critical, so it never decided anything — a textbook object adapter was recognised as a Decorator with D4 = 0. Fixed by the same-component rule; see §5a. Adapter's own separator must be weight 3 or in the role derivation. |
 | 2 | **State** | Separator is "the field is ASSIGNED from inside a method" — `_assigns_field` on the context's own field, which phase 2 just migrated. |
 | 3 | **Abstract Factory** | — |
 | 4 | **Proxy** | Blocked on a new property definition; see below. |
@@ -325,9 +325,27 @@ errors. The BDT battery is 27 files and caught two. What matters is whether a co
 construct: Kim never scores Builder at all, so the properties helper 2 broke are ones Kim does not
 evaluate.
 
-**A MUTATION MUST CHANGE EXACTLY ONE THING.** An early table patched both element-type checks at
-once and could not tell N1 from N3 apart, making one look redundant. A mutation that changes two
-things measures neither. This is "one change at a time" applied to the test-the-test step.
+**A MUTATION MUST CHANGE EXACTLY ONE THING — AND IT MUST BE THE RIGHT THING.**
+
+*First half.* An early table patched both element-type checks at once and could not tell N1 from N3
+apart, making one look redundant. A mutation that changes two things measures neither. This is "one
+change at a time" applied to the test-the-test step.
+
+*Second half.* MUT-4 v1 was written to break the iterator→collection map, and it cleared the map
+before each insert. That **deleted** `it2` rather than making it resolve wrongly — so `loopN9` held,
+and the fixture looked as if it guarded nothing. Rewritten as "the key is ignored, last value wins",
+N9 flips. The mutation was single-purpose and still worthless, because it modelled a *different*
+bug from the one the fixture exists to catch.
+
+**A mutation that does not model the bug proves nothing, and it fails in the direction of a false
+negative** — the fixture looks redundant and the natural next move is to delete a live guard. This
+has now happened twice: `loopN1` (its body was `System.out.println(s)`, so the element was an
+argument and the receiver rule rejected it before the element-type check was ever reached) and
+MUT-4 v1. Both times the fixture was fine and the *probe* was wrong.
+
+The check before trusting a negative result: **state which line of the real implementation the
+mutation is standing in for, and confirm the mutated code still reaches the fixture's code path.**
+A mutation that short-circuits earlier than the rule it targets tests nothing downstream of it.
 
 **Mutation-testing method note.** Rapid successive in-place patches proved unreliable: stale
 `__pycache__` survived rewrites and produced two contradictory readings of the same mutation. Runs
@@ -579,6 +597,75 @@ fixture. Unexplained movement is a defect.
 
 Forms 2 and 6 have no named element variable — the call sits on `observers.get(i)` or `it.next()`.
 If that stalls, ship forms 1 and 3, record the rest as known limitations, move on.
+
+## 5a. The same-component rule — found 2026-08-10, before Adapter started
+
+**A textbook object adapter was recognised as a Decorator.** Found by review, not by a suite.
+
+```java
+interface Target { void run(); }
+interface Source { void go(); }
+class Adapt implements Target {
+    private Source s;
+    public Adapt(Source s) { this.s = s; }
+    public void run() { s.go(); }
+}
+```
+
+`D1 0  D2 1  D3 1  D4 0  D5 1  D6 0` → PIQS **53.33**, *Moderate*, **recognised** (critical set
+`{D2, D3}` both held).
+
+**The docstring and the code disagreed.** `isDecorator(W)` was documented as "conforms to a
+component C **and** holds a field of type C" — the same C twice. The code built two independent
+sets and never required them to intersect. The same-type requirement lived only in D1 and D4, both
+weight 2 and non-critical, so they flagged the conversion without touching the verdict.
+
+**Why this blocked the experiment, not just the checker.** Conflict pair F is Adapter/Decorator and
+was scheduled first *because* its separator looked cheap. Every X output for pair F would have
+satisfied both rule sets → the pair is invalid by the experiment's own design. Both pairs planned
+as starting points were broken for the same underlying reason:
+
+| pair | status |
+|---|---|
+| B — Decorator / Proxy | known, recorded in §0 |
+| F — Adapter / Decorator | found 2026-08-10, fixed by this change |
+
+In both, the distinguishing condition sat **outside the critical set**. That generalisation is now
+a rule in `docs/PROPERTY_SPEC.md`: *a conflict-pair separator must be load-bearing for recognition.*
+
+**Handled as a REDEFINITION, not a bug fix**, per the divergence rule — it changes which programs
+satisfy D2, so it got its own branch, its own prediction, and its own measurement.
+
+| Question asked before implementing | Predicted | Measured |
+|---|---|---|
+| D2 alone, or more? | all six — D1/D3 iterate the field list, D4/D6 take it as an argument, D5 is `... or d2` | all six went to 0 on the adapter |
+| Which BDT cases move? | none | none — 28/28 |
+| `t3_decorator_lazy_proxy_KNOWN_LIMITATION` still passes? | yes — a Proxy conforms to the type it holds | yes |
+| Does Kim move? | cannot — Kim has **no Decorator scoring units** (10 factory, 10 strategy, 10 observer, 5 composite, 5 singleton) | 90.6% (145/160), 30/40 unchanged |
+| Effect on the Decorator/Proxy limitation? | none — both hold the type they conform to | unchanged |
+
+**Corpus exposure measured, not assumed:** across 212 single-file programs and all 27 BDT confirmed
+cases, wrappers accepted by the loose rule and rejected by the same-C rule: **0**.
+
+**The filter is on the FIELD LIST, not only on admission.** Gating admission alone leaves every
+component-typed field in `wrapped_fields`, which D3/D4/D6 all read — so a class conforming to `C`,
+holding both a `C` and an unrelated abstract `D`, and forwarding only to `D`, would still score
+`D3 = 1`. `decorator_delegates_to_unrelated_component.java` is the only program in the repo where
+the two forms of the rule disagree, because every corpus program holds exactly one component-typed
+field.
+
+**Open decision, deliberately not settled: D1 is now tautological.** `D1 == D2` for every program.
+No number moved, but the Decorator set is five independent properties scored as six, which inflates
+PSR for every recognised decorator. Removing D1 changes PSR's denominator for every Decorator
+program — a second measured change, not this one. Pinned by `test_d1_is_now_implied_by_d2`.
+
+**A silent-skip hole was closed at the same time.** `tests/test_renaming_invariance.py` maps a
+fixture filename to a pattern by substring and does `if pattern is None: continue`. A battery file
+matching no marker was **dropped from the suite without a word** — green, and never tested.
+`test_every_battery_file_is_covered` now compares the case list against the files on disk. It is
+compared against the directory rather than a hardcoded count so it cannot go stale, and so the fix
+is never "edit the number". Proven by dropping a marker-less file into the directory and watching
+it fail.
 
 ## 6. Traps in the current code
 

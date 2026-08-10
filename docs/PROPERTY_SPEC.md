@@ -90,8 +90,8 @@ Derived roles: `isComponent` (an abstract type — interface or abstract class),
 
 | ID | Statement | Tag | Weight |
 |----|-----------|-----|--------|
-| D1 | Decorator conforms to the **same** component type as what it wraps (is-a matches has-a). | structural | 2 |
-| **D2** | Decorator holds a component-typed reference (composition). | structural | **3** (critical) |
+| D1 | Decorator conforms to the **same** component type as what it wraps (is-a matches has-a). **Now implied by D2** — see below. | structural | 2 |
+| **D2** | Decorator holds a reference typed as a component **it itself conforms to**. | structural | **3** (critical) |
 | **D3** | Decorator delegates to the wrapped reference in its component methods (see the *any-vs-all* judgment call below). | behavioral | **3** (critical) |
 | D4 | Transparent enhancement — no interface conversion: the decorator exposes the wrapped component's whole operation set (distinguishes from **Adapter**). | structural | 2 |
 | D5 | Abstract decorator base / recursive composability — a collapsed single decorator is accepted (it wraps the component type, so it can wrap another decorator). | structural | 1 |
@@ -101,6 +101,52 @@ Derived roles: `isComponent` (an abstract type — interface or abstract class),
 decorator with no abstract base (D5 low-weight); constructor or setter injection of the wrapped
 reference. **Rejected:** a subclass that extends the concrete component with no wrapped reference
 (D2 fails); a wrapper that delegates to nothing (D3 fails).
+
+### The same-component rule — `isDecorator` requires the SAME C (REDEFINITION, measured)
+
+The role definition above always said *"conforms to a component **and** holds a field of **that**
+component type"*. The code did not do that. It computed two independent sets — the components `W`
+conforms to, and the component-typed fields `W` holds — and never required them to intersect.
+
+A textbook **object adapter** was therefore recognised as a Decorator:
+
+```java
+interface Target { void run(); }
+interface Source { void go(); }
+class Adapt implements Target {
+    private Source s;
+    public Adapt(Source s) { this.s = s; }
+    public void run() { s.go(); }
+}
+```
+
+`D1 0  D2 1  D3 1  D4 0  D5 1  D6 0` → PIQS **53.33**, grade *Moderate*, and **recognised**,
+because recognition is the critical set `{D2, D3}` and both held. D1 and D4 did flag the interface
+conversion — but both are weight 2 and non-critical, so they changed the score and not the verdict.
+
+**The rule now enforced:** a class is a decorator candidate only if it holds a field whose type is
+one of the components it conforms to. The filter is applied to the **field list**, not only to
+admission — `D3`, `D4` and `D6` all read that list, so gating admission alone would let a class
+that conforms to `C`, holds both a `C` and an unrelated abstract `D`, and forwards only to `D`
+still score `D3 = 1`: recognised while never forwarding to what it wraps. That distinction has its
+own fixture (`decorator_delegates_to_unrelated_component.java`); it is the only program where the
+two forms of the rule disagree, because every corpus program holds exactly one component-typed
+field.
+
+**Measured effect: nothing in the corpus moved.** Across 212 single-file programs and all BDT
+confirmed cases, the number of wrappers the loose rule accepted and the same-C rule rejects is
+**0**. Kim cannot move for a structural reason rather than a measured one: it has no Decorator
+scoring units (its 40 units are factory-method 10, strategy 10, observer 10, composite 5,
+singleton 5). `t3_decorator_lazy_proxy_KNOWN_LIMITATION` still passes, as it must — a Proxy
+conforms to the type it holds, so same-C is satisfied.
+
+**Consequence: D1 is now tautological.** `wrapped_fields` contains only conformed types, so D1 is
+true exactly when `decorators` is non-empty: `D1 == D2` for every program. No number moved (D1 was
+already 1 wherever D2 was 1), but the Decorator property set is now **five independent properties
+scored as six**, which inflates PSR for every recognised decorator. This is left as an **open
+decision, not a settled one** — removing D1 changes PSR's denominator for every Decorator program,
+which is a second measured change and not this one. Pinned by
+`tests/test_decorator_same_component.py::test_d1_is_now_implied_by_d2`.
 
 ### D3 semantics — the *any-vs-all* decision (RESOLVED)
 
@@ -125,9 +171,16 @@ component interface, hold a component-typed reference, and delegate to it. "Adds
 (Decorator) vs "controls access" (Proxy) is a semantic intent that is **not statically
 decidable**. This checker does **not** attempt to distinguish them — any structurally-conforming
 wrapper is accepted as Decorator. This is stated in a code comment on `_evaluate_decorator` and
-will be disclosed in the paper's threats to validity. (D4 distinguishes Decorator from *Adapter*,
-which is decidable — an Adapter converts to a different interface — but makes **no** claim about
-Proxy.)
+will be disclosed in the paper's threats to validity. (Decorator vs *Adapter* **is** decidable — an
+Adapter converts to a different interface — but D4 was never what decided it. See the correction
+below.)
+
+**Correction — D4 never separated Adapter, and could not have.** This section previously read
+"D4 distinguishes Decorator from *Adapter*". That was false in the way that matters: D4 is weight
+2 and non-critical, so it can move the score but not the verdict, and the object adapter above was
+recognised with `D4 = 0`. The separator is now the same-component rule inside `isDecorator`, which
+is load-bearing for recognition. The general form of the mistake is written up under
+*"A conflict-pair separator must be load-bearing for recognition"* below.
 
 This limitation is now **demonstrated**, not merely asserted: the battery case
 `t3_decorator_lazy_proxy_KNOWN_LIMITATION` is a genuine lazy-init/virtual **Proxy** (holds the
@@ -503,6 +556,38 @@ callback is one hop further out than the loop variable.
 A third Map shape, `map.forEach((k, v) -> v.update())`, is rejected for a different and better
 reason: it takes a `BiConsumer`, and the one-parameter check for `Consumer` rejects it at the
 shape. See the parked item in `docs/STATE.md`.
+
+## Rule: a conflict-pair separator must be LOAD-BEARING FOR RECOGNITION
+
+> **A property that distinguishes one pattern from another must be load-bearing for recognition.
+> A non-critical diagnostic cannot be a conflict-pair separator.**
+
+Recognition in this checker is decided by the **critical (weight-3) set** and nothing else — that
+is the definition the BDT battery uses to label every case. A weight-1 or weight-2 property
+changes PSR, CPC and the grade; it never changes whether a program *is* the pattern.
+
+So a property written as "distinguishes X from Y" but given a non-critical weight distinguishes
+nothing. It produces a *lower score* for Y while still calling Y an X.
+
+This is not hypothetical. **D4 was written as the Adapter separator and given weight 2.** A
+textbook object adapter scored `D4 = 0` — the property fired exactly as designed — and was
+recognised as a Decorator anyway. Conflict pair **F (Adapter/Decorator)** was planned as the
+cheapest pair to start with, on the grounds that "its separator is just comparing two types". The
+comparison existed; it just was not load-bearing. Every output for pair F would have satisfied both
+rule sets, which makes the pair **invalid by the experiment's own design** — the same failure the
+Decorator/Proxy pair (**B**) already has, for the same underlying reason: the distinguishing
+condition sat outside the critical set.
+
+**Apply this before defining a pattern's properties, not after.** When a new pattern is added
+specifically to support a conflict pair, decide first *which* property carries the separation and
+give it weight 3 — or put it in the role derivation, where it gates candidacy for every property at
+once. That is where the same-component rule ended up: inside `isDecorator`, so D2 through D6 all
+inherit it.
+
+**Checking a separator is load-bearing** is one measurement, not an argument: write the program
+that is the *other* pattern, score it, and require it to be **NOT-PATTERN** under the critical set.
+`t5_object_adapter_rejected_as_decorator__FAIL` is that check for pair F, and it gates the
+battery's exit code.
 
 ## Rule: does a divergence REDEFINE the predicate, or REMOVE A FALSE POSITIVE?
 

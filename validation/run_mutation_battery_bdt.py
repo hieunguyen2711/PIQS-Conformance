@@ -368,6 +368,32 @@ CONFIRMED_CASES = [
      "    public void display() { if (real == null) { real = new RealImage(file); } real.display(); }\n"
      "}\n"),
 
+    # TASK 3 (Decorator): a textbook OBJECT ADAPTER. It conforms to one abstract type and holds
+    # a DIFFERENT one -- an interface conversion, which is the opposite of a decorator's
+    # transparent pass-through. MUST-FAIL.
+    #
+    # Until the same-component rule this was RECOGNISED: D2 and D3 are the critical set and both
+    # held, because `isDecorator` compared "components W conforms to" against "component-typed
+    # fields W holds" without ever requiring the two to intersect. It scored PIQS 53.33.
+    # D4 was written as the Adapter separator but is weight 2 and non-critical, so it flagged the
+    # conversion without changing the verdict -- which is why a non-critical diagnostic can never
+    # serve as a conflict-pair separator (PROPERTY_SPEC.md).
+    #
+    # This case is the one that GATES that rule in the battery: it is a MUST-FAIL among the
+    # confirmed cases, so a regression to the loose rule fails the exit code rather than
+    # printing a row nobody reads. Its filename contains "decorator", which is also what puts it
+    # in tests/test_renaming_invariance.py -- a name without that marker is silently skipped.
+    ("t5_object_adapter_rejected_as_decorator__FAIL", "decorator", "FAIL",
+     "// An OBJECT ADAPTER, not a Decorator: PrinterAdapter IS-A Printer but HAS-A LegacyWriter.\n"
+     "// Two different abstract types -- it converts an interface rather than wrapping one.\n"
+     "interface Printer { void print(String text); }\n"
+     "interface LegacyWriter { void writeLine(String s); }\n"
+     "class PrinterAdapter implements Printer {\n"
+     "    private final LegacyWriter legacy;\n"
+     "    public PrinterAdapter(LegacyWriter legacy) { this.legacy = legacy; }\n"
+     "    public void print(String text) { legacy.writeLine(text); }\n"
+     "}\n"),
+
     # ---- TASK 4: Template Method in an interface (Java-8 default method) ----
 
     # TASK 4 (Template): an INTERFACE with a default-method template calling two abstract

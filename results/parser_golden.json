@@ -22145,6 +22145,171 @@
    "name": "Point"
   }
  },
+ "fixtures/mutation_battery_bdt/t5_object_adapter_rejected_as_decorator__FAIL.java": {
+  "LegacyWriter": {
+   "body": {
+    "len": 27,
+    "sha256": "8fea2c32a1adc1ae"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "writeLine",
+     "owner": "LegacyWriter",
+     "param_names": [
+      "s"
+     ],
+     "param_types": [
+      "String"
+     ],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "LegacyWriter"
+  },
+  "Printer": {
+   "body": {
+    "len": 26,
+    "sha256": "94c5ddc0c5782247"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "print",
+     "owner": "Printer",
+     "param_names": [
+      "text"
+     ],
+     "param_types": [
+      "String"
+     ],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Printer"
+  },
+  "PrinterAdapter": {
+   "body": {
+    "len": 176,
+    "sha256": "61a94166f0b5b847"
+   },
+   "extends": null,
+   "fields": [
+    {
+     "field_type": "LegacyWriter",
+     "modifiers": [
+      "final",
+      "private"
+     ],
+     "name": "legacy"
+    }
+   ],
+   "implements": [
+    "Printer"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [
+      "legacy"
+     ],
+     "body": {
+      "len": 23,
+      "sha256": "7792e9a2ba324aac"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": true,
+     "locals": {},
+     "mentions": [
+      "legacy",
+      "this"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "PrinterAdapter",
+     "owner": "PrinterAdapter",
+     "param_names": [
+      "legacy"
+     ],
+     "param_types": [
+      "LegacyWriter"
+     ],
+     "return_type": null,
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 25,
+      "sha256": "b9ecd17146763902"
+     },
+     "calls": [
+      [
+       "legacy",
+       "writeLine"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "legacy",
+      "text",
+      "writeLine"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "print",
+     "owner": "PrinterAdapter",
+     "param_names": [
+      "text"
+     ],
+     "param_types": [
+      "String"
+     ],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "PrinterAdapter"
+  }
+ },
  "fixtures/mutation_battery_bdt/t5_template_final_template.java": {
   "QuickSort": {
    "body": {
@@ -23292,6 +23457,168 @@
     }
    ],
    "name": "LoudDecorator"
+  }
+ },
+ "tests/fixtures_parser/decorator_delegates_to_unrelated_component.java": {
+  "Pump": {
+   "body": {
+    "len": 15,
+    "sha256": "fa7a6df1effb1d81"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "drive",
+     "owner": "Pump",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Pump"
+  },
+  "Router": {
+   "body": {
+    "len": 165,
+    "sha256": "89f8ebf7566e732d"
+   },
+   "extends": null,
+   "fields": [
+    {
+     "field_type": "Pump",
+     "modifiers": [
+      "private"
+     ],
+     "name": "held"
+    },
+    {
+     "field_type": "Valve",
+     "modifiers": [
+      "private"
+     ],
+     "name": "aux"
+    }
+   ],
+   "implements": [
+    "Pump"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [
+      "aux",
+      "held"
+     ],
+     "body": {
+      "len": 35,
+      "sha256": "45314c542c9bafd4"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": true,
+     "locals": {},
+     "mentions": [
+      "aux",
+      "held",
+      "this"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "Router",
+     "owner": "Router",
+     "param_names": [
+      "held",
+      "aux"
+     ],
+     "param_types": [
+      "Pump",
+      "Valve"
+     ],
+     "return_type": null,
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 13,
+      "sha256": "b79b719935b8f280"
+     },
+     "calls": [
+      [
+       "aux",
+       "open"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "aux",
+      "open"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "drive",
+     "owner": "Router",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Router"
+  },
+  "Valve": {
+   "body": {
+    "len": 14,
+    "sha256": "b504471edf5e66dc"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "open",
+     "owner": "Valve",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Valve"
   }
  },
  "tests/fixtures_parser/div1_this_keyword.java": {
@@ -28717,6 +29044,157 @@
     }
    ],
    "name": "Outer"
+  }
+ },
+ "tests/fixtures_parser/object_adapter_not_a_decorator.java": {
+  "Adapt": {
+   "body": {
+    "len": 100,
+    "sha256": "eaeef9b9e6ae1330"
+   },
+   "extends": null,
+   "fields": [
+    {
+     "field_type": "Source",
+     "modifiers": [
+      "private"
+     ],
+     "name": "s"
+    }
+   ],
+   "implements": [
+    "Target"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [
+      "s"
+     ],
+     "body": {
+      "len": 13,
+      "sha256": "b26d2eefb5307b49"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": true,
+     "locals": {},
+     "mentions": [
+      "s",
+      "this"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "Adapt",
+     "owner": "Adapt",
+     "param_names": [
+      "s"
+     ],
+     "param_types": [
+      "Source"
+     ],
+     "return_type": null,
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 9,
+      "sha256": "2064d6fb210c943d"
+     },
+     "calls": [
+      [
+       "s",
+       "go"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "go",
+      "s"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "run",
+     "owner": "Adapt",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Adapt"
+  },
+  "Source": {
+   "body": {
+    "len": 12,
+    "sha256": "66c46c0d6322609b"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "go",
+     "owner": "Source",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Source"
+  },
+  "Target": {
+   "body": {
+    "len": 13,
+    "sha256": "5899dd2a49b46cde"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "run",
+     "owner": "Target",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Target"
   }
  },
  "tests/fixtures_parser/shadowed_inherited_field.java": {

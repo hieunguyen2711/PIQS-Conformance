@@ -1384,8 +1384,24 @@ class PIQSChecker:
         component_names = self._component_type_names(types)
         classes = [t for t in types.values() if t.kind == "class"]
 
-        # A decorator conforms to a component AND holds a field of a component type.
+        # A decorator conforms to a component C AND holds a field of THAT SAME C.
         # decorators: list of (W, conformed_components, wrapped_fields[(field, comp_type)])
+        #
+        # THE SAME C IS THE POINT, AND IT WAS NOT ENFORCED UNTIL NOW. `conformed` and the field
+        # list used to be computed independently and never required to intersect, so a textbook
+        # object adapter -- conforms to `Target`, holds a `Source` -- satisfied the critical set
+        # {D2, D3} and was recognised as a Decorator (PIQS 53.33, "Moderate"). The same-type
+        # requirement existed only in D1 and D4, both weight 2 and NON-CRITICAL, so they flagged
+        # the interface conversion without affecting recognition. See
+        # tests/fixtures_parser/object_adapter_not_a_decorator.java and PROPERTY_SPEC.md
+        # ("a conflict-pair separator must be load-bearing for recognition").
+        #
+        # THE FILTER IS ON THE FIELD LIST, NOT ONLY ON ADMISSION. Gating admission alone leaves
+        # every component-typed field in `wrapped_fields`, and D3/D4/D6 all read that list -- so
+        # a class conforming to C, holding both a C and an unrelated abstract D, and forwarding
+        # only to D would still score D3=1: recognised while never forwarding to what it wraps.
+        # Pinned by tests/fixtures_parser/decorator_delegates_to_unrelated_component.java, the
+        # only fixture where the two forms of the rule disagree.
         decorators = []
         for w in classes:
             conformed = {c for c in component_names if self._conforms_to(w, c, types)}
@@ -1394,7 +1410,7 @@ class PIQSChecker:
             wrapped_fields = [
                 (f, f.field_type)
                 for f in w.fields
-                if f.field_type in component_names
+                if f.field_type in conformed
             ]
             if wrapped_fields:
                 decorators.append((w, conformed, wrapped_fields))
@@ -1413,6 +1429,14 @@ class PIQSChecker:
         )
 
         # D1 -- decorator conforms to the SAME component type it wraps (is-a matches has-a).
+        #
+        # D1 IS NOW TAUTOLOGICAL: `wrapped_fields` only ever contains conformed types, so this is
+        # true exactly when `decorators` is non-empty -- i.e. D1 == D2 for every program. It is
+        # left in place, and left scored, because removing a property changes PSR's denominator
+        # for every Decorator program in the corpus, which is a second measured change and not
+        # this one. The redundancy is recorded in PROPERTY_SPEC.md and pinned by
+        # tests/test_decorator_same_component.py::test_d1_is_now_implied_by_d2 so that it is an
+        # OPEN decision rather than a forgotten one.
         d1 = any(
             any(ctype in conformed for (_f, ctype) in wrapped_fields)
             for (w, conformed, wrapped_fields) in decorators
