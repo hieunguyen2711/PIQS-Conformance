@@ -2,6 +2,7 @@
   "generated_by": "validation/run_scorer.py",
   "scorer": "piqs.checker.PIQSChecker (unmodified)",
   "python": "3.14.6",
+  "javac_available": true,
   "weights": {
     "factory-method": {
       "F1": 2,
