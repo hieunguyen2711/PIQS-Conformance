@@ -80,7 +80,7 @@ def _fixture_vector(slug: str) -> dict[str, int]:
 ALL_UNITS = [(label, _vector(files)) for label, files in programs()]
 
 
-@pytest.mark.parametrize("pid", ["D1", "D5"])
+@pytest.mark.parametrize("pid", ["D5"])
 def test_property_is_identical_to_d2_on_every_unit(pid: str):
     """The tautology, measured. If this goes RED, the property has become meaningful again --
     which is a reason to re-decide the Decorator weights, NOT to edit this expectation."""
@@ -101,7 +101,7 @@ def test_d4_is_independent_of_d2():
     v = _fixture_vector("d4_abstract_base_partial_api")
     assert v["D2"] == 1, "the probe must still BE a decorator, or it proves nothing about D4"
     assert v["D4"] == 0, "D4 has collapsed into D2 -- the property set is down to three"
-    assert v == {"D1": 1, "D2": 1, "D3": 1, "D4": 0, "D5": 1, "D6": 1}
+    assert v == {"D2": 1, "D3": 1, "D4": 0, "D5": 1, "D6": 1}
 
 
 @pytest.mark.parametrize(
@@ -135,10 +135,18 @@ def test_property_has_a_separating_program(pid: str, slug: str):
     )
 
 
-def test_decorator_property_set_is_exactly_what_the_audit_covered():
-    """A new Decorator property must not slip in without an independence check.
+def test_decorator_property_set_is_exactly_the_surviving_ids():
+    """THE REPLACEMENT for `test_d1_is_now_implied_by_d2`, which became meaningless when D1 was
+    deleted. Adding a redundant property back must fail loudly, here.
 
-    The audit above covers D1 and D3-D6 against D2. If the set changes, someone has to redo it,
-    and this is where they find that out.
+    D1 was removed because it was a proven tautology: `D1 == D2` for every program, by
+    construction rather than by corpus. The reason to remove it is NOT primarily that it inflates
+    PSR -- see PROPERTY_SPEC.md. It is that **the rule list is the prompt**: the experiment emits
+    one sentence per rule, so a duplicated rule is a duplicated sentence in conditions O and P,
+    which contaminates the experiment directly. A future session must not be able to argue this
+    back on scoring grounds alone.
+
+    D5 is still listed here and is next; D4 is deliberately still alive pending the field-scope
+    audit, which may change what it measures.
     """
-    assert sorted(_PATTERN_WEIGHTS["decorator"]) == ["D1", "D2", "D3", "D4", "D5", "D6"]
+    assert sorted(_PATTERN_WEIGHTS["decorator"]) == ["D2", "D3", "D4", "D5", "D6"]

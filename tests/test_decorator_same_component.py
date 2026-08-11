@@ -29,17 +29,22 @@ That generalises, and the general form is now a rule in PROPERTY_SPEC.md:
     A property that distinguishes one pattern from another must be load-bearing for
     recognition. A non-critical diagnostic cannot be a conflict-pair separator.
 
-D1 IS NOW TAUTOLOGICAL. This is deliberate and recorded rather than hidden. D1 says "conforms
-to the same component type as what it wraps", which is now exactly the admission test, so
-D1 == D2 for every program. No existing number moved -- D1 was already 1 wherever D2 was 1
-across all 82 program units measured by validation/decorator_rule_effect.py -- but the set is now
-FOUR independent properties scored as six. `test_d1_is_now_implied_by_d2` pins that, so it
-cannot be forgotten, and it is an open decision rather than a settled one.
+D1 WAS DELETED BY THIS RULE, and the deletion is recorded here because this file is where the
+tautology was created. Making the same C the admission test made D1 -- "conforms to the same
+component type as what it wraps" -- a restatement of D2: `D1 == D2` for every program, by
+construction rather than by corpus. `test_d1_is_now_implied_by_d2` lived here and pinned that;
+it is gone, replaced by
+`tests/test_decorator_property_independence.py::test_decorator_property_set_is_exactly_the_surviving_ids`,
+which fails if a redundant property is ever added back.
 
-(This docstring first said "five". That was wrong: the audit in
-tests/test_decorator_property_independence.py found D5 tautological as well, by the same kind of
-argument -- `d5 = abstract_decorator_base or d2` is True exactly when d2 is. The independent
-properties are D2, D3, D4 and D6.)
+THE REASON FOR THE DELETION IS PROMPT GENERATION, NOT PSR. The experiment emits one sentence per
+rule to build conditions O and P, so a duplicated rule is a duplicated sentence in the prompt and
+contaminates the conditions directly. The PSR/CPC inflation is real but secondary, and on its own
+it is not enough to argue the property back.
+
+(An earlier version of this docstring said the set was "five independent properties scored as
+six". That was wrong twice over: the audit found D5 tautological as well, and both are now gone.
+The independent properties are D2, D3, D4 and D6.)
 """
 
 from __future__ import annotations
@@ -78,7 +83,7 @@ def test_object_adapter_is_not_recognised_as_a_decorator():
     PIQS 53.33, grade Moderate, and RECOGNISED because {D2,D3} both held."""
     res = _evaluate("object_adapter_not_a_decorator")
     v = {r["property_id"]: r["satisfaction"] for r in res["logical_assessment"]}
-    assert v == {"D1": 0, "D2": 0, "D3": 0, "D4": 0, "D5": 0, "D6": 0}
+    assert v == {"D2": 0, "D3": 0, "D4": 0, "D5": 0, "D6": 0}
     assert res["final_quality_result_piqs"]["result_percent"] == 0.0
     assert res["grade"] == "Poor"
     assert not recognised("object_adapter_not_a_decorator")
@@ -96,18 +101,6 @@ def test_delegation_must_be_to_the_wrapped_component():
     assert v["D2"] == 1, "Router holds a Pump and conforms to Pump -- it IS a candidate"
     assert v["D3"] == 0, "it forwards to the valve, never to the pump it wraps"
     assert not recognised("decorator_delegates_to_unrelated_component")
-
-
-def test_d1_is_now_implied_by_d2():
-    """D1 carries no independent information any more. Pinned so the redundancy is visible.
-
-    If D1 is ever redefined to say something D2 does not, this test SHOULD fail -- and that
-    failure is the signal to re-decide the Decorator weights, not to edit this expectation.
-    """
-    for slug in ("object_adapter_not_a_decorator", "decorator_delegates_to_unrelated_component",
-                 "abstract_decorator_base"):
-        v = vector(slug)
-        assert v["D1"] == v["D2"], f"{slug}: D1 and D2 disagree -- D1 is meaningful again"
 
 
 def test_a_genuine_decorator_is_still_recognised():

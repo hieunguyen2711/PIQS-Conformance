@@ -23,7 +23,9 @@ _PATTERN_WEIGHTS = {
     # pattern work (also the CRITICAL set); weight 2 = existence-of-a-role / interaction;
     # weight 1 = supporting/peripheral. See validation/bdt_property_spec.md.
     "builder": {"B1": 3, "B2": 3, "B3": 2, "B4": 2, "B5": 1, "B6": 1},
-    "decorator": {"D1": 2, "D2": 3, "D3": 3, "D4": 2, "D5": 1, "D6": 1},
+    # D1 was removed 2026-08-10: it was a proven tautology, `D1 == D2` for every program by
+    # construction. See PROPERTY_SPEC.md -- the reason is prompt generation, not PSR.
+    "decorator": {"D2": 3, "D3": 3, "D4": 2, "D5": 1, "D6": 1},
     "template-method": {"T1": 2, "T2": 2, "T3": 3, "T4": 2, "T5": 2},
 }
 
@@ -1428,19 +1430,18 @@ class PIQSChecker:
             for (w, _conf, wrapped_fields) in decorators
         )
 
-        # D1 -- decorator conforms to the SAME component type it wraps (is-a matches has-a).
+        # D1 IS GONE. It read "decorator conforms to the SAME component type it wraps", which
+        # became the admission test itself when the same-component rule landed (e2acb66):
+        # `wrapped_fields` contains only conformed types, so `any(ctype in conformed ...)` ranged
+        # over a list built by filtering on exactly the predicate it tested. `D1 == D2` for every
+        # program, by construction -- no Java program could separate them.
         #
-        # D1 IS NOW TAUTOLOGICAL: `wrapped_fields` only ever contains conformed types, so this is
-        # true exactly when `decorators` is non-empty -- i.e. D1 == D2 for every program. It is
-        # left in place, and left scored, because removing a property changes PSR's denominator
-        # for every Decorator program in the corpus, which is a second measured change and not
-        # this one. The redundancy is recorded in PROPERTY_SPEC.md and pinned by
-        # tests/test_decorator_same_component.py::test_d1_is_now_implied_by_d2 so that it is an
-        # OPEN decision rather than a forgotten one.
-        d1 = any(
-            any(ctype in conformed for (_f, ctype) in wrapped_fields)
-            for (w, conformed, wrapped_fields) in decorators
-        )
+        # THE REASON FOR REMOVING IT IS PROMPT GENERATION, NOT PSR. The experiment emits one
+        # sentence per rule to build conditions O and P, so a duplicated rule is a duplicated
+        # sentence in the prompt and contaminates the conditions directly. The PSR/CPC inflation
+        # is real but secondary, and it is not sufficient on its own to argue the property back.
+        # See PROPERTY_SPEC.md; pinned by
+        # tests/test_decorator_property_independence.py::test_decorator_property_set_is_exactly_the_surviving_ids
 
         # D4 -- transparent enhancement, no interface conversion (distinguishes from Adapter):
         # the decorator exposes the wrapped component's whole operation set (its method names are
@@ -1525,7 +1526,11 @@ class PIQSChecker:
         derived = {
             "isComponent(x)": bool(component_names),
             "isDecorator(x)": bool(decorators),
-            "wraps(d,c)": d1,
+            # The `wraps(W,C)` ROLE survives the removal of the D1 property: it is now enforced
+            # at admission, so it holds exactly when a decorator candidate exists. Reported here
+            # because derived predicates are descriptive output that compare.py reads for
+            # disagreement analysis -- dropping a key is a separate change from dropping a score.
+            "wraps(d,c)": bool(decorators),
             "delegatesTo(d,c)": d3,
             "isTransparent(d)": d4,
             "hasAbstractDecoratorBase(x)": abstract_decorator_base,
@@ -1533,8 +1538,7 @@ class PIQSChecker:
         }
 
         rows = [
-            self._row("D1", 2, d1, "Decorator conforms to the same component type as what it wraps."),
-            self._row("D2", 3, d2, "Decorator holds a component-typed reference (composition)."),
+            self._row("D2", 3, d2, "Decorator holds a reference typed as a component it itself conforms to (composition)."),
             self._row("D3", 3, d3, "Decorator delegates to the wrapped reference in its component methods."),
             self._row("D4", 2, d4, "Transparent enhancement -- no interface conversion (distinguishes from Adapter; NOT from Proxy)."),
             self._row("D5", 1, d5, "Abstract decorator base / recursive composability (collapsed single decorator accepted)."),

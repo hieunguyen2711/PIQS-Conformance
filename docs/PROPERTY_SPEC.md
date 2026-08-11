@@ -90,7 +90,7 @@ Derived roles: `isComponent` (an abstract type — interface or abstract class),
 
 | ID | Statement | Tag | Weight |
 |----|-----------|-----|--------|
-| D1 | Decorator conforms to the **same** component type as what it wraps (is-a matches has-a). **Now implied by D2** — see below. | structural | 2 |
+| ~~D1~~ | **DELETED 2026-08-10.** "Conforms to the same component type as what it wraps" — a proven tautology once that became the admission test. See *"D1 was deleted"* below. | — | — |
 | **D2** | Decorator holds a reference typed as a component **it itself conforms to**. | structural | **3** (critical) |
 | **D3** | Decorator delegates to the wrapped reference in its component methods (see the *any-vs-all* judgment call below). | behavioral | **3** (critical) |
 | D4 | Transparent enhancement — no interface conversion: the decorator exposes the wrapped component's whole operation set (distinguishes from **Adapter**). | structural | 2 |
@@ -166,13 +166,40 @@ units (its 40 units are factory-method 10, strategy 10, observer 10, composite 5
 `t3_decorator_lazy_proxy_KNOWN_LIMITATION` still passes, as it must — a Proxy conforms to the type
 it holds, so same-C is satisfied.
 
-**Consequence: D1 is now tautological.** `wrapped_fields` contains only conformed types, so D1 is
-true exactly when `decorators` is non-empty: `D1 == D2` for every program. No number moved (D1 was
-already 1 wherever D2 was 1), but the Decorator property set is now **four independent properties
-scored as six**, which inflates PSR for every recognised decorator. This is left as an **open
-decision, not a settled one** — removing D1 changes PSR's denominator for every Decorator program,
-which is a second measured change and not this one. Pinned by
-`tests/test_decorator_same_component.py::test_d1_is_now_implied_by_d2`.
+**Consequence: D1 became tautological, and has now been DELETED.** `wrapped_fields` contains only
+conformed types, so D1 was true exactly when `decorators` was non-empty: `D1 == D2` for every
+program, by construction rather than by corpus.
+
+### D1 was deleted — and the reason is the PROMPT, not PSR
+
+Read this order deliberately. A future session must not be able to argue the property back on
+scoring grounds alone.
+
+1. **The rule list *is* the prompt.** The experiment emits one sentence per rule to build
+   conditions O and P. A duplicated rule becomes a **duplicated sentence in the prompt**, which
+   contaminates the conditions directly. This is not a tidiness question and it has a deadline:
+   it must be settled *before* any `nl_clause` sentence is written.
+2. **In the per-rule model** it makes one fact count twice on one side of the Look-vs-Wiring
+   comparison, which is the headline result.
+3. **Only then:** it inflates PSR (the denominator counts it) and CPC (its weight counts it).
+
+Scores that moved, computed by hand from the weights before the scorer was run and confirmed
+exactly. Weights go from `Σ(w) = 12` over 6 properties to `Σ(w) = 10` over 5.
+
+| Case | PSR | CPC | PIQS |
+|---|---|---|---|
+| `decorator_no_delegation__FAIL`, `decorator_delegates_to_unrelated_component` | 66.67 → **60.0** | 66.67 → **60.0** | 66.67 → **60.0** |
+| `t1_decorator_partial_delegation_accepted` | 83.33 → **80.0** | 91.67 → **90.0** | 86.67 → **84.0** |
+| `d4_abstract_base_partial_api` | 83.33 → **80.0** | 83.33 → **80.0** | 83.33 → **80.0** |
+| every all-satisfied and every all-unsatisfied case | unchanged | unchanged | unchanged |
+
+**No recognition verdict moved** — the critical set is {D2, D3} and neither was touched. Kim
+cannot move: it has no Decorator scoring units. Pinned by
+`tests/test_decorator_property_independence.py::test_decorator_property_set_is_exactly_the_surviving_ids`.
+
+The `wraps(W,C)` **role** survives in the derived-predicate output: it is now enforced at
+admission, so it holds exactly when a candidate exists. Dropping a reported key is a separate
+change from dropping a scored property.
 
 ### D3 semantics — the *any-vs-all* decision (RESOLVED)
 

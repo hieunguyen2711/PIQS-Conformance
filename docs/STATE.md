@@ -664,11 +664,9 @@ holding both a `C` and an unrelated abstract `D`, and forwarding only to `D`, wo
 the two forms of the rule disagree, because every corpus program holds exactly one component-typed
 field.
 
-**Open decision, deliberately not settled: D1 is now tautological.** `D1 == D2` for every program.
-No number moved, but the Decorator set is **four** independent properties scored as six, which
-inflates PSR for every recognised decorator. Removing D1 changes PSR's denominator for every
-Decorator program — a second measured change, not this one. Pinned by `test_d1_is_now_implied_by_d2`.
-*(This paragraph first said "five". The audit in §5c found D5 tautological too.)*
+**D1 became tautological here, and was DELETED in §5d.** `D1 == D2` for every program, by
+construction. *(This paragraph first said the set was "five independent properties scored as six".
+The audit in §5c found D5 tautological too, so it was four.)*
 
 **A silent-skip hole was closed at the same time.** `tests/test_renaming_invariance.py` maps a
 fixture filename to a pattern by substring and does `if pattern is None: continue`. A battery file
@@ -770,6 +768,43 @@ depend on it.
 **One wrong claim was written and caught by its own test.** The first version named
 `abstract_decorator_base` as D6's separator. It is not — it scores `D6 = 1`. It is the fixture for
 D6's `not m.has_body` clause, which is a different question from whether D6 disagrees with D2.
+
+## 5d. D1 deleted — and the reason is the PROMPT, not PSR
+
+Read the reasons in this order. **A future session must not be able to argue D1 back on scoring
+grounds alone.**
+
+1. **The rule list IS the prompt.** The experiment emits one sentence per rule to build conditions
+   O and P. A duplicated rule is a **duplicated sentence in the prompt**, contaminating the
+   conditions directly. This has a deadline: it must be settled before any `nl_clause` is written.
+2. In the per-rule model it makes one fact count twice on one side of the Look-vs-Wiring
+   comparison — the headline result.
+3. Only then: it inflates PSR (denominator) and CPC (weight).
+
+Weights go from `Σ(w) = 12` over 6 properties to `Σ(w) = 10` over 5. **Every number below was
+computed by hand from the weights before the scorer was run, and every one matched.**
+
+| Case | PSR | CPC | PIQS |
+|---|---|---|---|
+| `decorator_no_delegation__FAIL` | 66.67 → **60.0** | 66.67 → **60.0** | 66.67 → **60.0** |
+| `decorator_delegates_to_unrelated_component` | 66.67 → **60.0** | 66.67 → **60.0** | 66.67 → **60.0** |
+| `t1_decorator_partial_delegation_accepted` | 83.33 → **80.0** | 91.67 → **90.0** | 86.67 → **84.0** |
+| `d4_abstract_base_partial_api` | 83.33 → **80.0** | 83.33 → **80.0** | 83.33 → **80.0** |
+| 7 all-satisfied cases | 100 | 100 | 100 (unchanged) |
+| 3 all-unsatisfied cases | 0 | 0 | 0 (unchanged) |
+
+All-zero vectors cannot move: 0/5 is still 0. All-ones cannot move: 5/5 is still 100.
+
+**No recognition verdict moved.** Critical set {D2, D3} untouched; BDT 28/28, D6 diagnostics 5/5.
+**Kim cannot move** — no Decorator scoring units.
+
+`test_d1_is_now_implied_by_d2` was not deleted silently. It is replaced by
+`test_decorator_property_set_is_exactly_the_surviving_ids`, which fails if a redundant property is
+ever added back. Shown red before green.
+
+The `wraps(W,C)` **role** survives in the derived-predicate output — it is enforced at admission,
+so it holds exactly when a candidate exists. Dropping a reported key is a separate change from
+dropping a scored property, and `compare.py` reads that dict.
 
 ## 6. Traps in the current code
 
