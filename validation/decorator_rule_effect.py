@@ -44,8 +44,10 @@ something.
 
     python3 validation/decorator_rule_effect.py
 
-Exit code is 0 whatever it finds -- this is a measurement, not a guard. The guard for the rule
-itself is the battery case `t5_object_adapter_rejected_as_decorator__FAIL`.
+Exit code is 0 for any CORPUS result -- this is a measurement, not a guard, and the guard for the
+rule itself is the battery case `t5_object_adapter_rejected_as_decorator__FAIL`. It exits **1**
+for one thing only: a positive control that did not fire. That is not a finding about the corpus,
+it is the script reporting that its own output cannot be trusted.
 """
 
 from __future__ import annotations
@@ -164,21 +166,40 @@ def main() -> int:
     print()
 
     affected = {label for label, *_ in admission_lost} | {label for label, *_ in narrowed}
-    control = {a for a in affected if any(a.endswith(c.split("/")[-1]) for c in INTRODUCED_BY_THE_RULE)}
-    pre_existing = affected - control
+
+    # Full-path equality, NOT `endswith(basename)`. Basenames are not unique in this tree -- six
+    # Kim programs each declare `Sale.java`, `ItemInventory.java` and four more -- so basename
+    # matching is only accidentally correct here. `endswith` is worse still: a future
+    # `my_object_adapter_not_a_decorator.java` would be silently counted as the control, and the
+    # real control's absence would be masked by the impostor. The labels for single-file programs
+    # ARE their repo-relative paths, so exact set arithmetic is available and is used.
+    control = affected & INTRODUCED_BY_THE_RULE
+    missing = INTRODUCED_BY_THE_RULE - affected
+    pre_existing = affected - INTRODUCED_BY_THE_RULE
 
     print(f"affected programs: {len(affected)}")
     print(f"  of which fixtures ADDED BY e2acb66 for this rule (the positive control): "
-          f"{len(control)}")
+          f"{len(control)}/{len(INTRODUCED_BY_THE_RULE)}")
     for a in sorted(control):
         print(f"      {a}")
     print(f"  PRE-EXISTING corpus programs affected: {len(pre_existing)}")
     for a in sorted(pre_existing):
         print(f"      {a}")
-    if not control:
-        print("\n  WARNING: the positive control did not fire. This script found none of the "
-              "three fixtures\n  that exist to be affected by this rule -- treat any zero above "
-              "as unproven.")
+
+    # THE CONTROL IS CHECKED BY COUNT, NOT BY EMPTINESS. The first version asked `if not
+    # control:`, which only fired when ALL THREE controls failed. Two of three firing left the
+    # script silent -- the broken state indistinguishable from the passing state, which is the
+    # exact defect this whole branch exists to remove. Partial failure is the LIKELY failure: a
+    # rule change that stops catching object adapters but still narrows Router's field list
+    # would take out two of three and print nothing.
+    if missing:
+        print()
+        print(f"  BROKEN: {len(missing)} of {len(INTRODUCED_BY_THE_RULE)} positive controls did "
+              f"not fire. The numbers above are UNPROVEN --")
+        print("  a measurement that cannot return non-zero says nothing when it returns zero.")
+        for a in sorted(missing):
+            print(f"      MISSING  {a}")
+        return 1
     return 0
 
 
