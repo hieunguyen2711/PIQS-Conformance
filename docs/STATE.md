@@ -855,6 +855,101 @@ The evidence trace now carries a key definitionally identical to a scored verdic
 shape again, moved out of the score and into the evidence rather than removed. Stage 5 owns it;
 nothing here changes it.
 
+## 5e. Field-scope audit — a decorator that forwards nothing scores 100. MEASURED, NOT FIXED.
+
+**Two independent defects. Fixing either one alone changes nothing.** Both design questions are
+open and belong to the project owner; §5e decides neither.
+
+### The mechanism
+
+`_evaluate_decorator`'s candidate loop reads `w.fields` — **own fields only, never
+`_effective_fields`**. A concrete decorator extending an abstract decorator base inherits the
+component reference and declares no field of its own, so it is **never a decorator candidate at
+all**. That is the canonical GoF Decorator shape: the base holds the component, the concrete
+decorators extend it. **Only the base is ever judged** — and D2, D3, D4 and D6 are each an
+`any(...)` over the candidate list, so one compliant class carries the whole program.
+
+`tests/fixtures_parser/decorator_subclass_forwards_nothing.java`, kept verbatim as reported:
+
+    D2 1   D3 1   D4 1   D6 1      PSR 100.0   CPC 100.0   PIQS 100.0   Excellent
+
+`Broken` overrides both component operations and forwards neither. Fully recognised, D6 clean.
+It scored a perfect **six** before D1 and D5 were deleted, and a perfect **four** now; the
+deletions neither caused nor affect it.
+
+### The three-row table — reproduced on HEAD, confirmed
+
+| Program | D4 |
+|---|---|
+| the abstract base alone | **0** |
+| base + a subclass extending it | **0** |
+| base + an independent concrete decorator with its own field | **1** |
+
+### All four combinations, measured by patching the checker — not argued
+
+| admission | quantifier | D2 | D3 | D4 | D6 | PSR | CPC | PIQS |
+|---|---|---|---|---|---|---|---|---|
+| own fields | `any` **(current)** | 1 | 1 | 1 | 1 | 100.0 | 100.0 | **100.0** |
+| own fields | `all` | 1 | 1 | 1 | 1 | 100.0 | 100.0 | **100.0** |
+| effective fields | `any` | 1 | 1 | 1 | 1 | 100.0 | 100.0 | **100.0** |
+| effective fields | `all` | 1 | **0** | 1 | **0** | 50.0 | 55.56 | **52.22** |
+
+`own + all` changes nothing because the base is the only candidate, so `all` over one element *is*
+`any`. `effective + any` admits `Broken` but the base still satisfies every `any(...)` on its
+behalf. **Only the fourth catches it**, and even there D4 stays 1: `_effective_methods` walks
+`extends`, so `Broken`'s effective method set includes the base's and covers the interface.
+
+### THE TWO OPEN QUESTIONS — not answered here
+
+1. **Own fields versus effective fields for candidate admission.**
+2. **`any(...)` versus `all(...)` for D3, D4 and D6.**
+
+The table above is the data for the decision. Nothing in this section changes a predicate.
+
+### Corpus effect — 3 invisible classes in 3 programs
+
+`validation/decorator_field_scope_effect.py`, one program at a time, positive control checked by
+count. Over 84 units:
+
+| Program | Invisible class |
+|---|---|
+| `fixtures/mutation_battery_bdt/decorator_filterinputstream_analogue.java` | `BufferedInputStream` inherits `InputStream` |
+| `tests/fixtures_parser/abstract_decorator_base.java` | `LoudDecorator` inherits `Component` |
+| `tests/fixtures_parser/decorator_subclass_forwards_nothing.java` | `Broken` inherits `Conduit` |
+
+**I predicted 2 and measured 3.** The prediction was wrong, not the measurement: I inspected
+`abstract_decorator_base.java`, found the shape, and stopped without checking the other BDT
+decorator fixtures. The one I missed is the important one — **`decorator_filterinputstream_analogue`
+is a corpus case modelled on the JDK's own decorator hierarchy**, so this is not an artefact of
+fixtures built for the audit. It is the shape real decorator code takes.
+
+### Scope of the own-fields-only reading, across all evaluators
+
+| Site | Function | Reads |
+|---|---|---|
+| 315 | `_field_of_type` | own |
+| 747 | `_evaluate_strategy` | own |
+| 938 | `_evaluate_observer` | own |
+| 1120, 1147 | `_evaluate_singleton` | own |
+| 1226 | `_evaluate_builder` | **`_effective_fields`** |
+| 1342 | `_evaluate_builder` | own |
+| 1414 | `_evaluate_decorator` | own |
+
+**Composite and Template Method never read fields** for role derivation, so neither can have this
+shape. **Builder is the only evaluator that uses `_effective_fields` at all — and it uses both.**
+Whether Strategy, Observer or Singleton are actually *wrong* to read own fields is a separate
+question per pattern and is **not** answered here: a Strategy context holding an inherited
+strategy field, or a Singleton whose instance field is inherited, are different programs from a
+decorator subclass and need their own fixtures. **Nothing outside Decorator was measured, and
+nothing anywhere was fixed.**
+
+### Consequence for D4 — it survives, and this is why it was kept alive
+
+`d4_abstract_base_partial_api.java` has one class, and `inner` is its own field. Effective fields
+add nothing there, and `all` over a single candidate equals `any`. **D4 stays 0 on that fixture in
+all four combinations**, so its only separator survives whichever way both questions are decided.
+Deferring the D4 decision cost nothing.
+
 ## 6. Traps in the current code
 
 ### `t.body` includes method bodies

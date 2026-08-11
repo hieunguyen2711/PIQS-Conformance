@@ -23765,6 +23765,284 @@
    "name": "Valve"
   }
  },
+ "tests/fixtures_parser/decorator_subclass_forwards_nothing.java": {
+  "Base": {
+   "body": {
+    "len": 157,
+    "sha256": "a73f36b2bc0eee6d"
+   },
+   "extends": null,
+   "fields": [
+    {
+     "field_type": "Conduit",
+     "modifiers": [
+      "protected"
+     ],
+     "name": "inner"
+    }
+   ],
+   "implements": [
+    "Conduit"
+   ],
+   "is_abstract": true,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [
+      "inner"
+     ],
+     "body": {
+      "len": 12,
+      "sha256": "1586668cafbbce88"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": true,
+     "locals": {},
+     "mentions": [
+      "i",
+      "inner"
+     ],
+     "modifiers": [],
+     "name": "Base",
+     "owner": "Base",
+     "param_names": [
+      "i"
+     ],
+     "param_types": [
+      "Conduit"
+     ],
+     "return_type": null,
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 17,
+      "sha256": "c6ef0a38ce04bde1"
+     },
+     "calls": [
+      [
+       "inner",
+       "write"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "inner",
+      "s",
+      "write"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "write",
+     "owner": "Base",
+     "param_names": [
+      "s"
+     ],
+     "param_types": [
+      "String"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 16,
+      "sha256": "6f499d3c7e94655e"
+     },
+     "calls": [
+      [
+       "inner",
+       "flush"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "flush",
+      "inner"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "flush",
+     "owner": "Base",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Base"
+  },
+  "Broken": {
+   "body": {
+    "len": 192,
+    "sha256": "919b6992b73556b7"
+   },
+   "extends": "Base",
+   "fields": [],
+   "implements": [],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 11,
+      "sha256": "3cc6881f24d86017"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": true,
+     "locals": {},
+     "mentions": [
+      "i",
+      "super"
+     ],
+     "modifiers": [],
+     "name": "Broken",
+     "owner": "Broken",
+     "param_names": [
+      "i"
+     ],
+     "param_types": [
+      "Conduit"
+     ],
+     "return_type": null,
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 24,
+      "sha256": "5d191864f1da86a8"
+     },
+     "calls": [
+      [
+       "out",
+       "println"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "System",
+      "out",
+      "println",
+      "s"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "write",
+     "owner": "Broken",
+     "param_names": [
+      "s"
+     ],
+     "param_types": [
+      "String"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 29,
+      "sha256": "31487aa25e2cb356"
+     },
+     "calls": [
+      [
+       "out",
+       "println"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "System",
+      "out",
+      "println"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "flush",
+     "owner": "Broken",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Broken"
+  },
+  "Conduit": {
+   "body": {
+    "len": 37,
+    "sha256": "0c6831eb7f9a86f8"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "write",
+     "owner": "Conduit",
+     "param_names": [
+      "s"
+     ],
+     "param_types": [
+      "String"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "flush",
+     "owner": "Conduit",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Conduit"
+  }
+ },
  "tests/fixtures_parser/div1_this_keyword.java": {
   "Assembler": {
    "body": {
