@@ -835,8 +835,25 @@ All-zero vectors cannot move: 0/5 is still 0. All-ones cannot move: 5/5 is still
 ever added back. Shown red before green.
 
 The `wraps(W,C)` **role** survives in the derived-predicate output — it is enforced at admission,
-so it holds exactly when a candidate exists. Dropping a reported key is a separate change from
-dropping a scored property, and `compare.py` reads that dict.
+so it holds exactly when a candidate exists. The derived predicates are the published **evidence
+trace**: the record of which structural roles were found, reported alongside the score rather than
+feeding it. Stage 5 exists to make that trace structural instead of name-based, so its keys are
+Stage 5's subject matter. Dropping a reported key is a separate change from dropping a scored
+property.
+
+> **Correction (2026-08-10).** This sentence first read *"and `compare.py` reads that dict"*. It
+> does not. **Nothing in the repository reads `derived_predicates` or `base_predicates`.**
+> `checker.py:186-187` produces them, `run_scorer.py:167-168` copies both into
+> `results/kim_replication_raw.json`, and nothing reads them back; `compare.py` reads only
+> `psr`, `cpc`, `piqs`, `properties`, `satisfaction`, `pattern`, `case_study`, `llm`. The decision
+> to keep the key stands — the reason given for it was wrong. A false *"X depends on this"* is
+> exactly the note that makes a later session treat dead weight as load-bearing, and Stage 5 is
+> still ahead.
+
+**FOR STAGE 5, recorded not acted on: `wraps(d,c)` is `bool(decorators)`, which is exactly D2.**
+The evidence trace now carries a key definitionally identical to a scored verdict. That is the D1
+shape again, moved out of the score and into the evidence rather than removed. Stage 5 owns it;
+nothing here changes it.
 
 ## 6. Traps in the current code
 

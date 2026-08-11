@@ -1537,10 +1537,26 @@ class PIQSChecker:
         derived = {
             "isComponent(x)": bool(component_names),
             "isDecorator(x)": bool(decorators),
-            # The `wraps(W,C)` ROLE survives the removal of the D1 property: it is now enforced
-            # at admission, so it holds exactly when a decorator candidate exists. Reported here
-            # because derived predicates are descriptive output that compare.py reads for
-            # disagreement analysis -- dropping a key is a separate change from dropping a score.
+            # The `wraps(W,C)` ROLE survives the removal of the D1 property: it is enforced at
+            # admission now, so it holds exactly when a decorator candidate exists.
+            #
+            # WHY IT IS KEPT. The derived predicates are the published EVIDENCE TRACE -- the
+            # record of which structural roles were found, reported alongside the score rather
+            # than feeding it. Stage 5 exists to make that trace structural instead of name-based,
+            # so the keys are its subject matter. Dropping a reported key is a separate change
+            # from dropping a scored property, and it belongs to Stage 5.
+            #
+            # A PREVIOUS VERSION OF THIS COMMENT SAID "compare.py reads that dict". IT DOES NOT.
+            # Nothing in the repository reads `derived_predicates` or `base_predicates`:
+            # `run_scorer.py` copies both into results/kim_replication_raw.json and never reads
+            # them back, and compare.py reads only psr/cpc/piqs/properties/satisfaction/pattern/
+            # case_study/llm. The decision to keep the key stands; the reason given for it was
+            # wrong, and a false "X depends on this" is the kind of note that makes a later
+            # session treat dead weight as load-bearing.
+            #
+            # FOR STAGE 5, NOT FOR NOW: `wraps(d,c)` is `bool(decorators)`, which is exactly D2.
+            # The trace now carries a key definitionally identical to a scored verdict -- the D1
+            # shape again, moved out of the score and into the evidence. Recorded in STATE.md.
             "wraps(d,c)": bool(decorators),
             "delegatesTo(d,c)": d3,
             "isTransparent(d)": d4,
