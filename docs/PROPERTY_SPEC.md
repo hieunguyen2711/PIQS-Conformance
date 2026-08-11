@@ -168,7 +168,7 @@ it holds, so same-C is satisfied.
 
 **Consequence: D1 is now tautological.** `wrapped_fields` contains only conformed types, so D1 is
 true exactly when `decorators` is non-empty: `D1 == D2` for every program. No number moved (D1 was
-already 1 wherever D2 was 1), but the Decorator property set is now **five independent properties
+already 1 wherever D2 was 1), but the Decorator property set is now **four independent properties
 scored as six**, which inflates PSR for every recognised decorator. This is left as an **open
 decision, not a settled one** — removing D1 changes PSR's denominator for every Decorator program,
 which is a second measured change and not this one. Pinned by

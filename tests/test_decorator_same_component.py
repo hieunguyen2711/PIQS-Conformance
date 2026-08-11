@@ -33,8 +33,13 @@ D1 IS NOW TAUTOLOGICAL. This is deliberate and recorded rather than hidden. D1 s
 to the same component type as what it wraps", which is now exactly the admission test, so
 D1 == D2 for every program. No existing number moved -- D1 was already 1 wherever D2 was 1
 across all 82 program units measured by validation/decorator_rule_effect.py -- but the set is now
-five independent properties scored as six. `test_d1_is_now_implied_by_d2` pins that, so it
+FOUR independent properties scored as six. `test_d1_is_now_implied_by_d2` pins that, so it
 cannot be forgotten, and it is an open decision rather than a settled one.
+
+(This docstring first said "five". That was wrong: the audit in
+tests/test_decorator_property_independence.py found D5 tautological as well, by the same kind of
+argument -- `d5 = abstract_decorator_base or d2` is True exactly when d2 is. The independent
+properties are D2, D3, D4 and D6.)
 """
 
 from __future__ import annotations

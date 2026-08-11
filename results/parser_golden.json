@@ -23459,6 +23459,150 @@
    "name": "LoudDecorator"
   }
  },
+ "tests/fixtures_parser/d4_abstract_base_partial_api.java": {
+  "Conduit": {
+   "body": {
+    "len": 45,
+    "sha256": "ffa4813826d5f9c6"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "write",
+     "owner": "Conduit",
+     "param_names": [
+      "s"
+     ],
+     "param_types": [
+      "String"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "flush",
+     "owner": "Conduit",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Conduit"
+  },
+  "Damper": {
+   "body": {
+    "len": 158,
+    "sha256": "d5b938a9748962a7"
+   },
+   "extends": null,
+   "fields": [
+    {
+     "field_type": "Conduit",
+     "modifiers": [
+      "protected"
+     ],
+     "name": "inner"
+    }
+   ],
+   "implements": [
+    "Conduit"
+   ],
+   "is_abstract": true,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [
+      "inner"
+     ],
+     "body": {
+      "len": 33,
+      "sha256": "1cb103ccf76d1d09"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": true,
+     "locals": {},
+     "mentions": [
+      "inner",
+      "this"
+     ],
+     "modifiers": [],
+     "name": "Damper",
+     "owner": "Damper",
+     "param_names": [
+      "inner"
+     ],
+     "param_types": [
+      "Conduit"
+     ],
+     "return_type": null,
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 29,
+      "sha256": "facf0305abf1a2cb"
+     },
+     "calls": [
+      [
+       "inner",
+       "write"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "inner",
+      "s",
+      "write"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "write",
+     "owner": "Damper",
+     "param_names": [
+      "s"
+     ],
+     "param_types": [
+      "String"
+     ],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Damper"
+  }
+ },
  "tests/fixtures_parser/decorator_delegates_to_unrelated_component.java": {
   "Pump": {
    "body": {

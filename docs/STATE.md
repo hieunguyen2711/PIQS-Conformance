@@ -665,9 +665,10 @@ the two forms of the rule disagree, because every corpus program holds exactly o
 field.
 
 **Open decision, deliberately not settled: D1 is now tautological.** `D1 == D2` for every program.
-No number moved, but the Decorator set is five independent properties scored as six, which inflates
-PSR for every recognised decorator. Removing D1 changes PSR's denominator for every Decorator
-program — a second measured change, not this one. Pinned by `test_d1_is_now_implied_by_d2`.
+No number moved, but the Decorator set is **four** independent properties scored as six, which
+inflates PSR for every recognised decorator. Removing D1 changes PSR's denominator for every
+Decorator program — a second measured change, not this one. Pinned by `test_d1_is_now_implied_by_d2`.
+*(This paragraph first said "five". The audit in §5c found D5 tautological too.)*
 
 **A silent-skip hole was closed at the same time.** `tests/test_renaming_invariance.py` maps a
 fixture filename to a pattern by substring and does `if pattern is None: continue`. A battery file
@@ -702,6 +703,73 @@ directly: **green suites mean the corpus lacks the case.**
 `decorator_rule_effect.py` now carries a named positive control — the three fixtures `e2acb66`
 added for this rule — and prints a warning if the control does not fire. Without it, "0 affected"
 and "the script is broken" are the same output.
+
+## 5c. Decorator tautology audit — measured 2026-08-10, NOTHING DELETED
+
+**Four of the six Decorator properties carry information. Six are scored.**
+
+Measured over 82 program units (12 Kim programs with all their files together, 12 mutation
+battery, 28 BDT, 30 parser fixtures), every one evaluated as `decorator`:
+
+| | measured |
+|---|---|
+| programs where `D1 != D2` | **0** |
+| programs where `D5 != D2` | **0** |
+| programs where `D2 == 1` | **13** |
+
+| Property | Independent of D2? | Separating program |
+|---|---|---|
+| D1 | **NO** — identity by construction | none can exist |
+| D3 | YES | `decorator_delegates_to_unrelated_component`, `decorator_no_delegation__FAIL`, `div5_chain_not_delegation` |
+| D4 | **YES** — but the probe had to be built | `d4_abstract_base_partial_api.java` (new) |
+| D5 | **NO** — identity by construction | none can exist |
+| D6 | YES | `t1_decorator_partial_delegation_accepted` + 3 more |
+
+### Why D1 and D5 cannot be separated by ANY program
+
+An argument from the code, not from the corpus — a corpus can only ever say *"no case here"*.
+
+**D1.** `wrapped_fields` is built by filtering on `f.field_type in conformed`, and `d1` then tests
+`any(ctype in conformed ...)` over that same list. The quantifier ranges over a list built by
+filtering on exactly the predicate it tests, and a candidate is appended only when the list is
+non-empty. So `d1 == bool(decorators) == d2` for every input.
+
+**D5.** `d5 = abstract_decorator_base or d2`, where `abstract_decorator_base` is an `any(...)` over
+`decorators`. Two exhaustive cases: `decorators` empty → `d2` False and `any` over empty is False
+→ `d5` False; `decorators` non-empty → `d2` True → `d5` True by the `or`. So `d5 == d2` always.
+`abstract_decorator_base` is not dead — D5's description reads on it — but it can never change
+D5's value.
+
+### D4 survived, and only because a probe was constructed for it
+
+**In the BDT battery `D4 == 1` in all 8 recognised decorators, which proves nothing.** `d4` is an
+`any(...)` over every decorator in the program, and for a **concrete** class the Java compiler
+already forces the implemented method set to cover the interface. One concrete decorator sets D4
+for the whole program, and every battery case has one. This is trap-shaped: the corpus agrees with
+"D4 is redundant" and with "D4 is independent" equally well.
+
+`d4_abstract_base_partial_api.java` is an abstract decorator base implementing part of the
+component API with **no concrete decorator present**. `_effective_methods` walks `extends` only,
+never `implements` (checker.py:353), so the wrapper's effective method set is `{write}` while the
+component's is `{write, flush}`.
+
+    D1 1 · D2 1 · D3 1 · D4 0 · D5 1 · D6 1     PSR 83.33 · CPC 83.33 · PIQS 83.33 · Good
+
+**Each guard proven against a deliberately broken checker**, one thing changed each time:
+
+| Mutation | Flips |
+|---|---|
+| `d5 = abstract_decorator_base` (drop the `or d2`) | D5 tautology test **only** |
+| `_transparent` uses `&` instead of `<=` | D4 independence test **only** |
+| `wrapped_fields` back to `component_names` | D1 tautology test **and** the D3 separator |
+
+The third flips two, correctly: reverting the same-component rule restores `Router`'s loose field
+list, so its D3 becomes 1 and the separator disappears with it. One thing changed; two properties
+depend on it.
+
+**One wrong claim was written and caught by its own test.** The first version named
+`abstract_decorator_base` as D6's separator. It is not — it scores `D6 = 1`. It is the fixture for
+D6's `not m.has_body` clause, which is a different question from whether D6 disagrees with D2.
 
 ## 6. Traps in the current code
 
