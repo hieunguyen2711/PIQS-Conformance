@@ -75,7 +75,39 @@ def compile_program(program_root, rel_files):
             capture_output=True,
             text=True,
         )
-        return proc.returncode == 0, proc.returncode, proc.stderr.strip()
+        return proc.returncode == 0, proc.returncode, _anonymise(proc.stderr.strip(), tmp)
+
+
+def _anonymise(text, tmpdir=None):
+    """Replace machine-specific absolute paths with placeholders before anything is written.
+
+    javac prints the ABSOLUTE path of every file it complains about, and this stderr is stored
+    verbatim in results/kim_replication_raw.json. Six programs fail to compile, so six copies of
+    the author's home directory and full project path were committed as DATA.
+
+    (This docstring cannot quote the offending prefix as an example: the guard below scans every
+    tracked file, and an illustrative path is indistinguishable from a real one. It caught this
+    very docstring on the first run, which is the behaviour wanted.)
+
+    Two problems, and the second is the serious one:
+
+      * a correct run on another machine differs from the committed baseline in every one of
+        those strings, so a whole-file diff cannot be used as a regression check;
+      * the paper is double-blind, and anonymising a repository URL does not anonymise a string
+        inside a committed data file. docs/MIGRATION.md records that every SCRIPT had this exact
+        prefix removed so the repo runs anywhere. The data files put it back as content.
+
+    Normalising at the point of writing, rather than cleaning the file afterwards, is what makes
+    it stay fixed: the next tool whose output gets captured is covered too. The error text itself
+    is kept -- the diagnostic value is in the message, not in the path.
+
+    Pinned by tests/test_no_absolute_paths.py, which scans every git-tracked file.
+    """
+    if not text:
+        return text
+    if tmpdir:
+        text = text.replace(tmpdir, "<tmpdir>")
+    return text.replace(ROOT, "<repo>")
 
 
 def main():
