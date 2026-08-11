@@ -83,7 +83,7 @@ def test_object_adapter_is_not_recognised_as_a_decorator():
     PIQS 53.33, grade Moderate, and RECOGNISED because {D2,D3} both held."""
     res = _evaluate("object_adapter_not_a_decorator")
     v = {r["property_id"]: r["satisfaction"] for r in res["logical_assessment"]}
-    assert v == {"D2": 0, "D3": 0, "D4": 0, "D5": 0, "D6": 0}
+    assert v == {"D2": 0, "D3": 0, "D4": 0, "D6": 0}
     assert res["final_quality_result_piqs"]["result_percent"] == 0.0
     assert res["grade"] == "Poor"
     assert not recognised("object_adapter_not_a_decorator")

@@ -94,7 +94,7 @@ Derived roles: `isComponent` (an abstract type — interface or abstract class),
 | **D2** | Decorator holds a reference typed as a component **it itself conforms to**. | structural | **3** (critical) |
 | **D3** | Decorator delegates to the wrapped reference in its component methods (see the *any-vs-all* judgment call below). | behavioral | **3** (critical) |
 | D4 | Transparent enhancement — no interface conversion: the decorator exposes the wrapped component's whole operation set (distinguishes from **Adapter**). | structural | 2 |
-| D5 | Abstract decorator base / recursive composability — a collapsed single decorator is accepted (it wraps the component type, so it can wrap another decorator). | structural | 1 |
+| ~~D5~~ | **DELETED 2026-08-10.** "Abstract decorator base / recursive composability" — computed as `abstract_decorator_base or d2`, a tautology. See below. | — | — |
 | D6 | **Full delegation (non-critical diagnostic)** — every implemented component operation forwards to the wrapped reference. Flags partial delegation *without* changing recognition. | behavioral | 1 |
 
 **Accepted variants (RULE 3):** interface or abstract-class component; a collapsed single
@@ -200,6 +200,37 @@ cannot move: it has no Decorator scoring units. Pinned by
 The `wraps(W,C)` **role** survives in the derived-predicate output: it is now enforced at
 admission, so it holds exactly when a candidate exists. Dropping a reported key is a separate
 change from dropping a scored property.
+
+### D5 was deleted too — the `or` was where it died
+
+`d5 = abstract_decorator_base or d2`, and `abstract_decorator_base` is an `any(...)` over the
+**same list** that decides `d2`:
+
+| `decorators` | `abstract_decorator_base` | `d2` | `d5` |
+|---|---|---|---|
+| empty | False (`any` over empty) | False | **False** |
+| non-empty | either | True | **True** (by the `or`) |
+
+`D5 == D2` for every program. Note this is *not* a case of a property that merely happens to
+agree on the corpus — the `or d2` guarantees it for every possible input.
+
+**The RULE 3 decision the `or d2` encoded is not lost.** "A collapsed single decorator is
+accepted" is already true of D2's admission rule, which never required an abstract base.
+`abstract_decorator_base` itself is **kept**: it still feeds the `hasAbstractDecoratorBase(x)`
+derived predicate, and D6's `not m.has_body` clause exists because of the shape it names.
+
+Weights go from `Σ(w) = 10` over 5 properties to `Σ(w) = 9` over 4. Computed by hand first,
+confirmed exactly:
+
+| Case | PSR | CPC | PIQS |
+|---|---|---|---|
+| `decorator_no_delegation__FAIL`, `decorator_delegates_to_unrelated_component` | 60.0 → **50.0** | 60.0 → **55.56** | 60.0 → **52.22** |
+| `t1_decorator_partial_delegation_accepted` | 80.0 → **75.0** | 90.0 → **88.89** | 84.0 → **80.56** |
+| `d4_abstract_base_partial_api` | 80.0 → **75.0** | 80.0 → **77.78** | 80.0 → **76.11** |
+
+Again no recognition verdict moved. **The Decorator set is now D2, D3, D4, D6 — four properties,
+all four independent.** D4 is deliberately still alive: the field-scope audit may change what it
+measures, and deciding it twice is worse than deciding it late.
 
 ### D3 semantics — the *any-vs-all* decision (RESOLVED)
 

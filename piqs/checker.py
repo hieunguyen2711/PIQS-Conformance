@@ -23,9 +23,9 @@ _PATTERN_WEIGHTS = {
     # pattern work (also the CRITICAL set); weight 2 = existence-of-a-role / interaction;
     # weight 1 = supporting/peripheral. See validation/bdt_property_spec.md.
     "builder": {"B1": 3, "B2": 3, "B3": 2, "B4": 2, "B5": 1, "B6": 1},
-    # D1 was removed 2026-08-10: it was a proven tautology, `D1 == D2` for every program by
+    # D1 and D5 were removed 2026-08-10: both proven tautologies, `== D2` for every program by
     # construction. See PROPERTY_SPEC.md -- the reason is prompt generation, not PSR.
-    "decorator": {"D2": 3, "D3": 3, "D4": 2, "D5": 1, "D6": 1},
+    "decorator": {"D2": 3, "D3": 3, "D4": 2, "D6": 1},
     "template-method": {"T1": 2, "T2": 2, "T3": 3, "T4": 2, "T5": 2},
 }
 
@@ -1460,12 +1460,23 @@ class PIQSChecker:
 
         d4 = any(_transparent(w, wf) for (w, _conf, wf) in decorators)
 
-        # D5 -- abstract decorator base / recursive composability. An abstract decorator base is
-        # an ABSTRACT decorator (abstract class that conforms-to and holds the component). Failing
-        # that, a collapsed single decorator is still ACCEPTED (RULE 3): because it wraps the
-        # component type itself, it can wrap another decorator -> recursive composability holds.
+        # D5 IS GONE. It read "abstract decorator base / recursive composability", and was
+        # computed as `abstract_decorator_base or d2`. That is a tautology by construction, and
+        # the `or` is where it died: `abstract_decorator_base` is an `any(...)` over the SAME list
+        # that decides d2, so
+        #
+        #     decorators empty     -> d2 False, and any() over empty is False  -> D5 False
+        #     decorators non-empty -> d2 True                                  -> D5 True
+        #
+        # D5 == D2 for every program. The accept-a-collapsed-single-decorator decision (RULE 3)
+        # that the `or d2` encoded is not lost: it lives in D2's admission rule, which never
+        # required an abstract base in the first place.
+        #
+        # THE REASON FOR REMOVING IT IS PROMPT GENERATION, NOT PSR -- see the D1 note above and
+        # PROPERTY_SPEC.md. `abstract_decorator_base` is KEPT: it still feeds the
+        # `hasAbstractDecoratorBase(x)` derived predicate, which is descriptive output, and D6's
+        # `not m.has_body` clause exists because of the shape it identifies.
         abstract_decorator_base = any(w.is_abstract for (w, _c, _wf) in decorators)
-        d5 = abstract_decorator_base or d2
 
         # D6 -- full/transparent delegation (NON-CRITICAL diagnostic, weight 1). D3 (critical)
         # only requires that AT LEAST ONE component method delegates -- this is deliberate:
@@ -1541,7 +1552,6 @@ class PIQSChecker:
             self._row("D2", 3, d2, "Decorator holds a reference typed as a component it itself conforms to (composition)."),
             self._row("D3", 3, d3, "Decorator delegates to the wrapped reference in its component methods."),
             self._row("D4", 2, d4, "Transparent enhancement -- no interface conversion (distinguishes from Adapter; NOT from Proxy)."),
-            self._row("D5", 1, d5, "Abstract decorator base / recursive composability (collapsed single decorator accepted)."),
             self._row("D6", 1, d6, "Full delegation -- every implemented component operation forwards to the wrapped reference (non-critical diagnostic; partial delegation still recognised)."),
         ]
         return base, derived, rows

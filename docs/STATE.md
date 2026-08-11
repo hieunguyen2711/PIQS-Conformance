@@ -769,7 +769,39 @@ depend on it.
 `abstract_decorator_base` as D6's separator. It is not — it scores `D6 = 1`. It is the fixture for
 D6's `not m.has_body` clause, which is a different question from whether D6 disagrees with D2.
 
-## 5d. D1 deleted — and the reason is the PROMPT, not PSR
+## 5d. D1 and D5 deleted — and the reason is the PROMPT, not PSR
+
+**The Decorator set is now D2, D3, D4, D6 — four properties, all four independent.** D4 is
+deliberately still alive pending §5e: the field-scope audit may change what it measures, and
+deciding it twice is worse than deciding it late.
+
+### D5, removed second (weight 1)
+
+`d5 = abstract_decorator_base or d2`, and `abstract_decorator_base` is an `any(...)` over the
+**same list** that decides `d2`. Empty → False/False; non-empty → `d2` True → `d5` True by the
+`or`. `D5 == D2` for every possible input, not merely for the corpus.
+
+The RULE 3 decision the `or d2` encoded — *a collapsed single decorator is accepted* — is not
+lost: it is already true of D2's admission rule, which never required an abstract base.
+`abstract_decorator_base` is **kept**, because it still feeds `hasAbstractDecoratorBase(x)` and
+D6's `not m.has_body` clause exists because of the shape it names.
+
+`Σ(w) = 10` over 5 → `Σ(w) = 9` over 4. Hand-computed first, matched exactly:
+
+| Case | PSR | CPC | PIQS |
+|---|---|---|---|
+| `decorator_no_delegation__FAIL` | 60.0 → **50.0** | 60.0 → **55.56** | 60.0 → **52.22** |
+| `decorator_delegates_to_unrelated_component` | 60.0 → **50.0** | 60.0 → **55.56** | 60.0 → **52.22** |
+| `t1_decorator_partial_delegation_accepted` | 80.0 → **75.0** | 90.0 → **88.89** | 84.0 → **80.56** |
+| `d4_abstract_base_partial_api` | 80.0 → **75.0** | 80.0 → **77.78** | 80.0 → **76.11** |
+
+pytest 218 → **217**: the `[D5]` parameter was the last one on
+`test_property_is_identical_to_d2_on_every_unit`, so the function went with it. Not missing — its
+job passed to `test_decorator_property_set_is_exactly_the_surviving_ids`, which states the whole
+set instead of checking two known offenders, and so also catches a redundant property nobody has
+named yet.
+
+### D1, removed first (weight 2)
 
 Read the reasons in this order. **A future session must not be able to argue D1 back on scoring
 grounds alone.**

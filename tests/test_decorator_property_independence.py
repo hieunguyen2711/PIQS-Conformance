@@ -80,15 +80,12 @@ def _fixture_vector(slug: str) -> dict[str, int]:
 ALL_UNITS = [(label, _vector(files)) for label, files in programs()]
 
 
-@pytest.mark.parametrize("pid", ["D5"])
-def test_property_is_identical_to_d2_on_every_unit(pid: str):
-    """The tautology, measured. If this goes RED, the property has become meaningful again --
-    which is a reason to re-decide the Decorator weights, NOT to edit this expectation."""
-    disagree = [label for label, v in ALL_UNITS if v[pid] != v["D2"]]
-    assert not disagree, (
-        f"{pid} differs from D2 on {len(disagree)} unit(s): {disagree[:5]}. "
-        f"{pid} carries independent information again -- re-decide the weights."
-    )
+# `test_property_is_identical_to_d2_on_every_unit` lived here, parametrised over ["D1", "D5"].
+# Both properties are now DELETED, so it has no parameters left and is gone with them. It is not
+# missing: its job -- "no redundant property may exist in the Decorator set" -- passed to
+# `test_decorator_property_set_is_exactly_the_surviving_ids` below, which states the whole set
+# rather than checking two known offenders one at a time. That is the stronger form: it also
+# catches a redundant property nobody has named yet.
 
 
 def test_d4_is_independent_of_d2():
@@ -101,7 +98,7 @@ def test_d4_is_independent_of_d2():
     v = _fixture_vector("d4_abstract_base_partial_api")
     assert v["D2"] == 1, "the probe must still BE a decorator, or it proves nothing about D4"
     assert v["D4"] == 0, "D4 has collapsed into D2 -- the property set is down to three"
-    assert v == {"D2": 1, "D3": 1, "D4": 0, "D5": 1, "D6": 1}
+    assert v == {"D2": 1, "D3": 1, "D4": 0, "D6": 1}
 
 
 @pytest.mark.parametrize(
@@ -149,4 +146,4 @@ def test_decorator_property_set_is_exactly_the_surviving_ids():
     D5 is still listed here and is next; D4 is deliberately still alive pending the field-scope
     audit, which may change what it measures.
     """
-    assert sorted(_PATTERN_WEIGHTS["decorator"]) == ["D2", "D3", "D4", "D5", "D6"]
+    assert sorted(_PATTERN_WEIGHTS["decorator"]) == ["D2", "D3", "D4", "D6"]
