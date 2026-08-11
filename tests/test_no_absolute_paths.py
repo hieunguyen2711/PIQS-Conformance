@@ -46,10 +46,9 @@ _UNRESOLVED = {
         "24 hits (source_zip, extracted_root). MIGRATION.md:28 states it was copied "
         "BYTE-IDENTICAL and left untouched 'so the migration cannot be accused of moving the "
         "goalposts'. Rewriting it is a decision about a measured artifact, not a cleanup.",
-    "validation/build_manifest.py":
-        "1 hit: the default value of the KIM_ZIP_DIR environment variable. Points OUTSIDE the "
-        "repo at the corpus zips, so it cannot be derived from __file__ the way MIGRATION.md "
-        "describes for the other scripts.",
+    # validation/build_manifest.py WAS listed here. It is not any more: KIM_ZIP_DIR is now a
+    # REQUIRED environment variable with no default, so there is no path left to anonymise. That
+    # is the preferred way off this list -- remove the path, do not permit it.
     "docs/MIGRATION.md":
         "2 hits: a GitHub username, and the old absolute path quoted as documentation of its own "
         "removal. The username is the sharper double-blind risk of the two.",
