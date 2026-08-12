@@ -117,7 +117,7 @@ def test_a_program_with_no_decorator_scores_no_satisfied_property(slug, why):
 
     Without `bool(decorators) and ...`, a program containing no decorator at all scores
     `D3 1 D4 1 D6 1`. Measured before the guard: `t5_object_adapter_rejected_as_decorator__FAIL`
-    and `decorator_plain_inheritance_no_ref__FAIL` both go from PIQS 0 to **71.67**.
+    and `decorator_plain_inheritance_no_ref__FAIL` both go from PIQS 0 to **47.78**.
 
     Their LABELS survive, because recognition is `D2 AND D3` and `D2 = 0`. That is exactly why
     labels are not enough: the paper reports per-rule verdicts, and three falsely satisfied rules
