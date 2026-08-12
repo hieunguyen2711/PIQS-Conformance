@@ -19190,7 +19190,7 @@
      },
      "calls": [
       [
-       null,
+       "super",
        "read"
       ]
      ],
@@ -24149,7 +24149,7 @@
      },
      "calls": [
       [
-       null,
+       "super",
        "hashCode"
       ]
      ],
@@ -29735,6 +29735,326 @@
     }
    ],
    "name": "Sub"
+  }
+ },
+ "tests/fixtures_parser/super_receiver_forms.java": {
+  "Anchor": {
+   "body": {
+    "len": 148,
+    "sha256": "20ff88be4a80b943"
+   },
+   "extends": "RelayBase",
+   "fields": [],
+   "implements": [],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 25,
+      "sha256": "5dd3304879ee91b0"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": true,
+     "locals": {},
+     "mentions": [
+      "src",
+      "super"
+     ],
+     "modifiers": [],
+     "name": "Anchor",
+     "owner": "Anchor",
+     "param_names": [
+      "src"
+     ],
+     "param_types": [
+      "Feed"
+     ],
+     "return_type": null,
+     "traversals": []
+    }
+   ],
+   "name": "Anchor"
+  },
+  "Feed": {
+   "body": {
+    "len": 17,
+    "sha256": "ca298f1eecae125e"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "pull",
+     "owner": "Feed",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "int",
+     "traversals": []
+    }
+   ],
+   "name": "Feed"
+  },
+  "Nested": {
+   "body": {
+    "len": 77,
+    "sha256": "0a3a3fb58a059532"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 49,
+      "sha256": "9fbdb7a6bf3feecc"
+     },
+     "calls": [
+      [
+       "super",
+       "pull"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "Anchor",
+      "pull",
+      "super"
+     ],
+     "modifiers": [],
+     "name": "reach",
+     "owner": "Nested",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "int",
+     "traversals": []
+    }
+   ],
+   "name": "Nested"
+  },
+  "Relay": {
+   "body": {
+    "len": 215,
+    "sha256": "b6af0354825128f5"
+   },
+   "extends": "RelayBase",
+   "fields": [],
+   "implements": [],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 25,
+      "sha256": "5dd3304879ee91b0"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": true,
+     "locals": {},
+     "mentions": [
+      "src",
+      "super"
+     ],
+     "modifiers": [],
+     "name": "Relay",
+     "owner": "Relay",
+     "param_names": [
+      "src"
+     ],
+     "param_types": [
+      "Feed"
+     ],
+     "return_type": null,
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 34,
+      "sha256": "7ee7eebef3268307"
+     },
+     "calls": [
+      [
+       "super",
+       "pull"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "pull",
+      "super"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "pull",
+     "owner": "Relay",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "int",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 28,
+      "sha256": "30337746a3e0fdec"
+     },
+     "calls": [
+      [
+       null,
+       "pull"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "pull"
+     ],
+     "modifiers": [],
+     "name": "selfCall",
+     "owner": "Relay",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "int",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 33,
+      "sha256": "373545327304f9ee"
+     },
+     "calls": [
+      [
+       null,
+       "pull"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "pull",
+      "this"
+     ],
+     "modifiers": [],
+     "name": "viaThis",
+     "owner": "Relay",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "int",
+     "traversals": []
+    }
+   ],
+   "name": "Relay"
+  },
+  "RelayBase": {
+   "body": {
+    "len": 140,
+    "sha256": "063b517353373669"
+   },
+   "extends": null,
+   "fields": [
+    {
+     "field_type": "Feed",
+     "modifiers": [
+      "protected"
+     ],
+     "name": "src"
+    }
+   ],
+   "implements": [
+    "Feed"
+   ],
+   "is_abstract": true,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [
+      "src"
+     ],
+     "body": {
+      "len": 29,
+      "sha256": "b920d1123ba47b06"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": true,
+     "locals": {},
+     "mentions": [
+      "src",
+      "this"
+     ],
+     "modifiers": [],
+     "name": "RelayBase",
+     "owner": "RelayBase",
+     "param_names": [
+      "src"
+     ],
+     "param_types": [
+      "Feed"
+     ],
+     "return_type": null,
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 32,
+      "sha256": "727a1c32db4810b1"
+     },
+     "calls": [
+      [
+       "src",
+       "pull"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "pull",
+      "src"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "pull",
+     "owner": "RelayBase",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "int",
+     "traversals": []
+    }
+   ],
+   "name": "RelayBase"
   }
  }
 }

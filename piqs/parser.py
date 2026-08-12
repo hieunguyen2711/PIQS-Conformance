@@ -292,6 +292,17 @@ def _assert_parsable(node, owner: str, name: str) -> None:
         stack.extend(n.children)
 
 
+# The receiver recorded for `super.m()` and `Outer.super.m()`.
+#
+# WHY A PLAIN STRING IS SAFE. `super` is a Java RESERVED KEYWORD (JLS 3.9): no field, local,
+# parameter or type may be named it. So this value cannot collide with a real identifier -- which
+# matters, because `_delegates_to_field` works by comparing a recorded receiver against a field
+# name, and the design depends on that comparison being impossible to satisfy by accident.
+# A sentinel object would also work, but a string survives the JSON round-trip in
+# results/parser_golden.json for free, and `calls` is snapshotted there.
+SUPER_RECEIVER = "super"
+
+
 def _qualifier(node, src: bytes) -> str | None:
     """The receiver a call or assignment is written against, as the old regexes saw it.
 
@@ -312,6 +323,8 @@ def _qualifier(node, src: bytes) -> str | None:
         return None
     if node.type == "identifier":
         return _text(node, src)
+    if node.type == "super":
+        return SUPER_RECEIVER
     if node.type == "field_access":
         field = node.child_by_field_name("field")
         return _text(field, src) if field is not None else None
@@ -348,9 +361,20 @@ def _invocations(node, src: bytes) -> list[tuple[str | None, str]]:
         if n.type == "method_invocation":
             name_node = n.child_by_field_name("name")
             if name_node is not None:
-                out.append(
-                    (_qualifier(n.child_by_field_name("object"), src), _text(name_node, src))
-                )
+                # `Outer.super.m()` -- a QUALIFIED superclass call from an inner class. tree-sitter
+                # reports `object = identifier "Outer"` and puts the `super` in a separate child,
+                # so `_qualifier` alone returns "Outer" and a class holding a field named `Outer`
+                # would count this as delegation to that field. `_qualifier` cannot see it: it only
+                # ever receives the object node. Hence the check here.
+                #
+                # Plain `super.m()` has the `super` node AS its object, so both paths agree and the
+                # branch is harmless for it. No other shape puts a bare `super` node directly under
+                # a method_invocation.
+                if any(c.type == "super" for c in n.children):
+                    receiver: str | None = SUPER_RECEIVER
+                else:
+                    receiver = _qualifier(n.child_by_field_name("object"), src)
+                out.append((receiver, _text(name_node, src)))
         for c in n.children:
             walk(c)
 
