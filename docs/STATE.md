@@ -5,12 +5,39 @@ Working notes for whoever (human or agent) picks this repo up next.
 **Scope of this file:** engineering state only. Paper strategy, venue and schedule live outside
 the repo on purpose — see "What does not go in this file" at the end.
 
-Last updated: **2026-08-07**, branch `parser-phase2`. The commit that carries this revision
-is the one that migrates body helper 1; `git log --oneline -1` is authoritative.
+Last updated: **2026-08-12**, on **`main`**. `git log --oneline -1` is authoritative.
 
-**This file supersedes `HANDOVER.md`**, which was created on this branch on 2026-08-06 and has
-been deleted. Two state files is the drift that made this one necessary. "Park it" and "update the
-state file" both mean this file.
+## THERE IS ONE BRANCH. READ `main`.
+
+Task F was merged to `main` on 2026-08-12 (`b49757a`, a `--no-ff` merge of 36 commits), and the
+**seven** working branches were then deleted, locally and on the remote. Every commit stays
+reachable from `main` — the names were labels, not storage, and containment was proved per branch
+with `git merge-base --is-ancestor <branch> main` before any deletion.
+
+**This is a correctness fix, not tidiness.** Seven branches where one holds all the work is how the
+wrong file gets read, and it already cost this project time: the standing instruction said "read
+`main`", `main` held Phase 1 code, and every real change lived on a branch. One branch removes the
+failure mode. If a future session creates branches again, merge and delete them at the same
+checkpoint.
+
+**This file supersedes `HANDOVER.md`**, which was created on 2026-08-06 and has been deleted. Two
+state files is the drift that made this one necessary. "Park it" and "update the state file" both
+mean this file.
+
+### Where things stand on `main`
+
+| | |
+|---|---|
+| Kim | 145/160 = 90.6%, units 30/40 |
+| mutation battery | 12/12 |
+| BDT | 28 confirmed, all match; D6 diagnostics 5/5 |
+| pytest | 237 passed, **8 known failures — 5 × C3, 3 × O1** |
+| `golden_facts --check` | clean, 220 files / 353 types / 688 methods |
+
+**The 8 failures are the next task, and they are not a defect in the suite.** `O1` and `C3` still
+read identifier names, so renaming moves their verdicts. A checker that reads names cannot measure
+name-dependence, which is what the paper claims — so this is a **validity** problem, not a
+cleanliness one, and it outranks the two deferred scoring imprecisions in §5f.
 
 ---
 
