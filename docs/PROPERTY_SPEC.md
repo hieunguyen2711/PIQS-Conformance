@@ -91,11 +91,11 @@ Derived roles: `isComponent` (an abstract type — interface or abstract class),
 | ID | Statement | Tag | Weight |
 |----|-----------|-----|--------|
 | ~~D1~~ | **DELETED 2026-08-10.** "Conforms to the same component type as what it wraps" — a proven tautology once that became the admission test. See *"D1 was deleted"* below. | — | — |
-| **D2** | Decorator holds a reference typed as a component **it itself conforms to**. | structural | **3** (critical) |
-| **D3** | Decorator delegates to the wrapped reference in its component methods (see the *any-vs-all* judgment call below). | behavioral | **3** (critical) |
-| D4 | Transparent enhancement — no interface conversion: the decorator exposes the wrapped component's whole operation set (distinguishes from **Adapter**). | structural | 2 |
+| **D2** | Decorator holds a reference typed as a component **it itself conforms to** — own **or inherited** (`_effective_fields`). | structural | **3** (critical) |
+| **D3** | **Every** decorator candidate delegates to the wrapped reference in its component methods. `all`, with an explicit non-empty guard. | behavioral | **3** (critical) |
+| D4 | Transparent enhancement — no interface conversion: the decorator exposes the wrapped component's whole operation set (distinguishes from **Adapter**). Stays `any` — see below. | structural | 2 |
 | ~~D5~~ | **DELETED 2026-08-10.** "Abstract decorator base / recursive composability" — computed as `abstract_decorator_base or d2`, a tautology. See below. | — | — |
-| D6 | **Full delegation (non-critical diagnostic)** — every implemented component operation forwards to the wrapped reference. Flags partial delegation *without* changing recognition. | behavioral | 1 |
+| D6 | **Full delegation (non-critical diagnostic)** — for **every** candidate, every implemented component operation forwards to the wrapped reference. Flags partial delegation *without* changing recognition. | behavioral | 1 |
 
 **Accepted variants (RULE 3):** interface or abstract-class component; a collapsed single
 decorator with no abstract base (D5 low-weight); constructor or setter injection of the wrapped
@@ -231,6 +231,53 @@ confirmed exactly:
 Again no recognition verdict moved. **The Decorator set is now D2, D3, D4, D6 — four properties,
 all four independent.** D4 is deliberately still alive: the field-scope audit may change what it
 measures, and deciding it twice is worse than deciding it late.
+
+### Field scope and the `all` quantifier — D3/D6 semantics (2026-08-12)
+
+**Two changes, one behaviour. Either alone is wrong.**
+
+1. **Admission reads `_effective_fields`, not `w.fields`.** In the canonical GoF shape the abstract
+   base declares the component reference and the concrete decorators extend it, so a concrete
+   decorator has no component-typed field of its own — and reading own fields meant it was **never
+   a decorator candidate at all**.
+2. **D3 and D6 are `bool(decorators) and all(...)`.** With admission fixed, `any` would still let
+   one compliant base carry a non-compliant subclass.
+
+Measured across all four combinations (docs/STATE.md §5e), **three of the four leave a decorator
+that forwards nothing at PIQS 100.**
+
+**WHY THIS WAS FIXED RATHER THAN DISCLOSED — the reason is the direction of the error, not its
+size.** The defect rewarded the abstract-base shape: if the base forwards, no subclass is examined.
+That is the textbook shape a model reproduces from memory under condition **N**. Under **O** the
+model works from rule sentences and is likelier to write one flat class, which **is** examined and
+**can** fail. Same quality of code, higher score in the shape N produces — which inflates
+**C1 = N − O**, the headline result. The defect manufactured the paper's own effect, and a reviewer
+who found it would have a fatal objection.
+
+**The non-empty guard is not optional.** `all([])` is True in Python, so without
+`bool(decorators)` a program containing no decorator scores satisfied D3 and D6. Measured against
+the unguarded version: `t5_object_adapter_rejected_as_decorator__FAIL` and
+`decorator_plain_inheritance_no_ref__FAIL` go from PIQS 0 to **47.78** (`D2 0 · D3 1 · D4 0 · D6 1`).
+Their *labels* survive, because recognition is `D2 ∧ D3` and `D2 = 0` — which is exactly why labels
+are not enough: the paper reports **per-rule verdicts**, and three falsely satisfied rules on a
+program with no decorator is worse than the defect being fixed.
+
+**D4 stays `any`, deliberately.** It asks about the **exposed API of the type** — does this wrapper
+present the component's whole operation set, or convert to a different interface? — not about
+per-class behaviour. Whether one subclass re-declares every operation is not the question. D3 and
+D6 ask behavioural questions ("does it forward?"), which every candidate must answer for itself.
+`any([])` is False, so D4 needs no guard. Revisit only if the battery objects; it does not.
+
+**`super.m()` counts as delegation, through a base that holds the component.** A concrete decorator
+forwards by calling `super.m()` — `BufferedInputStream.read()` does exactly that. The rule is
+**strict**: a `<super>` receiver counts only when a project-defined ancestor is itself a decorator
+candidate. The loose alternative re-opens the field-named-`super` hole by a different route.
+Without this rule the MUST-PASS case `decorator_filterinputstream_analogue` fails under `all`.
+
+**Known limitation, recorded not fixed.** `all(...)` scans each candidate's **own** methods, so a
+subclass that inherits all its forwarding behaviour and declares none of its own scores as
+forwarding nothing. `super_receiver_forms.java`'s `Anchor` is that shape. This is the own-fields
+defect one level up, in the method scan.
 
 ### D3 semantics — the *any-vs-all* decision (RESOLVED)
 

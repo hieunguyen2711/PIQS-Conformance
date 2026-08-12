@@ -1015,6 +1015,47 @@ never arises.
 `checker` at module level while `checker` imports `parser` only inside a function to break the
 cycle. `parser` re-exports it.
 
+### F3 — effective-fields admission and a non-vacuous `all`. THE DEFECT IS FIXED.
+
+Two changes, one behaviour, landed together because either alone is wrong. Admission reads
+`_effective_fields`; D3 and D6 become `bool(decorators) and all(...)`; **D4 stays `any`**.
+
+**Newly-admitted candidates:** `BufferedInputStream`, `LoudDecorator`, `Broken`, `Relay`, `Anchor`.
+`all` differs from `any` only where a program has 2+ candidates — exactly **5** programs.
+
+| Program | Candidates | Moves? |
+|---|---|---|
+| `decorator_filterinputstream_analogue` | FilterInputStream, **BufferedInputStream** | no — both forward |
+| `abstract_decorator_base` | ComponentDecorator, **LoudDecorator** | no |
+| `div8_anonymous_class_descend` | Logger, Logger2, Logger3 | no — all three forward |
+| `decorator_subclass_forwards_nothing` | Base, **Broken** | **100 → 52.22** |
+| `super_receiver_forms` | RelayBase, **Relay**, **Anchor** | **100 → 52.22** |
+
+Both movers go `1 1 1 1 → 1 0 1 0`: PSR 100 → **50.0**, CPC 100 → **55.56**, PIQS 100 → **52.22**,
+and both stop being recognised. Every figure was computed by hand from `{D2 3, D3 3, D4 2, D6 1}`
+before the scorer ran, and every one matched.
+
+**`decorator_filterinputstream_analogue` survives only because F2 landed first.** Without the
+`super` rule, `BufferedInputStream.read()`'s `super.read()` is not delegation, `all` fails, and the
+MUST-PASS case flips. That is the whole reason F2 was a separate prerequisite commit.
+
+**The `candidate_names` growth did NOT make the F2 strict rule loose.** Checked in writing before
+running: `Leaky`'s base `Plain` conforms to nothing, so it is skipped before fields are examined
+under *either* admission rule; `Weird` has no `extends` at all. Both still score `D3 0`.
+*Recorded, not fixed:* a three-level chain `A ← B ← C` where `B` only becomes a candidate through
+inheritance would newly make `C`'s `super` calls count. Every chain in the corpus is two deep.
+
+**The vacuous-`all` hazard, measured against the unguarded version:** `t5_object_adapter…__FAIL`
+and `decorator_plain_inheritance_no_ref__FAIL` go from PIQS 0 to **47.78** (`D2 0 · D3 1 · D4 0 ·
+D6 1`). Labels survive because recognition is `D2 ∧ D3` — which is exactly why labels are not
+enough.
+
+**NEW FINDING, not fixed, not in scope.** `super_receiver_forms` moves for a reason worth its own
+entry: `Anchor extends RelayBase` and declares only a constructor. It *inherits* a forwarding
+`pull()`, but `all(...)` scans `w.methods` — **own methods only** — so a subclass that inherits all
+its behaviour scores as forwarding nothing. **That is the own-fields defect one level up, in the
+METHOD scan.** It violates no constraint and is the next open question.
+
 ### The two predictions are now kept separate, permanently
 
 `golden_facts` dumps `JavaMethod` through `dataclasses.fields()` — built that way so a new fact
@@ -1022,10 +1063,10 @@ cycle. `parser` re-exports it.
 and a change to `calls` moves the second. Predicting a clean `--check` after changing `calls` is
 predicting the guard fails at its job.
 
-| | F1 | F1b | F2 |
-|---|---|---|---|
-| verdict movement | 0 | 0 | **0** |
-| `--check` diffs | 3 | 11 | **1** (FILE ADDED) |
+| | F1 | F1b | F2 | F3 |
+|---|---|---|---|---|
+| verdict movement | 0 | 0 | 0 | **2 programs, both intended** |
+| `--check` diffs | 3 | 11 | 1 (FILE ADDED) | **0** (parser untouched) |
 
 ## 6. Traps in the current code
 

@@ -1457,9 +1457,22 @@ class PIQSChecker:
             conformed = {c for c in component_names if self._conforms_to(w, c, types)}
             if not conformed:
                 continue
+            # EFFECTIVE fields, not own fields. In the canonical GoF shape the abstract base
+            # declares the component reference and the concrete decorators extend it, so a
+            # concrete decorator has NO component-typed field of its own -- and reading `w.fields`
+            # meant it was never a decorator candidate at all. Only the base was ever judged, and
+            # every property was an `any(...)` over the candidate list, so one compliant base
+            # carried the whole program: a subclass forwarding NOTHING scored a perfect four
+            # (tests/fixtures_parser/decorator_subclass_forwards_nothing.java).
+            #
+            # This matters in one direction, which is why it is fixed rather than documented. The
+            # abstract-base shape is what a model reproduces from memory under condition N; under
+            # O it works from rule sentences and is likelier to write one flat class, which IS
+            # examined and CAN fail. Same quality of code, higher score in the shape N produces --
+            # inflating C1 = N - O, the headline result. See docs/PROPERTY_SPEC.md.
             wrapped_fields = [
                 (f, f.field_type)
-                for f in w.fields
+                for f in self._effective_fields(w, types)
                 if f.field_type in conformed
             ]
             if wrapped_fields:
@@ -1497,7 +1510,18 @@ class PIQSChecker:
                 cur = parent
             return False
 
-        d3 = any(
+        # `all`, NOT `any` -- EVERY candidate must forward. With admission fixed, `any` would
+        # still let one compliant base carry a non-compliant subclass, so the two changes only
+        # work together.
+        #
+        # `bool(decorators) and ...` IS NOT OPTIONAL: `all([])` is True in Python, so a program
+        # containing no decorator at all would score D3=1 (and D6=1). Measured before the guard:
+        # t5_object_adapter_rejected_as_decorator__FAIL and decorator_plain_inheritance_no_ref__FAIL
+        # both go from PIQS 0 to 71.67. Their LABELS survive, because recognition is D2 AND D3 and
+        # D2=0 -- but the paper reports per-rule verdicts, not labels, and three falsely satisfied
+        # rules on a program with no decorator is worse than the defect being fixed. Pinned by
+        # tests/test_decorator_field_scope_fixed.py.
+        d3 = bool(decorators) and all(
             any(
                 self._delegates_to_field(m, f.name, _forwards_through_base(w))
                 for m in w.methods
@@ -1534,6 +1558,17 @@ class PIQSChecker:
                     return True
             return False
 
+        # D4 STAYS `any`, DELIBERATELY, while D3 and D6 became `all`. It asks about the EXPOSED API
+        # OF THE TYPE -- "does this wrapper present the component's whole operation set, or does it
+        # convert to a different interface?" -- and not about per-class behaviour. Whether one
+        # subclass re-declares every operation is not the question; whether the decorator family
+        # exposes the component's interface is. D3 and D6 ask behavioural questions ("does it
+        # forward?"), which every candidate must answer for itself.
+        #
+        # `any([])` is False, so the empty-candidate case needs no guard here -- unlike D3 and D6,
+        # where `all([])` is vacuously True.
+        #
+        # Revisit only if the battery objects. It does not today.
         d4 = any(_transparent(w, wf) for (w, _conf, wf) in decorators)
 
         # D5 IS GONE. It read "abstract decorator base / recursive composability", and was
@@ -1597,7 +1632,7 @@ class PIQSChecker:
                     return True
             return False
 
-        d6 = any(_fully_delegates(w, wf) for (w, _conf, wf) in decorators)
+        d6 = bool(decorators) and all(_fully_delegates(w, wf) for (w, _conf, wf) in decorators)
 
         base = {
             "isAbstract(x)": bool(component_names),
