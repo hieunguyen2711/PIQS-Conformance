@@ -32,6 +32,36 @@ _PATTERN_WEIGHTS = {
 # The critical property set per pattern -- the weight-3 relationship/behaviour properties.
 # A program is recognised AS the pattern only when ALL of its critical properties hold; the
 # BDT mutation battery keys its MUST-PASS / MUST-FAIL verdicts off exactly this set.
+# The receiver recorded for `super.m()` and `Outer.super.m()`.
+#
+# WHY NOT THE BARE TEXT "super". The first version of this used it, on the reasoning that `super`
+# is a reserved keyword so no field could be named it. Java forbids it -- but THIS CHECKER IS NOT
+# javac, and the code it scores is generated code that frequently does not compile:
+#
+#     javac                 error: <identifier> expected
+#     tree-sitter           has_error == False
+#     extract_types         fields == [('super', 'Duct')]
+#
+# So `class Weird { private Duct super; void write(String s){ super.write(s); } }` is reachable,
+# and with the bare text `_delegates_to_field` compared the receiver of a PARENT-CLASS call equal
+# to a field named `super` and credited delegation to a field that is never touched -- scoring
+# that program D2 1 D3 1 D4 1 D6 1, PIQS 100. That was a regression INTRODUCED by the bare-text
+# version, not a pre-existing hole: before any super handling the receiver was None.
+#
+# `<super>` cannot be any identifier, because `<` and `>` are not JavaLetters (JLS 3.8). Verified
+# against this parser rather than argued: `private Duct <super>;` yields a field whose name is the
+# empty string, never "<super>". A string (rather than a sentinel object) also survives the JSON
+# round-trip in results/parser_golden.json, and `calls` IS snapshotted there.
+#
+# Pinned by tests/fixtures_parser/field_named_super.java.
+#
+# IT LIVES HERE, NOT IN parser.py, FOR AN IMPORT REASON: `parser` imports `checker` at module
+# level, while `checker` imports `parser` only inside a function to break the cycle. A constant
+# that both need therefore has to sit on the `checker` side. `parser` re-exports it, so
+# `from piqs.parser import SUPER_RECEIVER` still works.
+SUPER_RECEIVER = "<super>"
+
+
 _CRITICAL_PROPERTIES = {
     "factory-method": {"F2", "F3", "F4"},
     "strategy": {"S1", "S2", "S4"},
@@ -315,7 +345,9 @@ class PIQSChecker:
         return any(f.field_type == type_name for f in jtype.fields)
 
     @staticmethod
-    def _delegates_to_field(method: "JavaMethod", field_name: str) -> bool:
+    def _delegates_to_field(
+        method: "JavaMethod", field_name: str, super_delegates: bool = False
+    ) -> bool:
         """delegatesTo(method, field): does `method` invoke something on the reference
         `field_name`? The structural signature of delegation (D3).
 
@@ -333,8 +365,24 @@ class PIQSChecker:
         The sharp case is `f.g.op()`, which delegates to `g` and NOT to `f`: the old regex is
         satisfied by the text `g.op(` and not by `f.op(`. Pinned by
         tests/fixtures_parser/div5_chain_not_delegation.java; zero corpus coverage.
+
+        `super_delegates` -- FORWARDING ONE LINK LONGER. In the canonical GoF shape the abstract
+        base holds the component and the concrete decorators extend it, so a concrete decorator
+        forwards by calling `super.m()`. `decorator_filterinputstream_analogue` is exactly that:
+        `BufferedInputStream.read()` forwards with `super.read()`, not with `in.read()`.
+
+        THE FLAG IS NOT OPTIONAL, and the caller must compute it. "Forwards through the base that
+        HOLDS the reference" contains a condition, so the condition gets checked: the caller passes
+        True only when a project-defined ancestor of the wrapper is ITSELF a decorator candidate.
+        Accepting every `super` call unconditionally would re-open the hole F1b closed --
+        `field_named_super.java` declares a `Duct` field, has no `extends` at all, and calls
+        `super.write()`, so the loose rule would score it D3 = 1 by a different route from the
+        string collision. Pinned by tests/test_super_delegation.py.
         """
-        return any(receiver == field_name for receiver, _name in method.calls)
+        return any(
+            receiver == field_name or (super_delegates and receiver == SUPER_RECEIVER)
+            for receiver, _name in method.calls
+        )
 
     @staticmethod
     def _assigns_field(method: "JavaMethod", field_name: str) -> bool:
@@ -1421,9 +1469,37 @@ class PIQSChecker:
         d2 = bool(decorators)
 
         # D3 -- decorator delegates to the wrapped reference in its component methods. CRITICAL.
+        # WHEN DOES `super.m()` COUNT AS DELEGATION? Only when the wrapper forwards THROUGH a base
+        # that actually holds the component -- i.e. when a project-defined ancestor is itself a
+        # decorator candidate. This is the STRICT reading, and it was chosen over "accept any
+        # `super` call" for two reasons that agree:
+        #
+        #   * On the merits: `super.m()` on a class whose base holds nothing forwards to something
+        #     that wraps nothing. tests/fixtures_parser/super_call_base_holds_nothing.java is that
+        #     program -- `Leaky extends Plain implements Spout`, declares a `Spout`, forwards with
+        #     `super.emit()`, and `Plain` holds nothing. Strict scores it D3=0; loose scores it 1.
+        #   * On the guard: the loose rule re-opens the hole F1b closed, by a different route.
+        #     `field_named_super.java` declares a `Duct`, has NO `extends`, and calls
+        #     `super.write()`. Loose scores it D3=1 -- exactly the verdict F1b removed. One fix
+        #     would have undone the other.
+        #
+        # Walks `extends` only, matching `_effective_fields` and `_effective_methods`: an
+        # interface cannot hold a field, so it can never be the base a wrapper forwards through.
+        candidate_names = {w.name for (w, _c, _wf) in decorators}
+
+        def _forwards_through_base(w) -> bool:
+            cur, seen = w, {w.name}
+            while cur.extends and cur.extends in types and cur.extends not in seen:
+                parent = types[cur.extends]
+                if parent.name in candidate_names:
+                    return True
+                seen.add(parent.name)
+                cur = parent
+            return False
+
         d3 = any(
             any(
-                self._delegates_to_field(m, f.name)
+                self._delegates_to_field(m, f.name, _forwards_through_base(w))
                 for m in w.methods
                 for (f, _c) in wrapped_fields
             )
@@ -1515,7 +1591,8 @@ class PIQSChecker:
                 comp_ops = {m.name for m in comp.methods if not m.is_constructor}
                 implemented = [op for op in comp_ops if op in w_ops]
                 if implemented and all(
-                    self._delegates_to_field(w_ops[op], f.name) for op in implemented
+                    self._delegates_to_field(w_ops[op], f.name, _forwards_through_base(w))
+                    for op in implemented
                 ):
                     return True
             return False

@@ -29834,6 +29834,157 @@
    "name": "Sub"
   }
  },
+ "tests/fixtures_parser/super_call_base_holds_nothing.java": {
+  "Leaky": {
+   "body": {
+    "len": 136,
+    "sha256": "11cb2061be9b9385"
+   },
+   "extends": "Plain",
+   "fields": [
+    {
+     "field_type": "Spout",
+     "modifiers": [
+      "private"
+     ],
+     "name": "held"
+    }
+   ],
+   "implements": [
+    "Spout"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [
+      "held"
+     ],
+     "body": {
+      "len": 31,
+      "sha256": "1356a5b81ebd7437"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": true,
+     "locals": {},
+     "mentions": [
+      "held",
+      "this"
+     ],
+     "modifiers": [],
+     "name": "Leaky",
+     "owner": "Leaky",
+     "param_names": [
+      "held"
+     ],
+     "param_types": [
+      "Spout"
+     ],
+     "return_type": null,
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 27,
+      "sha256": "f6f361fcf09847c8"
+     },
+     "calls": [
+      [
+       "<super>",
+       "emit"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "emit",
+      "super"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "emit",
+     "owner": "Leaky",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Leaky"
+  },
+  "Plain": {
+   "body": {
+    "len": 32,
+    "sha256": "ddbe6b0c75821c75"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 5,
+      "sha256": "4dc501d66cd78903"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [
+      "public"
+     ],
+     "name": "emit",
+     "owner": "Plain",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Plain"
+  },
+  "Spout": {
+   "body": {
+    "len": 18,
+    "sha256": "0ddad7c552138dc2"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "emit",
+     "owner": "Spout",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Spout"
+  }
+ },
  "tests/fixtures_parser/super_receiver_forms.java": {
   "Anchor": {
    "body": {

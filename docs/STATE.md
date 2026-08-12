@@ -950,6 +950,83 @@ add nothing there, and `all` over a single candidate equals `any`. **D4 stays 0 
 all four combinations**, so its only separator survives whichever way both questions are decided.
 Deferring the D4 decision cost nothing.
 
+## 5f. Task F — fixing the field-scope defect. F1 / F1b / F2 landed; F3 is next.
+
+### F1 + F1b — the parser records a `super` receiver
+
+`_qualifier` mapped every non-simple receiver to `None`, so `super.read()` and a bare `read()`
+were the **same recorded fact**. That is why `decorator_filterinputstream_analogue` looks as though
+its concrete decorator forwards to nothing.
+
+**F1 stored the bare text `"super"` and that was a regression, not a partial fix.** The reasoning
+was "Java forbids a field named `super`, so no collision is possible". Java does forbid it — **but
+this checker is not javac**, and the code it scores is generated code that frequently does not
+compile:
+
+| | |
+|---|---|
+| javac on `private Duct super;` | `error: <identifier> expected` |
+| tree-sitter `has_error` | **False** |
+| `extract_types` | `[('super', 'Duct')]` |
+| `1bdb99e` (before) | `calls=[(None,'write')]` — no collision |
+| **`cb5b974` (F1)** | **D2 1 · D3 1 · D4 1 · D6 1 · PIQS 100** |
+
+F1b uses `<super>`: `<` and `>` are not JavaLetters (JLS 3.8). **Verified against the parser, not
+argued** — `private Duct <super>;` yields a field named `''`, never `<super>`. Detection is keyed
+on **node type**, never text; text is what collided.
+
+`this` had the same hole. `this.m()` stays `None` (it *is* `m()`, the same call). `this.f.m()`
+stays `"f"`. **`Outer.this.m()` returned the keyword text `"this"` and now returns `None`** — a
+field named `this` parses fine, so that was the same collision in its other form. One node-type
+check: a `field_access` yields a receiver only when its `field` node is an `identifier`, which
+leaves `f.g.op() -> "g"` (divergence #5) untouched.
+
+### F2 — `super.<op>()` counts as delegation, but only through a base that holds the component
+
+**STRICT chosen over loose, and the two reasons agree.**
+
+*Merits:* "forwards through the base that **holds** the reference" contains a condition, so the
+condition is checked — a project-defined ancestor must itself be a decorator candidate.
+
+*Guard:* the loose rule **re-opens the hole F1b closed, by a different route**. `field_named_super`
+declares a `Duct`, has no `extends` at all, and calls `super.write()`; loose scores it `D3 = 1`.
+One fix would have undone the other. Measured: under loose, 3 tests go red including the F1b
+collision guard.
+
+| Fixture | strict | loose |
+|---|---|---|
+| `super_call_base_holds_nothing` (`Leaky extends Plain`) | D3 0, D6 0 | D3 1, D6 1 |
+| `field_named_super` (`Weird`, no `extends`) | D3 0, D6 0 | D3 1, D6 1 |
+
+**F2 moves no verdict, and that is the expected result, not a disappointment.** Under today's
+own-fields admission a class must *declare* a component-typed field to be examined at all, so every
+super-caller that inherits its field — `BufferedInputStream`, `Relay`, `Nested` — is never a
+candidate. All five `<super>` sites in the tree were enumerated from the snapshot; the only one on
+a candidate is `Weird`, which strict excludes.
+
+**F2 is a prerequisite, not a fix.** It becomes load-bearing in F3, when `_effective_fields`
+admission makes `BufferedInputStream` a candidate and `all` starts asking whether *it* forwards.
+
+`div1_this_keyword`'s `Assembler.handOff -> super.hashCode()` — the pre-existing loose-rule case —
+scores `D2 0 D3 0 D4 0 D6 0`. Predicted before looking: not a decorator candidate, so the question
+never arises.
+
+**`SUPER_RECEIVER` lives in `checker.py`, not `parser.py`**, for an import reason: `parser` imports
+`checker` at module level while `checker` imports `parser` only inside a function to break the
+cycle. `parser` re-exports it.
+
+### The two predictions are now kept separate, permanently
+
+`golden_facts` dumps `JavaMethod` through `dataclasses.fields()` — built that way so a new fact
+**cannot** hide. So "the suites did not move" and "the facts did not move" are different questions
+and a change to `calls` moves the second. Predicting a clean `--check` after changing `calls` is
+predicting the guard fails at its job.
+
+| | F1 | F1b | F2 |
+|---|---|---|---|
+| verdict movement | 0 | 0 | **0** |
+| `--check` diffs | 3 | 11 | **1** (FILE ADDED) |
+
 ## 6. Traps in the current code
 
 ### `t.body` includes method bodies

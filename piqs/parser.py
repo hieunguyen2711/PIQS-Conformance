@@ -49,7 +49,13 @@ from __future__ import annotations
 import tree_sitter_java
 from tree_sitter import Language, Parser
 
-from piqs.checker import JavaField, JavaMethod, JavaType, PIQSChecker
+from piqs.checker import (  # noqa: F401  (SUPER_RECEIVER is re-exported for callers)
+    SUPER_RECEIVER,
+    JavaField,
+    JavaMethod,
+    JavaType,
+    PIQSChecker,
+)
 
 JAVA_LANGUAGE = Language(tree_sitter_java.language())
 
@@ -290,31 +296,6 @@ def _assert_parsable(node, owner: str, name: str) -> None:
                 "Body-level facts would be silently empty; refusing to continue."
             )
         stack.extend(n.children)
-
-
-# The receiver recorded for `super.m()` and `Outer.super.m()`.
-#
-# WHY NOT THE BARE TEXT "super". The first version of this used it, on the reasoning that `super`
-# is a reserved keyword so no field could be named it. Java forbids it -- but THIS CHECKER IS NOT
-# javac, and the code it scores is generated code that frequently does not compile:
-#
-#     javac                 error: <identifier> expected
-#     tree-sitter           has_error == False
-#     extract_types         fields == [('super', 'Duct')]
-#
-# So `class Weird { private Duct super; void write(String s){ super.write(s); } }` is reachable,
-# and with the bare text `_delegates_to_field` compared the receiver of a PARENT-CLASS call equal
-# to a field named `super` and credited delegation to a field that is never touched -- scoring
-# that program D2 1 D3 1 D4 1 D6 1, PIQS 100. That was a regression INTRODUCED by the bare-text
-# version, not a pre-existing hole: before any super handling the receiver was None.
-#
-# `<super>` cannot be any identifier, because `<` and `>` are not JavaLetters (JLS 3.8). Verified
-# against this parser rather than argued: `private Duct <super>;` yields a field whose name is the
-# empty string, never "<super>". A string (rather than a sentinel object) also survives the JSON
-# round-trip in results/parser_golden.json, and `calls` IS snapshotted there.
-#
-# Pinned by tests/fixtures_parser/field_named_super.java.
-SUPER_RECEIVER = "<super>"
 
 
 def _qualifier(node, src: bytes) -> str | None:
