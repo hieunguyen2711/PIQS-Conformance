@@ -19190,7 +19190,7 @@
      },
      "calls": [
       [
-       "super",
+       "<super>",
        "read"
       ]
      ],
@@ -24149,7 +24149,7 @@
      },
      "calls": [
       [
-       "super",
+       "<super>",
        "hashCode"
       ]
      ],
@@ -25501,6 +25501,103 @@
     }
    ],
    "name": "Task"
+  }
+ },
+ "tests/fixtures_parser/field_named_super.java": {
+  "Duct": {
+   "body": {
+    "len": 27,
+    "sha256": "c0e537c61bc1e8c1"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "write",
+     "owner": "Duct",
+     "param_names": [
+      "s"
+     ],
+     "param_types": [
+      "String"
+     ],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Duct"
+  },
+  "Weird": {
+   "body": {
+    "len": 90,
+    "sha256": "2192c005fd163a5f"
+   },
+   "extends": null,
+   "fields": [
+    {
+     "field_type": "Duct",
+     "modifiers": [
+      "private"
+     ],
+     "name": "super"
+    }
+   ],
+   "implements": [
+    "Duct"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 29,
+      "sha256": "92f288e44cd2e6b9"
+     },
+     "calls": [
+      [
+       "<super>",
+       "write"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "s",
+      "super",
+      "write"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "write",
+     "owner": "Weird",
+     "param_names": [
+      "s"
+     ],
+     "param_types": [
+      "String"
+     ],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Weird"
   }
  },
  "tests/fixtures_parser/generic_map_field.java": {
@@ -29740,8 +29837,8 @@
  "tests/fixtures_parser/super_receiver_forms.java": {
   "Anchor": {
    "body": {
-    "len": 148,
-    "sha256": "20ff88be4a80b943"
+    "len": 228,
+    "sha256": "4260ab994a5cc349"
    },
    "extends": "RelayBase",
    "fields": [],
@@ -29813,8 +29910,8 @@
   },
   "Nested": {
    "body": {
-    "len": 77,
-    "sha256": "0a3a3fb58a059532"
+    "len": 157,
+    "sha256": "a2c77f8e3b66327b"
    },
    "extends": null,
    "fields": [],
@@ -29830,7 +29927,7 @@
      },
      "calls": [
       [
-       "super",
+       "<super>",
        "pull"
       ]
      ],
@@ -29849,14 +29946,42 @@
      "param_types": [],
      "return_type": "int",
      "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 48,
+      "sha256": "1d2d28cd89c6a913"
+     },
+     "calls": [
+      [
+       null,
+       "pull"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "Anchor",
+      "pull",
+      "this"
+     ],
+     "modifiers": [],
+     "name": "outerInstance",
+     "owner": "Nested",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "int",
+     "traversals": []
     }
    ],
    "name": "Nested"
   },
   "Relay": {
    "body": {
-    "len": 215,
-    "sha256": "b6af0354825128f5"
+    "len": 280,
+    "sha256": "066ec9403325a985"
    },
    "extends": "RelayBase",
    "fields": [],
@@ -29898,7 +30023,7 @@
      },
      "calls": [
       [
-       "super",
+       "<super>",
        "pull"
       ]
      ],
@@ -29966,6 +30091,34 @@
      ],
      "modifiers": [],
      "name": "viaThis",
+     "owner": "Relay",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "int",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 37,
+      "sha256": "cf5da7826f79f247"
+     },
+     "calls": [
+      [
+       "src",
+       "pull"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "pull",
+      "src",
+      "this"
+     ],
+     "modifiers": [],
+     "name": "viaFieldChain",
      "owner": "Relay",
      "param_names": [],
      "param_types": [],

@@ -294,13 +294,27 @@ def _assert_parsable(node, owner: str, name: str) -> None:
 
 # The receiver recorded for `super.m()` and `Outer.super.m()`.
 #
-# WHY A PLAIN STRING IS SAFE. `super` is a Java RESERVED KEYWORD (JLS 3.9): no field, local,
-# parameter or type may be named it. So this value cannot collide with a real identifier -- which
-# matters, because `_delegates_to_field` works by comparing a recorded receiver against a field
-# name, and the design depends on that comparison being impossible to satisfy by accident.
-# A sentinel object would also work, but a string survives the JSON round-trip in
-# results/parser_golden.json for free, and `calls` is snapshotted there.
-SUPER_RECEIVER = "super"
+# WHY NOT THE BARE TEXT "super". The first version of this used it, on the reasoning that `super`
+# is a reserved keyword so no field could be named it. Java forbids it -- but THIS CHECKER IS NOT
+# javac, and the code it scores is generated code that frequently does not compile:
+#
+#     javac                 error: <identifier> expected
+#     tree-sitter           has_error == False
+#     extract_types         fields == [('super', 'Duct')]
+#
+# So `class Weird { private Duct super; void write(String s){ super.write(s); } }` is reachable,
+# and with the bare text `_delegates_to_field` compared the receiver of a PARENT-CLASS call equal
+# to a field named `super` and credited delegation to a field that is never touched -- scoring
+# that program D2 1 D3 1 D4 1 D6 1, PIQS 100. That was a regression INTRODUCED by the bare-text
+# version, not a pre-existing hole: before any super handling the receiver was None.
+#
+# `<super>` cannot be any identifier, because `<` and `>` are not JavaLetters (JLS 3.8). Verified
+# against this parser rather than argued: `private Duct <super>;` yields a field whose name is the
+# empty string, never "<super>". A string (rather than a sentinel object) also survives the JSON
+# round-trip in results/parser_golden.json, and `calls` IS snapshotted there.
+#
+# Pinned by tests/fixtures_parser/field_named_super.java.
+SUPER_RECEIVER = "<super>"
 
 
 def _qualifier(node, src: bytes) -> str | None:
@@ -326,8 +340,19 @@ def _qualifier(node, src: bytes) -> str | None:
     if node.type == "super":
         return SUPER_RECEIVER
     if node.type == "field_access":
+        # ONLY an `identifier` field yields a receiver, and the check is on the NODE TYPE rather
+        # than on the text. `Outer.this.m()` arrives here with `field` being the `this` KEYWORD
+        # node, and returning its text gave the string "this" -- which a field literally named
+        # `this` would match, since tree-sitter parses `private Duct this;` quite happily. That is
+        # the same collision as the bare-"super" one above, in its other form. `Outer.this.m()` is
+        # a call on the ENCLOSING INSTANCE, not on any field of this class, so None is also the
+        # semantically right answer.
+        #
+        # `f.g.op() -> "g"` (divergence #5) is unaffected: `g` is an identifier.
         field = node.child_by_field_name("field")
-        return _text(field, src) if field is not None else None
+        if field is None or field.type != "identifier":
+            return None
+        return _text(field, src)
     return None
 
 

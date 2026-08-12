@@ -1,10 +1,12 @@
 // The four receiver forms a call can have, and what the parser must record for each.
 //
 //     src.pull()          receiver "src"      delegation to a held field
-//     super.pull()        receiver "super"    delegation THROUGH the base that holds the field
+//     super.pull()        receiver <super>    delegation THROUGH the base that holds the field
 //     pull()              receiver None       a self-call
 //     this.pull()         receiver None       THE SAME CALL as `pull()` -- not a separate form
-//     Anchor.super.pull()   receiver "super"    qualified superclass call from an inner class
+//     this.src.pull()     receiver "src"      a field_access -- already correct
+//     Anchor.super.pull() receiver <super>    qualified superclass call from an inner class
+//     Anchor.this.pull()  receiver None       a call on the ENCLOSING INSTANCE, not on a field
 //
 // Before this fixture, `_qualifier` mapped every receiver that was not a simple reference to
 // None, so `super.pull()` and a bare `pull()` were the SAME FACT. That is why
@@ -50,6 +52,10 @@ class Relay extends RelayBase {
     int viaThis() {
         return this.pull();
     }
+
+    int viaFieldChain() {
+        return this.src.pull();
+    }
 }
 
 class Anchor extends RelayBase {
@@ -60,6 +66,10 @@ class Anchor extends RelayBase {
     class Nested {
         int reach() {
             return Anchor.super.pull();
+        }
+
+        int outerInstance() {
+            return Anchor.this.pull();
         }
     }
 }
