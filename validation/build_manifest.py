@@ -5,8 +5,10 @@ Read-only on Kim's code. Kept for provenance: it is how validation/kim_file_mani
 was produced. The committed manifest is authoritative -- rerunning this rewrites the
 `extracted_root` fields and is NOT part of the normal validation flow.
 
-KIM_DIR points at the user's local copy of Kim's ZIP distribution (external research data,
-not in this repo); EXTRACT_ROOT now defaults to the in-repo corpus at fixtures/kim/.
+KIM_ZIP_DIR is a REQUIRED environment variable pointing at a local copy of Kim's ZIP
+distribution (external research data, not in this repo). It has no default: the old default was
+one machine's absolute home path, which is both a reproducibility problem and a double-blind
+problem. EXTRACT_ROOT defaults to the in-repo corpus at fixtures/kim/.
 """
 
 import json
@@ -14,9 +16,40 @@ import os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-KIM_DIR = os.environ.get(
-    "KIM_ZIP_DIR", "/Users/hieunguyen/Documents/Coding Projects/Design-Pattern-Applications"
-)
+
+def _kim_dir():
+    """KIM_ZIP_DIR is REQUIRED. There is no default, and there deliberately is not one.
+
+    It points at a local copy of Kim's ZIP distribution -- external research data that is not in
+    this repo and cannot be derived from `__file__` the way every other path here is. The old
+    default was one machine's absolute home path, hardcoded. That is a reproducibility problem
+    (it works for exactly one person and fails confusingly for everyone else) and a double-blind
+    problem (the paper is double-blind, and anonymising a repository URL does not anonymise a
+    string committed inside it).
+
+    Requiring the variable removes the path honestly rather than by exemption: there is no path
+    to anonymise, and a missing setting now fails immediately with an instruction instead of
+    silently looking in a directory that does not exist.
+
+    Read lazily, in a function, so that importing this module -- which
+    tests/test_no_absolute_paths.py does not do, but a future reader might -- does not require the
+    variable to be set.
+    """
+    d = os.environ.get("KIM_ZIP_DIR")
+    if not d:
+        raise SystemExit(
+            "KIM_ZIP_DIR is not set.\n"
+            "This script rebuilds validation/kim_file_manifest.json from a local copy of Kim's "
+            "ZIP distribution,\nwhich is external research data and is not part of this "
+            "repository. Set it to the directory\nholding those ZIPs, e.g.\n\n"
+            "    KIM_ZIP_DIR=/path/to/Design-Pattern-Applications python3 validation/build_manifest.py\n\n"
+            "The committed manifest is authoritative and this script is provenance only -- it is "
+            "NOT part of\nthe normal validation flow, so you almost certainly do not need to run "
+            "it."
+        )
+    return d
+
+
 EXTRACT_ROOT = os.path.join(ROOT, "fixtures", "kim")
 OUT = os.path.join(ROOT, "validation", "kim_file_manifest.json")
 
@@ -96,7 +129,7 @@ def main():
                 "case_study": case,
                 "llm": llm,
                 "role": role,
-                "source_zip": os.path.join(KIM_DIR, ZIP_BY_PROGRAM[prog]),
+                "source_zip": os.path.join(_kim_dir(), ZIP_BY_PROGRAM[prog]),
                 "extracted_root": prog_dir,
                 "num_java_files": len(rel_files),
                 "java_files": rel_files,

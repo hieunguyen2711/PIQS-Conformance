@@ -49,7 +49,13 @@ from __future__ import annotations
 import tree_sitter_java
 from tree_sitter import Language, Parser
 
-from piqs.checker import JavaField, JavaMethod, JavaType, PIQSChecker
+from piqs.checker import (  # noqa: F401  (SUPER_RECEIVER is re-exported for callers)
+    SUPER_RECEIVER,
+    JavaField,
+    JavaMethod,
+    JavaType,
+    PIQSChecker,
+)
 
 JAVA_LANGUAGE = Language(tree_sitter_java.language())
 
@@ -70,6 +76,19 @@ _BODY_NODES = {"class_body", "interface_body", "enum_body"}
 
 # Children of a `modifiers` node that are annotations rather than modifier keywords.
 _ANNOTATION_NODES = {"marker_annotation", "annotation"}
+
+# Leaf nodes that count as a "whole token named in the body", for `_mentioned_tokens`.
+#
+# `this` and `super` are KEYWORDS, not identifiers, and they get their own node types. The regex
+# this replaces was a whole-word text match, so it found them like any other word. Dropping them
+# is not a cosmetic loss: Builder B1 accepts a terminal only if its body consumes the builder's
+# configured state, and one of the two routes is passing `this` to the product constructor.
+#
+# Measured with them omitted: 4 divergence tests fail AND the BDT battery reports 3 mismatches --
+# `builder_bloch_fluent_static_nested` and `t5_builder_immutable_product` both flip B1=1 -> 0,
+# PIQS 100 -> 20. Kim does not move, because Kim never scores Builder. This is the one divergence
+# in the set with a live verdict.
+_TOKEN_NODES = {"identifier", "type_identifier", "this", "super"}
 
 _base_name = PIQSChecker._base_name
 
@@ -165,6 +184,571 @@ def _field_declarations(body_node):
                     yield inner
 
 
+def _declared_in_body(node, src: bytes) -> dict[str, str | None]:
+    """{identifier: declared base type} for every name declared inside a method body.
+
+    Phase 2, step 1. Five declaration forms carry a name into method scope:
+
+        local_variable_declaration    List<Observer> seen = ...;   (one entry per declarator)
+        enhanced_for_statement        for (Observer o : seen)
+        resource                      try (Scanner s = ...)
+        catch_formal_parameter        catch (IOException e)
+        lambda_expression parameters  o -> ...   /   (Observer o) -> ...
+
+    A lambda parameter with no written type maps to None: the name is in scope, the type is
+    not knowable here. Callers that need the element type take it from the iterated
+    collection instead.
+
+    The walk STOPS at a nested type body. A field of a local or anonymous class, and a
+    variable declared inside one, belong to that class -- not to the enclosing method. This
+    is the same boundary `_member_declarations` draws for methods, and it is what keeps the
+    scope table honest where the old `t.body` text matching was not: text matching cannot see
+    a brace, so it absorbed nested declarations and method signatures alike.
+
+    A lambda BODY is not such a boundary -- a lambda shares the enclosing method's scope --
+    so the walk descends into it.
+    """
+    out: dict[str, str | None] = {}
+
+    def add(name_node, type_node) -> None:
+        if name_node is None:
+            return
+        name = _text(name_node, src)
+        if not name:
+            return
+        out[name] = _base_name(_text(type_node, src)) if type_node is not None else None
+
+    def walk(n) -> None:
+        for child in n.children:
+            # A nested type's body is a different scope. Do not descend.
+            # This covers a local class (`class_declaration` -> `class_body`) and an anonymous
+            # class (`object_creation_expression` -> `class_body`) alike.
+            if child.type in _BODY_NODES:
+                continue
+
+            if child.type == "local_variable_declaration":
+                type_node = child.child_by_field_name("type")
+                for d in child.named_children:
+                    if d.type == "variable_declarator":
+                        add(d.child_by_field_name("name"), type_node)
+
+            elif child.type == "enhanced_for_statement":
+                add(child.child_by_field_name("name"), child.child_by_field_name("type"))
+
+            elif child.type == "resource":
+                add(child.child_by_field_name("name"), child.child_by_field_name("type"))
+
+            elif child.type == "catch_formal_parameter":
+                add(
+                    child.child_by_field_name("name"),
+                    next((c for c in child.named_children if c.type == "catch_type"), None),
+                )
+
+            elif child.type == "lambda_expression":
+                params = child.child_by_field_name("parameters")
+                if params is not None:
+                    if params.type == "identifier":
+                        # `o -> ...`: one untyped parameter.
+                        add(params, None)
+                    else:
+                        # `formal_parameters` (typed) or `inferred_parameters` (`(a, b) -> ...`).
+                        for p in params.named_children:
+                            if p.type == "formal_parameter":
+                                add(p.child_by_field_name("name"), p.child_by_field_name("type"))
+                            elif p.type == "identifier":
+                                add(p, None)
+
+            walk(child)
+
+    walk(node)
+    return out
+
+
+class JavaParseError(ValueError):
+    """A method body tree-sitter could not parse cleanly.
+
+    Raised rather than swallowed. Every body-level fact -- `locals`, `calls` -- is collected by
+    walking the body's subtree, and a walk over a broken subtree returns an EMPTY result, which
+    is indistinguishable from a correct "this method declares nothing and calls nothing". The
+    predicates would then quietly report False and the four suites would stay green.
+
+    tree-sitter is error-tolerant by design: it always returns a tree, inserting ERROR and
+    MISSING nodes around what it could not parse. That tolerance is what makes the silence
+    possible, so it has to be checked for explicitly.
+
+    Measured: 0 of 434 method bodies across all 189 .java files in the repo produce an ERROR or
+    MISSING node -- including the five Kim programs that FAIL `javac`, whose errors are semantic
+    (unresolved symbols, bad types) rather than syntactic. So this never fires today. It exists
+    for generated code, which is what the checker is actually for.
+    """
+
+
+def _assert_parsable(node, owner: str, name: str) -> None:
+    if node is None:
+        return
+    stack = [node]
+    while stack:
+        n = stack.pop()
+        if n.type == "ERROR" or n.is_missing:
+            raise JavaParseError(
+                f"{owner}.{name}: method body contains a tree-sitter "
+                f"{'MISSING' if n.is_missing else 'ERROR'} node at byte {n.start_byte}. "
+                "Body-level facts would be silently empty; refusing to continue."
+            )
+        stack.extend(n.children)
+
+
+def _qualifier(node, src: bytes) -> str | None:
+    """The receiver a call or assignment is written against, as the old regexes saw it.
+
+    One rule reproduces both `_delegates_to_field` and `_assigns_field` on every shape they
+    accept or reject:
+
+        identifier    -> its own text          f.op()        -> "f"
+        field_access  -> its FIELD's text      this.f.op()   -> "f"
+                                               f.g.op()      -> "g"   (not "f")
+        anything else -> None                  getX().op()   -> None
+                                               arr[0] = x    -> None
+
+    `f.g.op()` yielding "g" is not an accident: the regex needs `<name> . <ident> (`, and in
+    `f.g.op()` the text `g.op(` satisfies it while `f.op(` does not. Returning None there would
+    silently drop a real match.
+    """
+    if node is None:
+        return None
+    if node.type == "identifier":
+        return _text(node, src)
+    if node.type == "super":
+        return SUPER_RECEIVER
+    if node.type == "field_access":
+        # ONLY an `identifier` field yields a receiver, and the check is on the NODE TYPE rather
+        # than on the text. `Outer.this.m()` arrives here with `field` being the `this` KEYWORD
+        # node, and returning its text gave the string "this" -- which a field literally named
+        # `this` would match, since tree-sitter parses `private Duct this;` quite happily. That is
+        # the same collision as the bare-"super" one above, in its other form. `Outer.this.m()` is
+        # a call on the ENCLOSING INSTANCE, not on any field of this class, so None is also the
+        # semantically right answer.
+        #
+        # `f.g.op() -> "g"` (divergence #5) is unaffected: `g` is an identifier.
+        field = node.child_by_field_name("field")
+        if field is None or field.type != "identifier":
+            return None
+        return _text(field, src)
+    return None
+
+
+def _invocations(node, src: bytes) -> list[tuple[str | None, str]]:
+    """[(receiver, method_name)] for every method call in a method body.
+
+    Phase 2, step 2. Replaces `_calls_method`'s regex, which matched a bare identifier followed
+    by '(' anywhere in the body text. Four things that regex counted as a call are not one:
+
+      * text inside a COMMENT or STRING LITERAL. `// observers.add(o)` is not a call.
+      * a CONSTRUCTOR call. `new Wallet()` matched `_calls_method(body, "Wallet")`; an
+        object_creation_expression is not a method_invocation.
+      * a method DECLARATION inside the body -- a local or anonymous class declaring
+        `void ping(){}` matched "ping". This is the phantom-method problem phase 1 removed at
+        the type level, reappearing at the body level.
+      * nothing else: the walk does NOT stop at a nested type body.
+
+    That last point is deliberate and is the one place this walk differs from
+    `_declared_in_body`. A field of an anonymous class belongs to that class, so the SCOPE walk
+    stops there. A call written inside an anonymous class body still runs against the enclosing
+    instance's fields -- `new Runnable(){ public void run(){ inner.write(s); } }` really is the
+    enclosing class delegating to `inner` -- so the CALL walk descends. Reusing the scope
+    walker's boundary here would silently drop D3 for that shape.
+
+    Collecting only `method_invocation` nodes is what keeps declarations out, descent or not,
+    with no special case.
+    """
+    out: list[tuple[str | None, str]] = []
+
+    def walk(n) -> None:
+        if n.type == "method_invocation":
+            name_node = n.child_by_field_name("name")
+            if name_node is not None:
+                # `Outer.super.m()` -- a QUALIFIED superclass call from an inner class. tree-sitter
+                # reports `object = identifier "Outer"` and puts the `super` in a separate child,
+                # so `_qualifier` alone returns "Outer" and a class holding a field named `Outer`
+                # would count this as delegation to that field. `_qualifier` cannot see it: it only
+                # ever receives the object node. Hence the check here.
+                #
+                # Plain `super.m()` has the `super` node AS its object, so both paths agree and the
+                # branch is harmless for it. No other shape puts a bare `super` node directly under
+                # a method_invocation.
+                if any(c.type == "super" for c in n.children):
+                    receiver: str | None = SUPER_RECEIVER
+                else:
+                    receiver = _qualifier(n.child_by_field_name("object"), src)
+                out.append((receiver, _text(name_node, src)))
+        for c in n.children:
+            walk(c)
+
+    if node is not None:
+        walk(node)
+    return out
+
+
+def _mentioned_tokens(node, src: bytes) -> set[str]:
+    """Every whole token named in a method body -- identifiers AND keywords.
+
+    Phase 2, step 2. Replaces `_mentions_token`'s regex, which matched any whole word anywhere
+    in the body text. Two things follow, and they pull in opposite directions:
+
+      * Comments and string literals are NOT tokens (divergence #4). `// this` is not a mention.
+
+      * `this` and `super` ARE tokens, and they are KEYWORD nodes, not identifiers. A walk over
+        `identifier` alone silently answers False for every `this` -- and Builder B1 reads
+        exactly that: `_evaluate_builder` accepts a terminal only if its body consumes the
+        builder's configured state, one route being passing `this` to the product constructor.
+        Lose it and a legitimate `build()` stops being a terminal.
+
+    Measured: 43 real call sites pass "this", 3 of them True, all in the BDT battery. Omitting
+    the keyword produces exactly those 3 disagreements, in two distinct node positions --
+    `new Pizza(this)` (constructor argument) and `synchronized (this)` (statement lock). A fix
+    covering only one of the two is not a fix; see tests/fixtures_parser/div1_this_keyword.java.
+    """
+    out: set[str] = set()
+
+    def walk(n) -> None:
+        if n.type in _TOKEN_NODES:
+            out.add(_text(n, src))
+        for c in n.children:
+            walk(c)
+
+    if node is not None:
+        walk(node)
+    return out
+
+
+def _assignment_targets(node, src: bytes) -> set[str]:
+    """Names assigned in a method body, by the same rule the retired `_assigns_field` regex used.
+
+    Phase 2, step 2. The regex was ``name\\s*=(?!=)``, and three things follow from it:
+
+    * **Only the simple `=` counts.** A compound operator puts a character between the name and
+      the `=`, so the regex never matched one -- but tree-sitter gives EVERY compound form the
+      same `assignment_expression` node type, distinguished only by the `operator` field. Without
+      the filter below, parity breaks in TEN ways, not the one `+=` that divergence #2 is usually
+      described by: `+= -= *= /= %= &= |= ^= <<= >>= >>>=`. Measured with the filter removed: the
+      divergence fixture fails and all four suites stay green.
+
+      This is exact parity, deliberately. `_assigns_field` is documented as signalling a step
+      that POPULATES STATE, and `total += x` does populate state, so the regex is arguably wrong.
+      Preserving it keeps the migration a mechanism change: a movement caused by new meaning
+      would be indistinguishable from one caused by the tree. Parked in docs/STATE.md.
+
+    * **A DECLARATION is not an assignment** (divergence #3). `int count = 5;` matched the regex
+      and is a `local_variable_declaration` here, so it is excluded -- and unlike #2, the tree is
+      simply right: the declaration initialises a LOCAL that shadows the field, leaving the field
+      untouched. No node type has to be excluded for this; it is never collected in the first
+      place.
+
+    * **`f++` and `f == x` need no filter either** -- `update_expression` and `binary_expression`
+      are different node types.
+
+    The walk covers the whole subtree, not just `expression_statement`: `for (f = 0; ...)` is an
+    assignment_expression in the for-INIT, and the regex matched it. Constructor bodies are
+    covered too -- `_build_method` passes `constructor_body` here, and the Builder base predicate
+    `modifies(m,f)` reads constructors (63 of the corpus's 72 constructors name a field).
+    """
+    out: set[str] = set()
+
+    def walk(n) -> None:
+        if n.type == "assignment_expression":
+            op = n.child_by_field_name("operator")
+            # Simple `=` only. See the ten compound operators above.
+            if op is None or _text(op, src) == "=":
+                q = _qualifier(n.child_by_field_name("left"), src)
+                if q:
+                    out.add(q)
+        for c in n.children:
+            walk(c)
+
+    if node is not None:
+        walk(node)
+    return out
+
+
+def _callback_on(node, receiver: str, src: bytes) -> str | None:
+    """The name of the first method invoked ON `receiver` inside `node`.
+
+    RECEIVER, not merely mentioned. `observers.forEach(o -> log(o))` names the element and
+    iterates the right collection but never invokes anything on it -- `o` is an argument. O3 asks
+    whether the subject CALLS the callback on each observer, so that is not a notification.
+    Guarded by tests/fixtures_parser/loopN2_no_callback_call.java.
+    """
+    found: list[str] = []
+
+    def walk(n) -> None:
+        if found:
+            return
+        if n.type == "method_invocation":
+            obj = n.child_by_field_name("object")
+            nm = n.child_by_field_name("name")
+            if obj is not None and nm is not None and obj.type == "identifier":
+                if _text(obj, src) == receiver:
+                    found.append(_text(nm, src))
+                    return
+        for c in n.children:
+            walk(c)
+
+    if node is not None:
+        walk(node)
+    return found[0] if found else None
+
+
+def _single_lambda_param(lam, src: bytes) -> str | None:
+    """The lambda's parameter name, if it takes EXACTLY ONE.
+
+    `Collection.forEach` takes a `Consumer` -- one parameter. `Map.forEach` takes a `BiConsumer`
+    -- two. Requiring exactly one is therefore the shape check that separates a collection
+    traversal from a map traversal, and it is why the six `wallets.forEach((currency, wallet) ->
+    ...)` sites in Kim are rejected here rather than later at element-type resolution.
+    """
+    params = lam.child_by_field_name("parameters")
+    if params is None:
+        return None
+    if params.type == "identifier":
+        return _text(params, src)  # `o -> ...`
+    named = [c for c in params.named_children if c.type in {"formal_parameter", "identifier"}]
+    if len(named) != 1:
+        return None  # `(a, b) -> ...` is a BiConsumer, not a Consumer
+    p = named[0]
+    name_node = p.child_by_field_name("name") if p.type == "formal_parameter" else p
+    return _text(name_node, src) if name_node is not None else None
+
+
+# Stream/collection operations that yield the SAME element type they consume. Used to walk a
+# chained `forEach` receiver back to the collection it started from (loop form 5).
+#
+# The list is an ALLOWLIST and anything unrecognised rejects the chain. That direction is
+# deliberate: an operation that changes the element type -- `map`, `flatMap`, `mapToObj` -- makes
+# the base identifier the wrong place to read the element type from, and the corpus cannot tell us
+# which unfamiliar operation is which. Narrower is the safe default for a NEW detector.
+#
+#     observers.stream().forEach(...)                     base = observers, elements Observer  OK
+#     observers.stream().filter(...).forEach(...)          filter preserves the type           OK
+#     observers.stream().map(o -> o.getTag()).forEach(...) elements are Tag, NOT Observer      REJECT
+#
+# `Collections.unmodifiableList(observers)` is deliberately NOT here. It is a STATIC call whose
+# object is `Collections` and whose collection is an ARGUMENT, so a receiver walk never reaches
+# `observers` and the entry would be dead. A dead allowlist entry reads as coverage that does not
+# exist. If that shape is ever wanted it needs an argument case, not a name in this set.
+_ELEMENT_PRESERVING = {
+    "stream",
+    "parallelStream",
+    "filter",
+    "sorted",
+    "distinct",
+    "limit",
+    "skip",
+    "peek",
+}
+
+
+def _collection_of(node, src: bytes) -> str | None:
+    """The collection identifier a `forEach` receiver ultimately refers to, or None.
+
+    Form 3 is the base case -- the receiver IS the collection. Form 5 walks a chain of
+    element-preserving operations back to it. Anything else returns None, and None can never
+    match a `coll_fields` key, so the rejection needs no special case downstream.
+    """
+    seen = 0
+    while node is not None:
+        if node.type == "identifier":
+            return _text(node, src)
+        if node.type != "method_invocation":
+            return None
+        name = node.child_by_field_name("name")
+        if name is None or _text(name, src) not in _ELEMENT_PRESERVING:
+            return None
+        node = node.child_by_field_name("object")
+        seen += 1
+        if seen > 8:  # pathological chain; refuse rather than loop
+            return None
+    return None
+
+
+
+_LOOP_NODES = {"while_statement", "for_statement", "enhanced_for_statement", "do_statement"}
+
+
+def _for_init_vars(node, src: bytes) -> set[str]:
+    """Names declared in a `for` statement's INIT clause.
+
+    Form 2 needs them because an enclosing loop is NECESSARY BUT NOT SUFFICIENT:
+
+        for (int i = 0; i < observers.size(); i++) observers.get(i).update();   traversal
+        for (int i = 0; i < 10; i++)               observers.get(0).update();   the SAME observer
+
+    Both sit inside a for_statement. Only the first indexes BY the loop variable. Requiring the
+    argument of `get(...)` to be a for-init variable separates them, and gives reverse iteration
+    (`for (int i = n-1; i >= 0; i--)`) for free. Guarded by loopN7.
+    """
+    out: set[str] = set()
+    for child in node.children:
+        if child.type == "local_variable_declaration":
+            for d in child.named_children:
+                if d.type == "variable_declarator":
+                    nm = d.child_by_field_name("name")
+                    if nm is not None:
+                        out.add(_text(nm, src))
+        elif child.type in {"(", ")"}:
+            continue
+        elif child.type in _LOOP_NODES or child.type == "block":
+            break  # past the header, into the body
+    return out
+
+
+def _iterator_sources(node, src: bytes) -> dict[str, str]:
+    """{iterator variable -> the collection it was taken from}, KEYED BY IDENTIFIER.
+
+    A single per-method value would be wrong, not merely imprecise:
+
+        Iterator<String>   it2 = names.iterator();
+        Iterator<Observer> it1 = observers.iterator();
+
+    Last-wins would make `it2` resolve to `observers`, and a loop that never touches an observer
+    would score as a notification. Guarded by loopN9.
+    """
+    out: dict[str, str] = {}
+
+    def walk(n) -> None:
+        if n.type == "local_variable_declaration":
+            for d in n.named_children:
+                if d.type != "variable_declarator":
+                    continue
+                nm, val = d.child_by_field_name("name"), d.child_by_field_name("value")
+                if nm is None or val is None or val.type != "method_invocation":
+                    continue
+                vn, vo = val.child_by_field_name("name"), val.child_by_field_name("object")
+                if vn is not None and _text(vn, src) == "iterator" and vo is not None:
+                    coll = _collection_of(vo, src)
+                    if coll:
+                        out[_text(nm, src)] = coll
+        for c in n.children:
+            walk(c)
+
+    if node is not None:
+        walk(node)
+    return out
+
+
+def _indexed_source(obj, src: bytes, for_vars: set[str]) -> str | None:
+    """`observers.get(i)` -> "observers", when `i` is a for-init variable. Else None."""
+    if obj is None or obj.type != "method_invocation":
+        return None
+    nm = obj.child_by_field_name("name")
+    if nm is None or _text(nm, src) != "get":
+        return None
+    args = obj.child_by_field_name("arguments")
+    idx = [c for c in args.named_children] if args is not None else []
+    if len(idx) != 1 or idx[0].type != "identifier" or _text(idx[0], src) not in for_vars:
+        return None
+    return _collection_of(obj.child_by_field_name("object"), src)
+
+
+def _iterator_next_source(obj, src: bytes, iters: dict[str, str]) -> str | None:
+    """`it.next()` -> the collection `it` came from, else None."""
+    if obj is None or obj.type != "method_invocation":
+        return None
+    nm, o = obj.child_by_field_name("name"), obj.child_by_field_name("object")
+    if nm is None or _text(nm, src) != "next" or o is None or o.type != "identifier":
+        return None
+    return iters.get(_text(o, src))
+
+
+def _traversals(node, src: bytes) -> list[tuple[str, str, str | None]]:
+    """[(collection identifier, callback name, required qualifier)] per notification loop.
+
+    Phase 2, step 3. `foreach_re` in `_evaluate_observer` recognises ONE loop form of six, and the
+    other five are silently missed -- which looks exactly like a model that failed to write
+    Observer at all, the confound this checker exists to remove.
+
+    The element type is still resolved by the CHECKER from `coll_fields`, unchanged, so this adds
+    loop shapes without touching the `t.body` text matching that also feeds Composite.
+
+    `required qualifier` is None for the lambda forms, which carry no type name. For a method
+    reference it is the text before `::`, and the checker requires it to EQUAL the resolved
+    element type. That check cannot live here: tree-sitter reports an `identifier` for the
+    qualifier in both `Observer::update` and `logger::record`, because Java resolves type-vs-
+    variable semantically and the parser does no semantic resolution. It is a NAME COMPARISON
+    against the element type, made where the element type is known.
+
+    Implemented so far:
+
+        form 3   `observers.forEach(o -> o.update())`
+        form 5   `observers.stream().forEach(o -> o.update())`, and any chain of
+                 element-preserving operations -- see `_ELEMENT_PRESERVING`
+        form 4   `observers.forEach(Observer::update)` -- accepted only when the qualifier names
+                 the element type; `observers.forEach(logger::record)` passes the element as an
+                 ARGUMENT and is not a notification
+        form 2   `for (int i = 0; i < observers.size(); i++) observers.get(i).update()`
+        form 6   `Iterator<Observer> it = observers.iterator(); while (it.hasNext())
+                 it.next().update()`
+
+    Forms 2 and 6 differ from the rest: `get(i)` and `next()` yield ONE element and carry no
+    repetition, so the ENCLOSING LOOP IS PART OF THE PATTERN. Form 2 additionally requires the
+    index to be a for-init variable (an enclosing loop alone accepts `observers.get(0).update()`
+    ten times over). Form 6 accepts a `while` OR a `for` header, because
+    `for (Iterator it = c.iterator(); it.hasNext(); )` is the older and still common idiom and
+    costs nothing extra to allow.
+
+    Still on `foreach_re` in the checker: form 1 (enhanced-for).
+    """
+    out: list[tuple[str, str, str | None]] = []
+    iters = _iterator_sources(node, src)
+
+    def walk(n, for_vars: frozenset, in_loop: bool) -> None:
+        if n.type == "for_statement":
+            for_vars = for_vars | _for_init_vars(n, src)
+            in_loop = True
+        elif n.type in _LOOP_NODES:
+            in_loop = True
+
+        if n.type == "method_invocation":
+            nm = n.child_by_field_name("name")
+            obj = n.child_by_field_name("object")
+            args = n.child_by_field_name("arguments")
+            if nm is not None and args is not None and _text(nm, src) == "forEach":
+                # Form 3: the receiver IS the collection. Form 5: walk a chain of
+                # element-preserving operations back to it. Anything else -> None -> rejected.
+                coll = _collection_of(obj, src)
+                lams = [c for c in args.named_children if c.type == "lambda_expression"]
+                refs = [c for c in args.named_children if c.type == "method_reference"]
+                if coll and len(lams) == 1:
+                    param = _single_lambda_param(lams[0], src)
+                    if param:
+                        cb = _callback_on(lams[0].child_by_field_name("body"), param, src)
+                        if cb:
+                            out.append((coll, cb, None))
+                elif coll and len(refs) == 1:
+                    # Form 4. A method_reference is `<qualifier> :: <name>`; a CONSTRUCTOR
+                    # reference (`Observer::new`) has the keyword `new` there and is not a call
+                    # on the element, so it is excluded.
+                    parts = [c for c in refs[0].children if c.type not in {"::"}]
+                    if len(parts) == 2 and parts[1].type == "identifier":
+                        qual, name = _text(parts[0], src), _text(parts[1], src)
+                        if qual and name:
+                            out.append((coll, name, qual))
+            # Forms 2 and 6. Both call the callback on an expression that yields ONE element --
+            # `observers.get(i)` or `it.next()` -- so neither carries repetition of its own. The
+            # enclosing loop is therefore PART OF THE PATTERN, not context; without it,
+            # `observers.get(0).update()` has an identical call shape and notifies one observer.
+            elif nm is not None and in_loop:
+                obj2 = n.child_by_field_name("object")
+                coll2 = _indexed_source(obj2, src, for_vars) or _iterator_next_source(obj2, src, iters)
+                if coll2:
+                    out.append((coll2, _text(nm, src), None))
+        for c in n.children:
+            walk(c, for_vars, in_loop)
+
+    if node is not None:
+        walk(node, frozenset(), False)
+    return out
+
+
 def _build_method(decl, owner: str, src: bytes) -> JavaMethod:
     is_ctor = decl.type == "constructor_declaration"
     name_node = decl.child_by_field_name("name")
@@ -181,6 +765,8 @@ def _build_method(decl, owner: str, src: bytes) -> JavaMethod:
 
     body_node = next((c for c in decl.children if c.type in {"block", "constructor_body"}), None)
     has_body = body_node is not None
+    if has_body:
+        _assert_parsable(body_node, owner, name)
 
     return JavaMethod(
         name=name,
@@ -192,6 +778,11 @@ def _build_method(decl, owner: str, src: bytes) -> JavaMethod:
         body=_brace_inner(body_node, src) if has_body else "",
         is_constructor=is_ctor,
         has_body=has_body,
+        locals=_declared_in_body(body_node, src) if has_body else {},
+        mentions=_mentioned_tokens(body_node, src) if has_body else set(),
+        assignments=_assignment_targets(body_node, src) if has_body else set(),
+        traversals=_traversals(body_node, src) if has_body else [],
+        calls=_invocations(body_node, src) if has_body else [],
     )
 
 

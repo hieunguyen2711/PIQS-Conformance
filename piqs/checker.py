@@ -23,13 +23,45 @@ _PATTERN_WEIGHTS = {
     # pattern work (also the CRITICAL set); weight 2 = existence-of-a-role / interaction;
     # weight 1 = supporting/peripheral. See validation/bdt_property_spec.md.
     "builder": {"B1": 3, "B2": 3, "B3": 2, "B4": 2, "B5": 1, "B6": 1},
-    "decorator": {"D1": 2, "D2": 3, "D3": 3, "D4": 2, "D5": 1, "D6": 1},
+    # D1 and D5 were removed 2026-08-10: both proven tautologies, `== D2` for every program by
+    # construction. See PROPERTY_SPEC.md -- the reason is prompt generation, not PSR.
+    "decorator": {"D2": 3, "D3": 3, "D4": 2, "D6": 1},
     "template-method": {"T1": 2, "T2": 2, "T3": 3, "T4": 2, "T5": 2},
 }
 
 # The critical property set per pattern -- the weight-3 relationship/behaviour properties.
 # A program is recognised AS the pattern only when ALL of its critical properties hold; the
 # BDT mutation battery keys its MUST-PASS / MUST-FAIL verdicts off exactly this set.
+# The receiver recorded for `super.m()` and `Outer.super.m()`.
+#
+# WHY NOT THE BARE TEXT "super". The first version of this used it, on the reasoning that `super`
+# is a reserved keyword so no field could be named it. Java forbids it -- but THIS CHECKER IS NOT
+# javac, and the code it scores is generated code that frequently does not compile:
+#
+#     javac                 error: <identifier> expected
+#     tree-sitter           has_error == False
+#     extract_types         fields == [('super', 'Duct')]
+#
+# So `class Weird { private Duct super; void write(String s){ super.write(s); } }` is reachable,
+# and with the bare text `_delegates_to_field` compared the receiver of a PARENT-CLASS call equal
+# to a field named `super` and credited delegation to a field that is never touched -- scoring
+# that program D2 1 D3 1 D4 1 D6 1, PIQS 100. That was a regression INTRODUCED by the bare-text
+# version, not a pre-existing hole: before any super handling the receiver was None.
+#
+# `<super>` cannot be any identifier, because `<` and `>` are not JavaLetters (JLS 3.8). Verified
+# against this parser rather than argued: `private Duct <super>;` yields a field whose name is the
+# empty string, never "<super>". A string (rather than a sentinel object) also survives the JSON
+# round-trip in results/parser_golden.json, and `calls` IS snapshotted there.
+#
+# Pinned by tests/fixtures_parser/field_named_super.java.
+#
+# IT LIVES HERE, NOT IN parser.py, FOR AN IMPORT REASON: `parser` imports `checker` at module
+# level, while `checker` imports `parser` only inside a function to break the cycle. A constant
+# that both need therefore has to sit on the `checker` side. `parser` re-exports it, so
+# `from piqs.parser import SUPER_RECEIVER` still works.
+SUPER_RECEIVER = "<super>"
+
+
 _CRITICAL_PROPERTIES = {
     "factory-method": {"F2", "F3", "F4"},
     "strategy": {"S1", "S2", "S4"},
@@ -82,6 +114,45 @@ class JavaMethod:
     # empty-bodied concrete method (`void step() {}`) -- both leave `body == ""`. Template
     # Method (T1/T2/T3) needs this distinction; the five original patterns never read it.
     has_body: bool = True
+    # {identifier: declared base type} for every name declared INSIDE this method's body --
+    # local variables, enhanced-for variables, try-with-resources resources, catch parameters
+    # and lambda parameters. Built by piqs.parser from the AST.
+    #
+    # Parameters are deliberately NOT duplicated here: they already live in `param_names` /
+    # `param_types`, and a second copy is a second thing to keep in step. Assemble the full
+    # scope with `PIQSChecker._scope(type, method, types)`, which is the only supported way to
+    # read it -- that merges fields, then parameters, then these, in Java shadowing order.
+    #
+    # The value is None when a name is declared without a type the parser can see: an
+    # untyped lambda parameter (`o -> o.update()`). The NAME is still recorded, because a
+    # consumer that needs the type gets it from the iterated collection, not from the lambda.
+    #
+    # Block scope is not modelled -- the dict is flat, so two sibling blocks each declaring
+    # `i` collapse to one entry (last wins). No predicate distinguishes them.
+    locals: dict[str, str | None] = field(default_factory=dict)
+    # [(receiver, method_name)] for every call in this method's body, in source order. Built by
+    # piqs.parser from the AST; read through `PIQSChecker._calls_within`.
+    #
+    # `receiver` is the reference the call is written against -- "f" for `f.op()` and for
+    # `this.f.op()`, "g" for `f.g.op()`, None for `op()` and for a chain like `getX().op()`.
+    # None can never equal a field name, so chains and unqualified calls are rejected by
+    # comparison alone.
+    #
+    # Tree-sitter Nodes are deliberately NOT stored: a Node is only valid while its Tree is
+    # alive, so holding one past parse time gives a dangling reference that fails silently.
+    # Everything is extracted eagerly into plain data, which also keeps JavaMethod serializable.
+    calls: list[tuple[str | None, str]] = field(default_factory=list)
+    # Every whole token named in the body -- identifiers AND the `this` / `super`
+    # keywords. Built by piqs.parser; read through `PIQSChecker._mentions_within`.
+    mentions: set[str] = field(default_factory=set)
+    # Names assigned in the body via a simple `=`. Built by piqs.parser; read through
+    # `PIQSChecker._assigns_field`.
+    assignments: set[str] = field(default_factory=set)
+    # [(collection identifier, callback name)] for each notification loop the parser
+    # recognises in this body. The ELEMENT TYPE is not resolved here -- the checker does
+    # that from `coll_fields`, unchanged, so loop shapes can be added without touching
+    # the `t.body` text matching that also feeds Composite.
+    traversals: list[tuple[str, str, str | None]] = field(default_factory=list)
 
 
 @dataclass
@@ -191,15 +262,18 @@ class PIQSChecker:
         return extract_types(java_files)
 
     @staticmethod
-    def _calls_method(body: str, name: str) -> bool:
-        """Fix G: True if `body` invokes a method named exactly `name` -- a whole
-        identifier followed by '(' (so `pay` does not match inside `payment`)."""
-        return re.search(r"(?<![A-Za-z0-9_])" + re.escape(name) + r"\s*\(", body) is not None
+    def _mentions_within(method: "JavaMethod", token: str) -> bool:
+        """mentionsWithin(method, token): does `method`'s body name `token` as a whole token?
 
-    @staticmethod
-    def _mentions_token(body: str, name: str) -> bool:
-        """Fix G: True if `name` occurs in `body` as a whole identifier, not a substring."""
-        return re.search(r"(?<![A-Za-z0-9_])" + re.escape(name) + r"(?![A-Za-z0-9_])", body) is not None
+        Phase 2, step 2. Reads `method.mentions`, precomputed from the AST; the
+        `_mentions_token(body, name)` regex it replaces is gone. Whole-token matching is
+        unchanged -- `siz` still does not match inside `size` -- but it now comes from the tree
+        rather than a look-behind.
+
+        `this` and `super` are included: they are keyword nodes, and Builder B1 reads
+        `this` to accept a terminal. Comments and string literals are not (divergence #4).
+        """
+        return token in method.mentions
 
     @staticmethod
     def _has_verb_prefix(name: str, verb: str) -> bool:
@@ -244,13 +318,24 @@ class PIQSChecker:
     # ------------------------------------------------------------------ #
     # New AST helpers (RULE 1): the only two base predicates the codebase lacked.
     # ------------------------------------------------------------------ #
-    @classmethod
-    def _calls_within(cls, method: "JavaMethod", target: str) -> bool:
+    @staticmethod
+    def _calls_within(method: "JavaMethod", target: str) -> bool:
         """callsWithin(method, target): does `method`'s body invoke a method named exactly
-        `target`? Whole-token match (reuses the pass-3 precision rule via _calls_method), so
-        `read` never matches inside `readLine`. Used by D3 (delegation) and T3 (inversion of
-        control)."""
-        return cls._calls_method(method.body, target)
+        `target`? Used by Strategy (execute), D3 (delegation) and T3 (inversion of control).
+
+        Phase 2, step 2: this reads `method.calls`, precomputed from the AST, and the separate
+        `_calls_method(body, name)` regex it used to wrap is gone -- one source of truth. Exact
+        name matching is unchanged, so `read` still never matches inside `readLine`; that came
+        from the whole-token rule, which the tree gives for free.
+
+        Four things the regex counted as a call and this does not: text in a comment or string
+        literal, a constructor call (`new Wallet()` matched the name "Wallet"), a method
+        DECLARED in the body, and -- unchanged -- nothing else, because the walk descends into
+        anonymous and local class bodies exactly as the flat text did. Each is pinned by a
+        fixture in tests/test_body_helpers_divergences.py; none occurs in either corpus, so the
+        suites are not what protects them.
+        """
+        return any(name == target for _receiver, name in method.calls)
 
     @staticmethod
     def _field_of_type(jtype: "JavaType", type_name: str) -> bool:
@@ -260,22 +345,52 @@ class PIQSChecker:
         return any(f.field_type == type_name for f in jtype.fields)
 
     @staticmethod
-    def _delegates_to_field(body: str, field_name: str) -> bool:
-        """True if `body` invokes a method on the reference `field_name` -- `field.op(...)` or
-        `this.field.op(...)` as a whole token. The structural signature of delegation (D3)."""
-        return re.search(
-            r"(?<![A-Za-z0-9_])(?:this\s*\.\s*)?" + re.escape(field_name) + r"\s*\.\s*[A-Za-z_]\w*\s*\(",
-            body,
-        ) is not None
+    def _delegates_to_field(
+        method: "JavaMethod", field_name: str, super_delegates: bool = False
+    ) -> bool:
+        """delegatesTo(method, field): does `method` invoke something on the reference
+        `field_name`? The structural signature of delegation (D3).
+
+        Phase 2, step 2. Reads `method.calls`, whose receiver was normalised at parse time by
+        `_qualifier`. The retired regex required `<name> . <ident> (`, optionally preceded by
+        `this.`, and that narrowness is the meaning: D3 asks whether the wrapper forwards to THE
+        HELD REFERENCE, so a chain through a call (`getX().op()`) or an array element
+        (`arr[0].op()`) is not delegation to a field.
+
+        A method_invocation query is naturally WIDER than that. Nothing here re-narrows it --
+        the uniform qualifier rule does, by storing None for any receiver that is not a simple
+        reference. None never equals a field name, so chains are rejected by comparison alone
+        and there is no chain-detection branch anywhere.
+
+        The sharp case is `f.g.op()`, which delegates to `g` and NOT to `f`: the old regex is
+        satisfied by the text `g.op(` and not by `f.op(`. Pinned by
+        tests/fixtures_parser/div5_chain_not_delegation.java; zero corpus coverage.
+
+        `super_delegates` -- FORWARDING ONE LINK LONGER. In the canonical GoF shape the abstract
+        base holds the component and the concrete decorators extend it, so a concrete decorator
+        forwards by calling `super.m()`. `decorator_filterinputstream_analogue` is exactly that:
+        `BufferedInputStream.read()` forwards with `super.read()`, not with `in.read()`.
+
+        THE FLAG IS NOT OPTIONAL, and the caller must compute it. "Forwards through the base that
+        HOLDS the reference" contains a condition, so the condition gets checked: the caller passes
+        True only when a project-defined ancestor of the wrapper is ITSELF a decorator candidate.
+        Accepting every `super` call unconditionally would re-open the hole F1b closed --
+        `field_named_super.java` declares a `Duct` field, has no `extends` at all, and calls
+        `super.write()`, so the loose rule would score it D3 = 1 by a different route from the
+        string collision. Pinned by tests/test_super_delegation.py.
+        """
+        return any(
+            receiver == field_name or (super_delegates and receiver == SUPER_RECEIVER)
+            for receiver, _name in method.calls
+        )
 
     @staticmethod
-    def _assigns_field(body: str, field_name: str) -> bool:
-        """True if `body` assigns to the field `field_name` (`field = ...` or `this.field = ...`),
-        not an equality test. Signals a configuration/build-part step that populates state."""
-        return re.search(
-            r"(?<![A-Za-z0-9_])(?:this\s*\.\s*)?" + re.escape(field_name) + r"\s*=(?!=)",
-            body,
-        ) is not None
+    def _assigns_field(method: "JavaMethod", field_name: str) -> bool:
+        """True if `method` assigns to `field_name` -- `field = ...` or `this.field = ...`.
+
+        Phase 2, step 2. Reads `method.assignments`, precomputed from the AST.
+        """
+        return field_name in method.assignments
 
     def _effective_methods(self, t: "JavaType", types: dict[str, "JavaType"]) -> list["JavaMethod"]:
         """`t`'s own methods plus those inherited from its project-defined `extends` ancestors.
@@ -303,6 +418,50 @@ class PIQSChecker:
             seen.add(parent.name)
             cur = parent
         return fields
+
+    def _scope(
+        self, t: "JavaType", m: "JavaMethod", types: dict[str, "JavaType"]
+    ) -> dict[str, str | None]:
+        """{identifier: declared base type} visible inside `m`, a method of `t`.
+
+        Phase 2, step 1 -- the scope table. The single supported way to ask what a name means
+        inside a method body. Sources, merged in Java shadowing order so that a later source
+        overwrites an earlier one:
+
+            1. fields of `t` and of its project-defined ancestors   (`_effective_fields`)
+            2. `m`'s parameters
+            3. names declared in `m`'s body                         (`m.locals`)
+
+        A local named `x` therefore beats a field named `x`, which is what Java does.
+
+        The value is the declared type's BASE name (`List<Observer> seen` -> "List"), or None
+        for an untyped lambda parameter. Use `name in types` to decide whether a type is
+        project-defined; see docs/PROPERTY_SPEC.md, "Identifier resolution".
+
+        NOTHING READS THIS YET. It is built and tested on its own so that the verdict-moving
+        change -- replacing the `t.body` text matching in `_evaluate_observer` and
+        `_evaluate_composite` -- lands as a separate, separately-measured step.
+        """
+        # `reversed` is load-bearing. `_effective_fields` returns own fields FIRST, then the
+        # parent's, then the grandparent's. A plain comprehension lets the LATER entry win, so
+        # an inherited field would overwrite the subclass field that shadows it -- the inverse
+        # of Java, where a subclass field hides a superclass field of the same name. Walking
+        # ancestors-first makes the nearest declaration land last and win.
+        #
+        # `_effective_fields` itself is NOT reordered: its other caller (`_evaluate_builder`)
+        # collapses the result into a set, so order is invisible there, and changing it would be
+        # an unmeasured behaviour change somewhere else.
+        #
+        # Guarded by tests/fixtures_parser/shadowed_inherited_field.java. No corpus file shadows
+        # an inherited field, so all four suites pass without this.
+        scope: dict[str, str | None] = {
+            f.name: f.field_type for f in reversed(self._effective_fields(t, types))
+        }
+        for pname, ptype in zip(m.param_names, m.param_types):
+            if pname:
+                scope[pname] = ptype or None
+        scope.update(m.locals)
+        return scope
 
     def _framework_roles_supplied(self, t: "JavaType", types: dict[str, "JavaType"]) -> list[str]:
         """Which pattern-bearing structures a framework-inheriting type declares ITSELF.
@@ -636,8 +795,9 @@ class PIQSChecker:
             field_strategy = any(f.field_type in strategy_ifaces for f in c.fields)
             setter = any(self._has_verb_prefix(m.name, "set") and any(pt in strategy_ifaces for pt in m.param_types) for m in c.methods)
             # Fix G: invoke-by-whole-token, not `"pay" in body` (which matched "payment").
+            # Phase 2 step 2: the whole-token rule is now the tree's, via `method.calls`.
             execute = any(
-                any(self._calls_method(m.body, name) for name in strategy_method_names)
+                any(self._calls_within(m, name) for name in strategy_method_names)
                 for m in c.methods
             )
 
@@ -838,6 +998,25 @@ class PIQSChecker:
                         observer_type_names.add(elem)
                         callback_names.update(calls)
                         notifies_loop = True
+                # (a2) Phase 2 step 3: loop forms the enhanced-for regex above cannot express.
+                # The parser reports (collection, callback); the element type is resolved HERE,
+                # from the same `coll_fields` the enhanced-for branch uses, so no new way of
+                # identifying a collection is introduced.
+                for (coll, cb, qual) in m.traversals:
+                    elem = coll_fields.get(coll)
+                    if not elem or elem not in types:
+                        continue
+                    # A method reference is a notification only when its qualifier NAMES the
+                    # element type. `observers.forEach(logger::record)` passes each observer as an
+                    # ARGUMENT to something else -- the loopN2 failure mode in method-reference
+                    # clothes. Exact match, deliberately: a qualifier naming a SUPERTYPE of the
+                    # element is legal Java and is recorded as a known limitation rather than
+                    # accepted, because narrower is safe where the corpus cannot decide.
+                    if qual is not None and qual != elem:
+                        continue
+                    observer_type_names.add(elem)
+                    callback_names.add(cb)
+                    notifies_loop = True
                 # (b) single held observer of an abstract type that has a concrete impl
                 for fname, ftype in single_obs_fields.items():
                     has_impl = any(
@@ -1013,7 +1192,7 @@ class PIQSChecker:
                 has_instance_method = True
                 returns = True
                 for m in accessor:
-                    if any(self._mentions_token(m.body, f.name) for c2 in classes for f in c2.fields
+                    if any(self._mentions_within(m, f.name) for c2 in classes for f in c2.fields
                            if "static" in f.modifiers and f.field_type == c.name):
                         accesses_field = True
                     if re.search(rf"\bnew\s+{c.name}\s*\(", m.body):
@@ -1112,7 +1291,7 @@ class PIQSChecker:
                 # Void build-part: a void concrete method that populates the product's state
                 # (assigns a field, or mutates a held field through a call on it).
                 if m.return_type == "void" and m.has_body:
-                    if any(self._assigns_field(m.body, fn) or self._delegates_to_field(m.body, fn) for fn in field_names):
+                    if any(self._assigns_field(m, fn) or self._delegates_to_field(m, fn) for fn in field_names):
                         void_steps.append(m)
                     continue
                 # Terminal: a concrete method returning a type distinct from the builder (and not
@@ -1125,8 +1304,8 @@ class PIQSChecker:
                 if (
                     m.has_body
                     and m.return_type not in (None, "void", t.name)
-                    and (self._mentions_token(m.body, "this")
-                         or any(self._mentions_token(m.body, fn) for fn in field_names))
+                    and (self._mentions_within(m, "this")
+                         or any(self._mentions_within(m, fn) for fn in field_names))
                 ):
                     terminals.append(m)
 
@@ -1207,7 +1386,7 @@ class PIQSChecker:
             "hasMethod(c,m)": any(t.methods for t in types.values()),
             "returns(m,t)": any(m.return_type for t in types.values() for m in t.methods if not m.is_constructor),
             "modifies(m,f)": any(
-                self._assigns_field(m.body, f.name)
+                self._assigns_field(m, f.name)
                 for t in types.values() for m in t.methods for f in t.fields
             ),
             "callsWithin(m,t)": bool(all_step_names) and director_exists,
@@ -1255,17 +1434,46 @@ class PIQSChecker:
         component_names = self._component_type_names(types)
         classes = [t for t in types.values() if t.kind == "class"]
 
-        # A decorator conforms to a component AND holds a field of a component type.
+        # A decorator conforms to a component C AND holds a field of THAT SAME C.
         # decorators: list of (W, conformed_components, wrapped_fields[(field, comp_type)])
+        #
+        # THE SAME C IS THE POINT, AND IT WAS NOT ENFORCED UNTIL NOW. `conformed` and the field
+        # list used to be computed independently and never required to intersect, so a textbook
+        # object adapter -- conforms to `Target`, holds a `Source` -- satisfied the critical set
+        # {D2, D3} and was recognised as a Decorator (PIQS 53.33, "Moderate"). The same-type
+        # requirement existed only in D1 and D4, both weight 2 and NON-CRITICAL, so they flagged
+        # the interface conversion without affecting recognition. See
+        # tests/fixtures_parser/object_adapter_not_a_decorator.java and PROPERTY_SPEC.md
+        # ("a conflict-pair separator must be load-bearing for recognition").
+        #
+        # THE FILTER IS ON THE FIELD LIST, NOT ONLY ON ADMISSION. Gating admission alone leaves
+        # every component-typed field in `wrapped_fields`, and D3/D4/D6 all read that list -- so
+        # a class conforming to C, holding both a C and an unrelated abstract D, and forwarding
+        # only to D would still score D3=1: recognised while never forwarding to what it wraps.
+        # Pinned by tests/fixtures_parser/decorator_delegates_to_unrelated_component.java, the
+        # only fixture where the two forms of the rule disagree.
         decorators = []
         for w in classes:
             conformed = {c for c in component_names if self._conforms_to(w, c, types)}
             if not conformed:
                 continue
+            # EFFECTIVE fields, not own fields. In the canonical GoF shape the abstract base
+            # declares the component reference and the concrete decorators extend it, so a
+            # concrete decorator has NO component-typed field of its own -- and reading `w.fields`
+            # meant it was never a decorator candidate at all. Only the base was ever judged, and
+            # every property was an `any(...)` over the candidate list, so one compliant base
+            # carried the whole program: a subclass forwarding NOTHING scored a perfect four
+            # (tests/fixtures_parser/decorator_subclass_forwards_nothing.java).
+            #
+            # This matters in one direction, which is why it is fixed rather than documented. The
+            # abstract-base shape is what a model reproduces from memory under condition N; under
+            # O it works from rule sentences and is likelier to write one flat class, which IS
+            # examined and CAN fail. Same quality of code, higher score in the shape N produces --
+            # inflating C1 = N - O, the headline result. See docs/PROPERTY_SPEC.md.
             wrapped_fields = [
                 (f, f.field_type)
-                for f in w.fields
-                if f.field_type in component_names
+                for f in self._effective_fields(w, types)
+                if f.field_type in conformed
             ]
             if wrapped_fields:
                 decorators.append((w, conformed, wrapped_fields))
@@ -1274,20 +1482,78 @@ class PIQSChecker:
         d2 = bool(decorators)
 
         # D3 -- decorator delegates to the wrapped reference in its component methods. CRITICAL.
-        d3 = any(
+        # WHEN DOES `super.m()` COUNT AS DELEGATION? Only when the wrapper forwards THROUGH a base
+        # that actually holds the component -- i.e. when a project-defined ancestor is itself a
+        # decorator candidate. This is the STRICT reading, and it was chosen over "accept any
+        # `super` call" for two reasons that agree:
+        #
+        #   * On the merits: `super.m()` on a class whose base holds nothing forwards to something
+        #     that wraps nothing. tests/fixtures_parser/super_call_base_holds_nothing.java is that
+        #     program -- `Leaky extends Plain implements Spout`, declares a `Spout`, forwards with
+        #     `super.emit()`, and `Plain` holds nothing. Strict scores it D3=0; loose scores it 1.
+        #   * On the guard: the loose rule re-opens the hole F1b closed, by a different route.
+        #     `field_named_super.java` declares a `Duct`, has NO `extends`, and calls
+        #     `super.write()`. Loose scores it D3=1 -- exactly the verdict F1b removed. One fix
+        #     would have undone the other.
+        #
+        # Walks `extends` only, matching `_effective_fields` and `_effective_methods`: an
+        # interface cannot hold a field, so it can never be the base a wrapper forwards through.
+        candidate_names = {w.name for (w, _c, _wf) in decorators}
+
+        def _forwards_through_base(w) -> bool:
+            cur, seen = w, {w.name}
+            while cur.extends and cur.extends in types and cur.extends not in seen:
+                parent = types[cur.extends]
+                if parent.name in candidate_names:
+                    return True
+                seen.add(parent.name)
+                cur = parent
+            return False
+
+        # `all`, NOT `any` -- EVERY candidate must forward. With admission fixed, `any` would
+        # still let one compliant base carry a non-compliant subclass, so the two changes only
+        # work together.
+        #
+        # `bool(decorators) and ...` IS NOT OPTIONAL: `all([])` is True in Python, so a program
+        # containing no decorator at all would score D3=1 and D6=1. Measured against the unguarded
+        # build: t5_object_adapter_rejected_as_decorator__FAIL and
+        # decorator_plain_inheritance_no_ref__FAIL both go
+        #
+        #     D2 0  D3 1  D4 0  D6 1     PSR 50.0  CPC 44.44  PIQS 0 -> 47.78
+        #
+        # D4 is 0 because it stays `any`, and `any([])` is False -- so TWO rules are falsely
+        # satisfied here, not three. Their LABELS survive, because recognition is D2 AND D3 and
+        # D2=0 -- but the paper reports per-rule verdicts, not labels, and two falsely satisfied
+        # rules on a program with no decorator is worse than the defect being fixed.
+        #
+        # THIS FIGURE WAS FIRST RECORDED AS 71.67, AND THE DIFFERENCE IS KEPT ON RECORD RATHER
+        # THAN DELETED, because it says WHICH DESIGN was measured. 71.67 is the unguarded build
+        # with D4 ALSO switched to `all` (D2 0 D3 1 D4 1 D6 1, PSR 75.0, CPC 66.67) -- both
+        # numbers verified by building both variants. A metric quoted without its design is the
+        # kind of number that propagates.
+        #
+        # Pinned by tests/test_decorator_field_scope_fixed.py.
+        d3 = bool(decorators) and all(
             any(
-                self._delegates_to_field(m.body, f.name)
+                self._delegates_to_field(m, f.name, _forwards_through_base(w))
                 for m in w.methods
                 for (f, _c) in wrapped_fields
             )
             for (w, _conf, wrapped_fields) in decorators
         )
 
-        # D1 -- decorator conforms to the SAME component type it wraps (is-a matches has-a).
-        d1 = any(
-            any(ctype in conformed for (_f, ctype) in wrapped_fields)
-            for (w, conformed, wrapped_fields) in decorators
-        )
+        # D1 IS GONE. It read "decorator conforms to the SAME component type it wraps", which
+        # became the admission test itself when the same-component rule landed (e2acb66):
+        # `wrapped_fields` contains only conformed types, so `any(ctype in conformed ...)` ranged
+        # over a list built by filtering on exactly the predicate it tested. `D1 == D2` for every
+        # program, by construction -- no Java program could separate them.
+        #
+        # THE REASON FOR REMOVING IT IS PROMPT GENERATION, NOT PSR. The experiment emits one
+        # sentence per rule to build conditions O and P, so a duplicated rule is a duplicated
+        # sentence in the prompt and contaminates the conditions directly. The PSR/CPC inflation
+        # is real but secondary, and it is not sufficient on its own to argue the property back.
+        # See PROPERTY_SPEC.md; pinned by
+        # tests/test_decorator_property_independence.py::test_decorator_property_set_is_exactly_the_surviving_ids
 
         # D4 -- transparent enhancement, no interface conversion (distinguishes from Adapter):
         # the decorator exposes the wrapped component's whole operation set (its method names are
@@ -1304,14 +1570,36 @@ class PIQSChecker:
                     return True
             return False
 
+        # D4 STAYS `any`, DELIBERATELY, while D3 and D6 became `all`. It asks about the EXPOSED API
+        # OF THE TYPE -- "does this wrapper present the component's whole operation set, or does it
+        # convert to a different interface?" -- and not about per-class behaviour. Whether one
+        # subclass re-declares every operation is not the question; whether the decorator family
+        # exposes the component's interface is. D3 and D6 ask behavioural questions ("does it
+        # forward?"), which every candidate must answer for itself.
+        #
+        # `any([])` is False, so the empty-candidate case needs no guard here -- unlike D3 and D6,
+        # where `all([])` is vacuously True.
+        #
+        # Revisit only if the battery objects. It does not today.
         d4 = any(_transparent(w, wf) for (w, _conf, wf) in decorators)
 
-        # D5 -- abstract decorator base / recursive composability. An abstract decorator base is
-        # an ABSTRACT decorator (abstract class that conforms-to and holds the component). Failing
-        # that, a collapsed single decorator is still ACCEPTED (RULE 3): because it wraps the
-        # component type itself, it can wrap another decorator -> recursive composability holds.
+        # D5 IS GONE. It read "abstract decorator base / recursive composability", and was
+        # computed as `abstract_decorator_base or d2`. That is a tautology by construction, and
+        # the `or` is where it died: `abstract_decorator_base` is an `any(...)` over the SAME list
+        # that decides d2, so
+        #
+        #     decorators empty     -> d2 False, and any() over empty is False  -> D5 False
+        #     decorators non-empty -> d2 True                                  -> D5 True
+        #
+        # D5 == D2 for every program. The accept-a-collapsed-single-decorator decision (RULE 3)
+        # that the `or d2` encoded is not lost: it lives in D2's admission rule, which never
+        # required an abstract base in the first place.
+        #
+        # THE REASON FOR REMOVING IT IS PROMPT GENERATION, NOT PSR -- see the D1 note above and
+        # PROPERTY_SPEC.md. `abstract_decorator_base` is KEPT: it still feeds the
+        # `hasAbstractDecoratorBase(x)` derived predicate, which is descriptive output, and D6's
+        # `not m.has_body` clause exists because of the shape it identifies.
         abstract_decorator_base = any(w.is_abstract for (w, _c, _wf) in decorators)
-        d5 = abstract_decorator_base or d2
 
         # D6 -- full/transparent delegation (NON-CRITICAL diagnostic, weight 1). D3 (critical)
         # only requires that AT LEAST ONE component method delegates -- this is deliberate:
@@ -1350,12 +1638,13 @@ class PIQSChecker:
                 comp_ops = {m.name for m in comp.methods if not m.is_constructor}
                 implemented = [op for op in comp_ops if op in w_ops]
                 if implemented and all(
-                    self._delegates_to_field(w_ops[op].body, f.name) for op in implemented
+                    self._delegates_to_field(w_ops[op], f.name, _forwards_through_base(w))
+                    for op in implemented
                 ):
                     return True
             return False
 
-        d6 = any(_fully_delegates(w, wf) for (w, _conf, wf) in decorators)
+        d6 = bool(decorators) and all(_fully_delegates(w, wf) for (w, _conf, wf) in decorators)
 
         base = {
             "isAbstract(x)": bool(component_names),
@@ -1372,7 +1661,27 @@ class PIQSChecker:
         derived = {
             "isComponent(x)": bool(component_names),
             "isDecorator(x)": bool(decorators),
-            "wraps(d,c)": d1,
+            # The `wraps(W,C)` ROLE survives the removal of the D1 property: it is enforced at
+            # admission now, so it holds exactly when a decorator candidate exists.
+            #
+            # WHY IT IS KEPT. The derived predicates are the published EVIDENCE TRACE -- the
+            # record of which structural roles were found, reported alongside the score rather
+            # than feeding it. Stage 5 exists to make that trace structural instead of name-based,
+            # so the keys are its subject matter. Dropping a reported key is a separate change
+            # from dropping a scored property, and it belongs to Stage 5.
+            #
+            # A PREVIOUS VERSION OF THIS COMMENT SAID "compare.py reads that dict". IT DOES NOT.
+            # Nothing in the repository reads `derived_predicates` or `base_predicates`:
+            # `run_scorer.py` copies both into results/kim_replication_raw.json and never reads
+            # them back, and compare.py reads only psr/cpc/piqs/properties/satisfaction/pattern/
+            # case_study/llm. The decision to keep the key stands; the reason given for it was
+            # wrong, and a false "X depends on this" is the kind of note that makes a later
+            # session treat dead weight as load-bearing.
+            #
+            # FOR STAGE 5, NOT FOR NOW: `wraps(d,c)` is `bool(decorators)`, which is exactly D2.
+            # The trace now carries a key definitionally identical to a scored verdict -- the D1
+            # shape again, moved out of the score and into the evidence. Recorded in STATE.md.
+            "wraps(d,c)": bool(decorators),
             "delegatesTo(d,c)": d3,
             "isTransparent(d)": d4,
             "hasAbstractDecoratorBase(x)": abstract_decorator_base,
@@ -1380,11 +1689,9 @@ class PIQSChecker:
         }
 
         rows = [
-            self._row("D1", 2, d1, "Decorator conforms to the same component type as what it wraps."),
-            self._row("D2", 3, d2, "Decorator holds a component-typed reference (composition)."),
+            self._row("D2", 3, d2, "Decorator holds a reference typed as a component it itself conforms to (composition)."),
             self._row("D3", 3, d3, "Decorator delegates to the wrapped reference in its component methods."),
             self._row("D4", 2, d4, "Transparent enhancement -- no interface conversion (distinguishes from Adapter; NOT from Proxy)."),
-            self._row("D5", 1, d5, "Abstract decorator base / recursive composability (collapsed single decorator accepted)."),
             self._row("D6", 1, d6, "Full delegation -- every implemented component operation forwards to the wrapped reference (non-critical diagnostic; partial delegation still recognised)."),
         ]
         return base, derived, rows

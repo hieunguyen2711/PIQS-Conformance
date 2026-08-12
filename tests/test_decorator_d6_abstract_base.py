@@ -104,4 +104,4 @@ def test_abstract_decorator_base_is_fully_delegating() -> None:
     # Recognition is unaffected either way; the critical set is {D2, D3}. Pinned so a future
     # failure is attributable to D6 alone rather than to the case ceasing to be a decorator.
     assert props["D2"] == 1 and props["D3"] == 1
-    assert props == {"D1": 1, "D2": 1, "D3": 1, "D4": 1, "D5": 1, "D6": 1}
+    assert props == {"D2": 1, "D3": 1, "D4": 1, "D6": 1}

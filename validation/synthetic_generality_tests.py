@@ -139,22 +139,35 @@ types = svc._extract_types(real_field)
 c_foo_fields = [f for f in types["C"].fields if f.field_type == "Foo"]
 results.append(("F: genuine class-scope field kept -> C has 1 Foo field", {"C.fields(Foo)": len(c_foo_fields)}, len(c_foo_fields) == 1))
 
-# POLICY: Fix G (whole-token identifier matching -- _calls_method, _mentions_token,
+# POLICY: Fix G (whole-token identifier matching -- _calls_within, _mentions_within,
 # _has_verb_prefix). docs/PROPERTY_SPEC.md, "Reused scaffolding": substring name matching is not
 # reintroduced.
+#
+# Phase 2 step 2: `_calls_method(body_text, name)` is gone. The call predicate is
+# `_calls_within(method, name)`, reading `method.calls` precomputed from the AST, so these cases
+# now go through a real parse instead of a bare string. That is the point -- the assertion is
+# unchanged, only the way the body reaches the predicate.
+
+
+def _body(src_body):
+    """The JavaMethod for a one-method class wrapping `src_body`."""
+    src = "class __G { void __m(Obj obj, int amount) {" + src_body + "} }\nclass Obj { void pay(int a){} }"
+    return next(m for m in svc._extract_types({"G.java": src})["__G"].methods if m.name == "__m")
+
+
 # G: identifier must match as a whole token, not a substring.
-body_sub = "PaymentStrategy payment = PaymentFactory.get();"
-g_sub = (svc._calls_method(body_sub, "pay") is False) and (svc._mentions_token(body_sub, "pay") is False)
+m_sub = _body("PaymentStrategy payment = PaymentFactory.get();")
+g_sub = (svc._calls_within(m_sub, "pay") is False) and (svc._mentions_within(m_sub, "pay") is False)
 results.append(("G: 'pay' does NOT match inside 'payment'/'PaymentFactory'",
-                {"calls_pay": svc._calls_method(body_sub, "pay"), "mentions_pay": svc._mentions_token(body_sub, "pay")}, g_sub))
+                {"calls_pay": svc._calls_within(m_sub, "pay"), "mentions_pay": svc._mentions_within(m_sub, "pay")}, g_sub))
 
 # G: an exact token / call DOES match; verb-prefix distinguishes addChild from address.
-body_tok = "obj.pay(amount);"
-g_tok = (svc._calls_method(body_tok, "pay")
+m_tok = _body("obj.pay(amount);")
+g_tok = (svc._calls_within(m_tok, "pay")
          and svc._has_verb_prefix("addChild", "add")
          and not svc._has_verb_prefix("address", "add"))
 results.append(("G: 'pay(' matches; add-prefix addChild yes / address no",
-                {"calls_pay": svc._calls_method(body_tok, "pay"),
+                {"calls_pay": svc._calls_within(m_tok, "pay"),
                  "addChild": svc._has_verb_prefix("addChild", "add"),
                  "address": svc._has_verb_prefix("address", "add")}, g_tok))
 

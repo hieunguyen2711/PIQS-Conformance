@@ -28,8 +28,8 @@ are detected by shape.
 
 Base predicates reused verbatim from the five existing patterns: `isAbstract`, `isConcrete`,
 `hasMethod`, `returns`, `implements`, `extends`, `overrides`, `accepts`, `calls`, `reads`,
-`modifies`. Pass-3 precision work reused: whole-token identifier matching (`_calls_method`,
-`_mentions_token`, `_has_verb_prefix`) and class-scope-only field extraction. Substring name
+`modifies`. Pass-3 precision work reused: whole-token identifier matching (`_calls_within`,
+`_mentions_within`, `_has_verb_prefix`) and class-scope-only field extraction. Substring name
 matching and method-local-variable-as-field are **not** reintroduced.
 
 > **Parser migration, phase 1.** Class-scope-only field extraction was originally `_class_scope_only`,
@@ -90,17 +90,202 @@ Derived roles: `isComponent` (an abstract type — interface or abstract class),
 
 | ID | Statement | Tag | Weight |
 |----|-----------|-----|--------|
-| D1 | Decorator conforms to the **same** component type as what it wraps (is-a matches has-a). | structural | 2 |
-| **D2** | Decorator holds a component-typed reference (composition). | structural | **3** (critical) |
-| **D3** | Decorator delegates to the wrapped reference in its component methods (see the *any-vs-all* judgment call below). | behavioral | **3** (critical) |
-| D4 | Transparent enhancement — no interface conversion: the decorator exposes the wrapped component's whole operation set (distinguishes from **Adapter**). | structural | 2 |
-| D5 | Abstract decorator base / recursive composability — a collapsed single decorator is accepted (it wraps the component type, so it can wrap another decorator). | structural | 1 |
-| D6 | **Full delegation (non-critical diagnostic)** — every implemented component operation forwards to the wrapped reference. Flags partial delegation *without* changing recognition. | behavioral | 1 |
+| ~~D1~~ | **DELETED 2026-08-10.** "Conforms to the same component type as what it wraps" — a proven tautology once that became the admission test. See *"D1 was deleted"* below. | — | — |
+| **D2** | Decorator holds a reference typed as a component **it itself conforms to** — own **or inherited** (`_effective_fields`). | structural | **3** (critical) |
+| **D3** | **Every** decorator candidate delegates to the wrapped reference in its component methods. `all`, with an explicit non-empty guard. | behavioral | **3** (critical) |
+| D4 | Transparent enhancement — no interface conversion: the decorator exposes the wrapped component's whole operation set (distinguishes from **Adapter**). Stays `any` — see below. | structural | 2 |
+| ~~D5~~ | **DELETED 2026-08-10.** "Abstract decorator base / recursive composability" — computed as `abstract_decorator_base or d2`, a tautology. See below. | — | — |
+| D6 | **Full delegation (non-critical diagnostic)** — for **every** candidate, every implemented component operation forwards to the wrapped reference. Flags partial delegation *without* changing recognition. | behavioral | 1 |
 
 **Accepted variants (RULE 3):** interface or abstract-class component; a collapsed single
 decorator with no abstract base (D5 low-weight); constructor or setter injection of the wrapped
 reference. **Rejected:** a subclass that extends the concrete component with no wrapped reference
 (D2 fails); a wrapper that delegates to nothing (D3 fails).
+
+### The same-component rule — `isDecorator` requires the SAME C (REDEFINITION, measured)
+
+The role definition above always said *"conforms to a component **and** holds a field of **that**
+component type"*. The code did not do that. It computed two independent sets — the components `W`
+conforms to, and the component-typed fields `W` holds — and never required them to intersect.
+
+A textbook **object adapter** was therefore recognised as a Decorator:
+
+```java
+interface Target { void run(); }
+interface Source { void go(); }
+class Adapt implements Target {
+    private Source s;
+    public Adapt(Source s) { this.s = s; }
+    public void run() { s.go(); }
+}
+```
+
+`D1 0  D2 1  D3 1  D4 0  D5 1  D6 0` → PIQS **53.33**, grade *Moderate*, and **recognised**,
+because recognition is the critical set `{D2, D3}` and both held. D1 and D4 did flag the interface
+conversion — but both are weight 2 and non-critical, so they changed the score and not the verdict.
+
+**The rule now enforced:** a class is a decorator candidate only if it holds a field whose type is
+one of the components it conforms to. The filter is applied to the **field list**, not only to
+admission — `D3`, `D4` and `D6` all read that list, so gating admission alone would let a class
+that conforms to `C`, holds both a `C` and an unrelated abstract `D`, and forwards only to `D`
+still score `D3 = 1`: recognised while never forwarding to what it wraps. That distinction has its
+own fixture (`decorator_delegates_to_unrelated_component.java`); it is the only program where the
+two forms of the rule disagree, because every corpus program holds exactly one component-typed
+field.
+
+**Measured effect: nothing in the pre-existing corpus moved.** Measured **one program at a time**
+by `validation/decorator_rule_effect.py` over **82 units** — 12 Kim programs (all of their files
+together), 12 mutation-battery files, 28 BDT files, 30 parser fixtures.
+
+| | count |
+|---|---|
+| ADMISSION LOST — was a candidate, is not now | 2 |
+| FIELD LIST NARROWED — still a candidate, D3/D4/D6 see fewer fields | 1 |
+| of those, fixtures added by `e2acb66` **for this rule** | 3 |
+| **pre-existing corpus programs affected** | **0** |
+
+The three hits are the script's **positive control**. A scan that can only ever return zero
+proves nothing about the corpus; because this one finds the fixtures planted for the rule, its
+zero for everything else is a measurement rather than a silence.
+
+> **Correction (2026-08-10).** This paragraph previously read *"across 212 single-file programs"*.
+> The conclusion was right and the method could not support it. **Kim has no single-file
+> programs** — all 12 are multi-file, 6 to 16 files each. `_component_type_names` only sees the
+> types in the dict it is handed, so scanning file by file a class whose interface is declared in
+> a sibling file gets `conformed = {}` and is skipped before the rule is reached. A file-by-file
+> scan **cannot** find an affected Kim wrapper whether or not one exists.
+>
+> The replacement script was wrong on its first run too, in the opposite direction: it omitted the
+> `if not conformed: continue` gate that the **loose rule also had**, and reported 16 affected
+> wrappers — counting every `Context`-holds-a-`Strategy` in the corpus as an effect of a change
+> that never touched it. A script comparing two rules has to hold everything except the one
+> difference identical, or it measures itself.
+
+Kim cannot move for a structural reason on top of the measured one: it has no Decorator scoring
+units (its 40 units are factory-method 10, strategy 10, observer 10, composite 5, singleton 5).
+`t3_decorator_lazy_proxy_KNOWN_LIMITATION` still passes, as it must — a Proxy conforms to the type
+it holds, so same-C is satisfied.
+
+**Consequence: D1 became tautological, and has now been DELETED.** `wrapped_fields` contains only
+conformed types, so D1 was true exactly when `decorators` was non-empty: `D1 == D2` for every
+program, by construction rather than by corpus.
+
+### D1 was deleted — and the reason is the PROMPT, not PSR
+
+Read this order deliberately. A future session must not be able to argue the property back on
+scoring grounds alone.
+
+1. **The rule list *is* the prompt.** The experiment emits one sentence per rule to build
+   conditions O and P. A duplicated rule becomes a **duplicated sentence in the prompt**, which
+   contaminates the conditions directly. This is not a tidiness question and it has a deadline:
+   it must be settled *before* any `nl_clause` sentence is written.
+2. **In the per-rule model** it makes one fact count twice on one side of the Look-vs-Wiring
+   comparison, which is the headline result.
+3. **Only then:** it inflates PSR (the denominator counts it) and CPC (its weight counts it).
+
+Scores that moved, computed by hand from the weights before the scorer was run and confirmed
+exactly. Weights go from `Σ(w) = 12` over 6 properties to `Σ(w) = 10` over 5.
+
+| Case | PSR | CPC | PIQS |
+|---|---|---|---|
+| `decorator_no_delegation__FAIL`, `decorator_delegates_to_unrelated_component` | 66.67 → **60.0** | 66.67 → **60.0** | 66.67 → **60.0** |
+| `t1_decorator_partial_delegation_accepted` | 83.33 → **80.0** | 91.67 → **90.0** | 86.67 → **84.0** |
+| `d4_abstract_base_partial_api` | 83.33 → **80.0** | 83.33 → **80.0** | 83.33 → **80.0** |
+| every all-satisfied and every all-unsatisfied case | unchanged | unchanged | unchanged |
+
+**No recognition verdict moved** — the critical set is {D2, D3} and neither was touched. Kim
+cannot move: it has no Decorator scoring units. Pinned by
+`tests/test_decorator_property_independence.py::test_decorator_property_set_is_exactly_the_surviving_ids`.
+
+The `wraps(W,C)` **role** survives in the derived-predicate output: it is now enforced at
+admission, so it holds exactly when a candidate exists. Dropping a reported key is a separate
+change from dropping a scored property.
+
+### D5 was deleted too — the `or` was where it died
+
+`d5 = abstract_decorator_base or d2`, and `abstract_decorator_base` is an `any(...)` over the
+**same list** that decides `d2`:
+
+| `decorators` | `abstract_decorator_base` | `d2` | `d5` |
+|---|---|---|---|
+| empty | False (`any` over empty) | False | **False** |
+| non-empty | either | True | **True** (by the `or`) |
+
+`D5 == D2` for every program. Note this is *not* a case of a property that merely happens to
+agree on the corpus — the `or d2` guarantees it for every possible input.
+
+**The RULE 3 decision the `or d2` encoded is not lost.** "A collapsed single decorator is
+accepted" is already true of D2's admission rule, which never required an abstract base.
+`abstract_decorator_base` itself is **kept**: it still feeds the `hasAbstractDecoratorBase(x)`
+derived predicate, and D6's `not m.has_body` clause exists because of the shape it names.
+
+Weights go from `Σ(w) = 10` over 5 properties to `Σ(w) = 9` over 4. Computed by hand first,
+confirmed exactly:
+
+| Case | PSR | CPC | PIQS |
+|---|---|---|---|
+| `decorator_no_delegation__FAIL`, `decorator_delegates_to_unrelated_component` | 60.0 → **50.0** | 60.0 → **55.56** | 60.0 → **52.22** |
+| `t1_decorator_partial_delegation_accepted` | 80.0 → **75.0** | 90.0 → **88.89** | 84.0 → **80.56** |
+| `d4_abstract_base_partial_api` | 80.0 → **75.0** | 80.0 → **77.78** | 80.0 → **76.11** |
+
+Again no recognition verdict moved. **The Decorator set is now D2, D3, D4, D6 — four properties,
+all four independent.** D4 is deliberately still alive: the field-scope audit may change what it
+measures, and deciding it twice is worse than deciding it late.
+
+### Field scope and the `all` quantifier — D3/D6 semantics (2026-08-12)
+
+**Two changes, one behaviour. Either alone is wrong.**
+
+1. **Admission reads `_effective_fields`, not `w.fields`.** In the canonical GoF shape the abstract
+   base declares the component reference and the concrete decorators extend it, so a concrete
+   decorator has no component-typed field of its own — and reading own fields meant it was **never
+   a decorator candidate at all**.
+2. **D3 and D6 are `bool(decorators) and all(...)`.** With admission fixed, `any` would still let
+   one compliant base carry a non-compliant subclass.
+
+Measured across all four combinations (docs/STATE.md §5e), **three of the four leave a decorator
+that forwards nothing at PIQS 100.**
+
+**WHY THIS WAS FIXED RATHER THAN DISCLOSED — the reason is the direction of the error, not its
+size.** The defect rewarded the abstract-base shape: if the base forwards, no subclass is examined.
+That is the textbook shape a model reproduces from memory under condition **N**. Under **O** the
+model works from rule sentences and is likelier to write one flat class, which **is** examined and
+**can** fail. Same quality of code, higher score in the shape N produces — which inflates
+**C1 = N − O**, the headline result. The defect manufactured the paper's own effect, and a reviewer
+who found it would have a fatal objection.
+
+**The non-empty guard is not optional.** `all([])` is True in Python, so without
+`bool(decorators)` a program containing no decorator scores satisfied D3 and D6. Measured against
+the unguarded version: `t5_object_adapter_rejected_as_decorator__FAIL` and
+`decorator_plain_inheritance_no_ref__FAIL` go from PIQS 0 to **47.78** (`D2 0 · D3 1 · D4 0 · D6 1`).
+D4 is 0 because it stays `any` and `any([])` is False, so **two** rules are falsely satisfied, not
+three. Their *labels* survive, because recognition is `D2 ∧ D3` and `D2 = 0` — which is exactly why
+labels are not enough: the paper reports **per-rule verdicts**, and two falsely satisfied rules on a
+program with no decorator is worse than the defect being fixed.
+
+> **Why 47.78 and not 71.67, kept on record rather than deleted.** The figure was first reported as
+> 71.67. That is the same unguarded build with **D4 also switched to `all`** — `D2 0 · D3 1 · D4 1 ·
+> D6 1`, PSR 75.0, CPC 66.67. This build keeps D4 as `any`, giving `D4 = 0`, PSR 50.0, CPC 44.44,
+> PIQS 47.78. Both were verified by building both variants. The difference is worth more on record
+> than erased, because it names which design produced which number — a metric quoted without its
+> design is exactly the kind that propagates.
+
+**D4 stays `any`, deliberately.** It asks about the **exposed API of the type** — does this wrapper
+present the component's whole operation set, or convert to a different interface? — not about
+per-class behaviour. Whether one subclass re-declares every operation is not the question. D3 and
+D6 ask behavioural questions ("does it forward?"), which every candidate must answer for itself.
+`any([])` is False, so D4 needs no guard. Revisit only if the battery objects; it does not.
+
+**`super.m()` counts as delegation, through a base that holds the component.** A concrete decorator
+forwards by calling `super.m()` — `BufferedInputStream.read()` does exactly that. The rule is
+**strict**: a `<super>` receiver counts only when a project-defined ancestor is itself a decorator
+candidate. The loose alternative re-opens the field-named-`super` hole by a different route.
+Without this rule the MUST-PASS case `decorator_filterinputstream_analogue` fails under `all`.
+
+**Known limitation, recorded not fixed.** `all(...)` scans each candidate's **own** methods, so a
+subclass that inherits all its forwarding behaviour and declares none of its own scores as
+forwarding nothing. `super_receiver_forms.java`'s `Anchor` is that shape. This is the own-fields
+defect one level up, in the method scan.
 
 ### D3 semantics — the *any-vs-all* decision (RESOLVED)
 
@@ -125,15 +310,80 @@ component interface, hold a component-typed reference, and delegate to it. "Adds
 (Decorator) vs "controls access" (Proxy) is a semantic intent that is **not statically
 decidable**. This checker does **not** attempt to distinguish them — any structurally-conforming
 wrapper is accepted as Decorator. This is stated in a code comment on `_evaluate_decorator` and
-will be disclosed in the paper's threats to validity. (D4 distinguishes Decorator from *Adapter*,
-which is decidable — an Adapter converts to a different interface — but makes **no** claim about
-Proxy.)
+will be disclosed in the paper's threats to validity. (Decorator vs *Adapter* **is** decidable — an
+Adapter converts to a different interface — but D4 was never what decided it. See the correction
+below.)
+
+**Correction — D4 never separated Adapter, and could not have.** This section previously read
+"D4 distinguishes Decorator from *Adapter*". That was false in the way that matters: D4 is weight
+2 and non-critical, so it can move the score but not the verdict, and the object adapter above was
+recognised with `D4 = 0`. The separator is now the same-component rule inside `isDecorator`, which
+is load-bearing for recognition. The general form of the mistake is written up under
+*"A conflict-pair separator must be load-bearing for recognition"* below.
 
 This limitation is now **demonstrated**, not merely asserted: the battery case
 `t3_decorator_lazy_proxy_KNOWN_LIMITATION` is a genuine lazy-init/virtual **Proxy** (holds the
 component, delegates, but its added logic *controls access* — it creates the real subject on
 first use). The checker recognises it as a Decorator (D2=1, D3=1, PIQS 100). The case carries an
 in-source `// KNOWN LIMITATION` comment so reviewers see the accepted-Proxy fact directly.
+
+### Known limitation — `this` inside an anonymous class (recorded, not fixed)
+
+In Java, `this` inside an anonymous class refers to the **anonymous class**, not the enclosing
+one. Under divergence #8 the call walk descends into anonymous class bodies, so
+
+```java
+class Logger implements Sink {
+    private Sink inner;
+    public void write(String s) {
+        Runnable r = new Runnable() { public void run() { this.inner.op(); } };
+        r.run();
+    }
+}
+```
+
+credits **`Logger`** with delegating to `inner`, when `this.inner` inside the anonymous class does
+not name `Logger`'s field at all. (Written without `this`, `inner.op()` *would* correctly resolve
+to the enclosing instance's field — it is the explicit `this` qualifier that is misread.)
+
+**Not fixed in phase 2, on purpose.** The retired regex behaved the same way, so this is exact
+parity: fixing it would be a meaning change smuggled inside a mechanism change, and any resulting
+movement would be unattributable. Fixing it properly needs the receiver's *enclosing type*, which
+the flat `(receiver, method_name)` shape does not carry.
+
+**Coverage: zero.** The corpus contains 0 anonymous class bodies in 422 method bodies, so nothing
+scores differently today. This is a generated-code risk, not a current one — 2026 Java uses
+anonymous classes and lambdas far more than Kim's corpus does.
+
+### Known limitation — assignment to a local that shadows a field (recorded, not fixed)
+
+```java
+void shadowedWrite(Object other, Object another) {
+    Object held = other;   // declares a LOCAL that shadows the field `held`
+    held = another;        // assigns the LOCAL -- the field is never touched
+}
+```
+
+`_assigns_field(method, "held")` reports **True**. The declaration is correctly excluded
+(divergence #3 — it is a `local_variable_declaration`), but the second line is a genuine
+`assignment_expression` whose target is the bare name `held`, and nothing at that point knows the
+name has been rebound to a local.
+
+**Not fixed in phase 2, on purpose.** The retired regex behaved identically, so this is exact
+parity. `JavaMethod.locals` now exists and could resolve it — a name declared in the body shadows
+the field for the rest of the method — but using it here would turn a mechanism change into a
+meaning change, and any resulting movement would be unattributable. It is a **Step 3** question
+with its own prediction.
+
+The same reasoning distinguishes the two assignment divergences. **#2** (compound operators)
+preserves the regex even though the regex is arguably wrong, because fixing it changes which
+programs satisfy a property. **#3** (declarations) takes the tree's answer, because the regex's
+answer was never correct for any program — it removes a false positive rather than redefining the
+predicate.
+
+**Coverage: zero.** No `_assigns_field` call site in either corpus has a local shadowing the
+queried field name. Pinned by `tests/fixtures_parser/div3_declaration_not_assignment.java`, whose
+final case asserts the limitation rather than the correct answer, and says so.
 
 ---
 
@@ -265,6 +515,276 @@ it is descriptive and never decides anything, because deciding what a framework 
 agreement from 9/10 to 8/10, still above the 80% reliability threshold. Kim marked that cell
 satisfied. We now disagree, for the same reason we already disagreed with Kim on O2 of the same
 cell — recorded in `KIM_VALIDATION.md` as Kim-side leniency.
+
+## Identifier resolution (parser phase 2)
+
+**The rule.** An identifier resolves to a project type when its declared type's simple name
+appears in the project's type table. Types not declared in the project are external. This is
+sound for single-package projects; cross-package name collisions are not resolved and did not
+occur in either corpus.
+
+**The scope table.** `PIQSChecker._scope(type, method, types)` returns `{identifier: declared
+base type}` for one method. Three sources, merged in Java shadowing order — a later source
+overwrites an earlier one:
+
+| # | Source | Where it comes from |
+|---|---|---|
+| 1 | fields of the type and of its project-defined ancestors | `_effective_fields` |
+| 2 | the method's parameters | `JavaMethod.param_names` / `param_types` |
+| 3 | names declared in the method body | `JavaMethod.locals`, built by `piqs.parser` |
+
+Source 3 covers local variables, enhanced-for variables, try-with-resources resources, catch
+parameters and lambda parameters. A lambda parameter written without a type (`o -> o.update()`)
+records the **name with type `None`** — the name is in scope, and no type is invented. A consumer
+that needs the element type takes it from the iterated collection.
+
+**What the table deliberately excludes.** The walk stops at a nested type body, so a field of a
+local or anonymous class, and a variable declared inside one, belong to that class rather than to
+the enclosing method. Block scope is not modelled: the dict is flat, so two sibling blocks each
+declaring `i` collapse to one entry.
+
+**Why this replaces text matching.** The pattern being retired is
+`elem_field_re.findall(t.body)` in `_evaluate_observer` (and its twins in `_evaluate_composite`
+and `_framework_roles_supplied`). `t.body` is the whole text between a class's braces, method
+bodies and signatures included, so the regex cannot tell a declaration from anything shaped like
+one. Measured across the 184 corpus files, five types feed it a name that is not a class field:
+
+| File | Harvested | Actually a |
+|---|---|---|
+| `RefactoredPOSCopilot/Receipt.java:35` | `items` | local variable |
+| `POS/Receipt.java:35` | `items` | local variable (unscored, `original_base`) |
+| `RefactoredPOSCopilot/Sale.java:20` | `getSaleLineItem` | **method name** |
+| `POS/Sale.java:27` | `getSaleLineItem` | **method name** (unscored) |
+| `RefactoredPOSClaude/Sale.java:38` | `getComponents` | **method name** |
+
+The method-name entries are inert today only by luck: `foreach_re` wants a bare identifier after
+the colon, and a call site always carries `()`. The local-variable entries are **load-bearing** —
+they are why a method-local collection of observers is detected at all today. Any scope table that
+held fields only would therefore be a silent regression, not a no-op; see
+`tests/test_scope_table.py`.
+
+## Body predicates: text matching vs the AST (parser phase 2, step 2)
+
+The body helpers were regexes over method-body **text**. A query over the AST is not equivalent
+to one. Each difference below is a **recorded decision**, not an implementation accident.
+
+`_calls_method(body, name)` is retired. The call predicate is `_calls_within(method, target)`,
+reading `JavaMethod.calls` — `[(receiver, method_name)]`, precomputed at parse time. Exact-name
+matching is unchanged: `read` still never matches inside `readLine`, but that now falls out of the
+tree rather than from a look-behind assertion.
+
+| # | Construct | Decision | Why |
+|---|---|---|---|
+| 1 | `this` / `super` are KEYWORD nodes, not identifiers | **Include them** in the mentions set | The retired regex was a whole-word text match and found them like any word. Builder B1 accepts a terminal only if its body consumes configured state, one route being passing `this` to the product constructor. **The only divergence in the set with a live verdict** |
+| 4 | Comments and string literals | **Not code.** `// observers.add(o)` is not a call | A model must not earn a property for a commented-out call. The one divergence the corpus exercises in bulk: 34,190 masked characters across the 10 scored programs, 0 of 40 units moved |
+| 6 | `new Wallet()` | **Not a method call** | `callsWithin(method, target)` takes a *method* as its target. The regex matched a bare identifier followed by `(`, which a constructor also is |
+| 7 | A method **declared** in the body | **Not an invocation** | The phantom-method problem phase 1 removed at the type level, reappearing at the body level. Collecting only `method_invocation` excludes it with no special case |
+| 8 | Anonymous / local class bodies | **Descend** | A call written inside an anonymous class still runs against the *enclosing* instance's fields, so it really is the enclosing class delegating. This is the one place the call walk differs from the scope walk |
+
+**Divergence 8 is the subtle one.** `_declared_in_body` (the scope table) *stops* at a nested type
+body: a field of an anonymous class belongs to that class. `_invocations` *descends*: a call there
+belongs to the enclosing method. Reusing one walker for both would silently drop D3 for
+
+```java
+public void write(String s) {
+    Runnable r = new Runnable() { public void run() { inner.write(s); } };
+    r.run();
+}
+```
+
+A **lambda** body is not affected either way — it is a `block`, not a `class_body`, so the scope
+walk already descends into it. Only anonymous and local *classes* differ.
+
+**Receiver normalisation.** One rule reproduces the retired regexes on every shape they accept or
+reject, for call receivers and assignment targets alike:
+
+> `identifier` → its own text. `field_access` → its **field**'s text. Anything else → `None`.
+
+| Expression | Retired regex | Stored |
+|---|---|---|
+| `f.op()` | `f` delegates | `"f"` |
+| `this.f.op()` | `f` delegates | `"f"` |
+| `f.g.op()` | `g` delegates, `f` does **not** | `"g"` |
+| `getX().op()` | nothing delegates | `None` |
+| `op()` | nothing delegates | `None` |
+| `f = x` / `this.f = x` | `f` assigned | `"f"` |
+| `f.g = x` | `g` assigned, `f` not | `"g"` |
+| `arr[0] = x` | `arr` not assigned | `None` |
+
+`f.g.op()` stores `"g"`, **not** `None`: the regex needs `<name> . <ident> (`, which `g.op(`
+satisfies, so `_delegates_to_field("f.g.op();", "g")` was already True. `None` would drop it.
+Because `None` can never equal a field name, chains and unqualified calls are rejected by
+comparison alone.
+
+**No tree-sitter `Node` is stored on `JavaMethod`.** A `Node` is valid only while its `Tree` is
+alive; holding one past parse time gives a dangling reference that fails silently or crashes in a
+way a small test will not surface. Everything is extracted eagerly into plain Python data, which
+also keeps `JavaMethod` serializable for the result records.
+
+**Divergence 1 is the exception to everything below.** Omitting `this`/`super` fails 4 fixtures
+AND breaks the BDT battery: `builder_bloch_fluent_static_nested` and `t5_builder_immutable_product`
+flip `B1=1 → 0`, PIQS 100 → 20, 3 mismatches, exit 1. Kim does not move, because Kim never scores
+Builder. Measured: 43 call sites pass `"this"`, 3 are True, all in BDT. The fixture covers two
+distinct node positions — `new Loaf(this)` (constructor argument) and `synchronized (this)`
+(statement lock) — because a fix for one is not a fix for the other.
+
+**Coverage warning.** Of the other four divergences, three occur **zero** times in either corpus (#6,
+#7, #8 — and #8's near-miss, 7 lambdas in 422 method bodies, is not even the affected shape). All four
+suites stay green whichever behaviour is chosen. `tests/test_body_helpers_divergences.py` is the
+only thing that distinguishes a correct migration from a wrong one, and each of its guards ships
+with the mutation that makes it fail. See the next section.
+
+## Observer notification loops — the rule for forms without their own repetition
+
+O3 asks whether the subject invokes the callback on **every** observer. One observer is not enough,
+so the detector must see repetition.
+
+Forms 1 and 3 carry it inside the matched node: an enhanced-for **is** a loop, `forEach` **is** a
+loop, and neither can run once by accident. Forms 2 and 6 do not — `get(i)` and `next()` are single
+calls, and the repetition lives in the `for`/`while` around them:
+
+| | traversal | not traversal |
+|---|---|---|
+| form 2 | `for (int i = 0; i < obs.size(); i++) obs.get(i).update();` | `obs.get(0).update();` |
+| form 6 | `while (it.hasNext()) it.next().update();` | `it.next().update();` |
+
+Each pair has the **same call shape**. Shape alone cannot separate them.
+
+**Rule: for forms 2 and 6, the enclosing loop is part of the pattern, not context.** The matched
+call must sit inside a `for_statement` (form 2) or a `while_statement` (form 6). Guarded by
+`tests/fixtures_parser/loopN4_single_call_no_loop.java`, whose expected O3 is 0 — none of the six
+positive fixtures can raise this alarm, because every one of them contains a loop.
+
+### Known limitation — a method-reference qualifier naming a SUPERTYPE (recorded, not fixed)
+
+Form 4 accepts `observers.forEach(Observer::update)` only when the qualifier is an EXACT match for
+the resolved element type. Legal Java can name a supertype instead:
+
+```java
+List<ConcreteObserver> obs;
+obs.forEach(Observer::update);      // qualifier is the SUPERTYPE of the element -- rejected today
+```
+
+Exact match is the deliberate default: narrower is safe where the corpus cannot decide between
+readings. `_conforms_to` already walks the project's type graph and would resolve it, so this is a
+small change when it is wanted — but widening a NEW detector without a corpus case to measure
+against is how false positives get in.
+
+The Kim site (`components.forEach(SaleComponent::print)`, `List<SaleComponent> components`) is an
+exact match, so nothing in either corpus exercises the supertype form.
+
+### Known limitation — Map iteration is not detected as notification (recorded, not fixed)
+
+The two idiomatic ways to iterate a `Map`'s values are
+
+```java
+observers.values().forEach(o -> o.update());
+observers.entrySet().forEach(e -> e.getValue().update());
+```
+
+Neither `values` nor `entrySet` is in `_ELEMENT_PRESERVING`, so both chains are rejected and no
+notification is detected. That is the **safe** direction — rejecting is a missed positive, not a
+false one — but it is a real gap, not a theoretical one: generated 2026 Java writes
+`values().forEach(...)` routinely.
+
+Fixing it needs the **type argument** of the `Map`, which `_base_name` strips (`Map<String,
+Observer>` -> `Map`), and it interacts with the parked `Map<K,V>` item. `entrySet()` is harder
+still: the element is a `Map.Entry`, and the observer is reached through `getValue()`, so the
+callback is one hop further out than the loop variable.
+
+A third Map shape, `map.forEach((k, v) -> v.update())`, is rejected for a different and better
+reason: it takes a `BiConsumer`, and the one-parameter check for `Consumer` rejects it at the
+shape. See the parked item in `docs/STATE.md`.
+
+## Rule: a conflict-pair separator must be LOAD-BEARING FOR RECOGNITION
+
+> **A property that distinguishes one pattern from another must be load-bearing for recognition.
+> A non-critical diagnostic cannot be a conflict-pair separator.**
+
+Recognition in this checker is decided by the **critical (weight-3) set** and nothing else — that
+is the definition the BDT battery uses to label every case. A weight-1 or weight-2 property
+changes PSR, CPC and the grade; it never changes whether a program *is* the pattern.
+
+So a property written as "distinguishes X from Y" but given a non-critical weight distinguishes
+nothing. It produces a *lower score* for Y while still calling Y an X.
+
+This is not hypothetical. **D4 was written as the Adapter separator and given weight 2.** A
+textbook object adapter scored `D4 = 0` — the property fired exactly as designed — and was
+recognised as a Decorator anyway. Conflict pair **F (Adapter/Decorator)** was planned as the
+cheapest pair to start with, on the grounds that "its separator is just comparing two types". The
+comparison existed; it just was not load-bearing. Every output for pair F would have satisfied both
+rule sets, which makes the pair **invalid by the experiment's own design** — the same failure the
+Decorator/Proxy pair (**B**) already has, for the same underlying reason: the distinguishing
+condition sat outside the critical set.
+
+**Apply this before defining a pattern's properties, not after.** When a new pattern is added
+specifically to support a conflict pair, decide first *which* property carries the separation and
+give it weight 3 — or put it in the role derivation, where it gates candidacy for every property at
+once. That is where the same-component rule ended up: inside `isDecorator`, so D2 through D6 all
+inherit it.
+
+**Checking a separator is load-bearing** is one measurement, not an argument: write the program
+that is the *other* pattern, score it, and require it to be **NOT-PATTERN** under the critical set.
+`t5_object_adapter_rejected_as_decorator__FAIL` is that check for pair F, and it gates the
+battery's exit code.
+
+## Rule: does a divergence REDEFINE the predicate, or REMOVE A FALSE POSITIVE?
+
+Every migration divergence is decided by this question, and it is the reason two divergences that
+look alike are decided oppositely.
+
+| | Redefines the predicate | Removes a false positive |
+|---|---|---|
+| Test | changes **which programs satisfy a property** | removes an answer that was **never correct for any program** |
+| Handling | needs its **own separately-measured change**, with its own prediction | may **ride along** with a mechanism migration |
+| Why | a movement caused by new meaning is indistinguishable from one caused by the new mechanism, so the migration stops being measurable | there is no reading under which the old answer was right, so nothing is being traded away |
+
+Worked pair, from phase 2 step 2:
+
+* **Divergence #2 — compound assignment.** `total += x` does populate state, and `_assigns_field`
+  is documented as signalling a step that populates state, so the regex is arguably wrong. It was
+  **preserved anyway**: correcting it would change which builders satisfy B1/B2. Parked as a
+  candidate meaning change with its own prediction.
+* **Divergence #3 — local declaration.** `int count = 5;` declares a local that shadows the field
+  and leaves the field untouched. The regex called that an assignment to the field. **The tree's
+  answer was taken**, because no program was ever served by the old one.
+
+Applied across step 2: #3, #4, #6 and #7 removed false positives and rode along; #2 preserved
+regex behaviour; #1, #5 and #8 were parity requirements rather than either.
+
+## What a green suite does not prove
+
+A recurring failure mode in this repo, recorded because it has now cost real work twice. "No
+test breaks" tells you what the corpus and the test suite **contain**. It does not tell you the
+code is dead, nor that a test is doing its job.
+
+**Case 1 — the D6 guard (`_fully_delegates`, `not m.has_body`).** One line looked like dead code
+left over from the retired signature regex. Deleting it passes all four suites. It is still
+load-bearing for a different reason: an abstract decorator base may forward part of the component
+API and leave the rest abstract, and a bodyless declaration is not implemented. Without the skip
+a correct abstract base scores D6=0, moving PIQS from 100 to 86.67. No corpus file exercises it.
+`tests/test_decorator_d6_abstract_base.py` and its fixture are the only thing standing between
+that line and a deletion that looks safe.
+
+**Case 2 — the nested-class-field test (`tests/test_scope_table.py`).** The scope table walk stops
+at a nested type body, and two tests assert nothing from inside a local or anonymous class leaks
+into the enclosing method's scope. Removing the boundary was expected to fail both. It failed only
+`test_variable_inside_nested_class_body_is_not_in_enclosing_scope`.
+
+Reason: a nested class's field is a `field_declaration` node, and the walk reads
+`local_variable_declaration` and four other forms — never `field_declaration`. So
+`test_nested_class_field_is_not_in_enclosing_scope` could not fail from removing the boundary,
+because the boundary was not what stopped it. The test was passing for a reason other than the one
+it advertised.
+
+It was **kept**, not deleted, because a second mutation shows what it does catch: adding
+`field_declaration` to the walk — a plausible future "completeness" edit — fails both tests. The
+guard is real; it protects a different mutation from the one its name suggests.
+
+The lesson generalises: **a passing test is evidence only against the mutations you have actually
+tried.** Every guard added in this repo should come with the mutation that makes it fail, recorded
+alongside it. All four scope-table guards were verified this way (nested boundary, nested field
+harvesting, invented lambda type, reversed shadowing order).
 
 ## Oracle
 

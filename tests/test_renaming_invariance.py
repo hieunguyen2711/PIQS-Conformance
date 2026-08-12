@@ -138,6 +138,36 @@ def test_verdicts_survive_renaming(case: Case) -> None:
     )
 
 
+@pytest.mark.parametrize("subdir", ["mutation_battery", "mutation_battery_bdt"])
+def test_every_battery_file_is_covered(subdir: str) -> None:
+    """No battery file may be silently skipped.
+
+    `_pattern_for` maps a filename to a pattern by substring, and `_battery_cases` does
+    `if pattern is None: continue`. So a new fixture whose name contains none of the markers is
+    DROPPED FROM THIS SUITE WITHOUT A WORD. The suite still goes green, and it looks like the
+    file passed renaming invariance when it was never tested at all.
+
+    That is the same failure mode this repo keeps meeting: a guard whose broken state is
+    indistinguishable from its passing state. A hardcoded expected count would catch it, but it
+    goes stale on every addition and invites editing the number instead of fixing the cause.
+    Comparing against the files actually on disk cannot go stale.
+
+    Mind the ordering in `_PATTERN_BY_MARKER` too: longest key first, so a file named
+    `adapter_vs_decorator.java` matches "decorator". That is correct here, but it means the
+    marker decides the pattern, not the part of the name a reader's eye goes to first.
+    """
+    d = os.path.join(FIXTURES, subdir)
+    on_disk = sorted(fn[:-5] for fn in os.listdir(d) if fn.endswith(".java"))
+    covered = sorted(c.name for c in _battery_cases(subdir))
+    missing = sorted(set(on_disk) - set(covered))
+    assert not missing, (
+        f"{len(missing)} file(s) in fixtures/{subdir}/ match no marker in _PATTERN_BY_MARKER "
+        f"and are silently skipped by this suite: {missing}. "
+        "Add a marker, or rename the file so it carries one."
+    )
+    assert len(covered) == len(on_disk)
+
+
 def test_obfuscator_preserves_structure() -> None:
     """The renamer must change identifiers and nothing else."""
     src = (
