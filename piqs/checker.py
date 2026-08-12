@@ -1515,12 +1515,24 @@ class PIQSChecker:
         # work together.
         #
         # `bool(decorators) and ...` IS NOT OPTIONAL: `all([])` is True in Python, so a program
-        # containing no decorator at all would score D3=1 (and D6=1). Measured before the guard:
-        # t5_object_adapter_rejected_as_decorator__FAIL and decorator_plain_inheritance_no_ref__FAIL
-        # both go from PIQS 0 to 71.67. Their LABELS survive, because recognition is D2 AND D3 and
-        # D2=0 -- but the paper reports per-rule verdicts, not labels, and three falsely satisfied
-        # rules on a program with no decorator is worse than the defect being fixed. Pinned by
-        # tests/test_decorator_field_scope_fixed.py.
+        # containing no decorator at all would score D3=1 and D6=1. Measured against the unguarded
+        # build: t5_object_adapter_rejected_as_decorator__FAIL and
+        # decorator_plain_inheritance_no_ref__FAIL both go
+        #
+        #     D2 0  D3 1  D4 0  D6 1     PSR 50.0  CPC 44.44  PIQS 0 -> 47.78
+        #
+        # D4 is 0 because it stays `any`, and `any([])` is False -- so TWO rules are falsely
+        # satisfied here, not three. Their LABELS survive, because recognition is D2 AND D3 and
+        # D2=0 -- but the paper reports per-rule verdicts, not labels, and two falsely satisfied
+        # rules on a program with no decorator is worse than the defect being fixed.
+        #
+        # THIS FIGURE WAS FIRST RECORDED AS 71.67, AND THE DIFFERENCE IS KEPT ON RECORD RATHER
+        # THAN DELETED, because it says WHICH DESIGN was measured. 71.67 is the unguarded build
+        # with D4 ALSO switched to `all` (D2 0 D3 1 D4 1 D6 1, PSR 75.0, CPC 66.67) -- both
+        # numbers verified by building both variants. A metric quoted without its design is the
+        # kind of number that propagates.
+        #
+        # Pinned by tests/test_decorator_field_scope_fixed.py.
         d3 = bool(decorators) and all(
             any(
                 self._delegates_to_field(m, f.name, _forwards_through_base(w))

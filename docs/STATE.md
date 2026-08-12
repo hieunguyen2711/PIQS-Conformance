@@ -1056,6 +1056,45 @@ entry: `Anchor extends RelayBase` and declares only a constructor. It *inherits*
 its behaviour scores as forwarding nothing. **That is the own-fields defect one level up, in the
 METHOD scan.** It violates no constraint and is the next open question.
 
+### TASK F IS CLOSED. Two limitations found, measured, and DEFERRED on schedule grounds.
+
+Both are **scoring imprecisions**. What comes next — `O1` and `C3` name-dependence — is a
+**validity problem**, and that ordering is deliberate.
+
+**1. The `Anchor` finding — method scope.** `all(...)` scans `w.methods`, own methods only. A
+subclass that correctly *inherits* its forwarding behaviour scores as forwarding nothing:
+
+```java
+class Anchor extends RelayBase {
+    Anchor(Feed src) { super(src); }
+    // no pull() of its own -- it inherits a forwarding one
+}
+```
+
+This is the defect Task F just fixed, one level up: **fields moved from own-only to effective,
+methods did not.** And it points the *opposite* way — a model writing the abstract-base shape
+produces subclasses that add one method and inherit the rest, and those now score `D3 = 0` when
+they are correct. Demonstrated by `super_receiver_forms.java`.
+
+**2. The three-level chain** (from F2). `A ← B ← C`, where `B` becomes a decorator candidate only
+through inheritance and so newly makes `C`'s `super` calls count. Every chain in the corpus is two
+deep, so it cannot fire today.
+
+### The 47.78 / 71.67 reconciliation — kept on record, not deleted
+
+The unguarded-`all` figure was first recorded as **71.67**. Both numbers are correct, for different
+designs, and both were verified by building both variants:
+
+| Unguarded build | Vector | PSR | CPC | PIQS |
+|---|---|---|---|---|
+| D4 stays `any` — **this build** | `D2 0 · D3 1 · D4 0 · D6 1` | 50.0 | 44.44 | **47.78** |
+| D4 also `all` — the scratch design | `D2 0 · D3 1 · D4 1 · D6 1` | 75.0 | 66.67 | **71.67** |
+
+`any([])` is False, so D4 stays 0 when it remains `any`. **Two** rules are falsely satisfied, not
+three. The difference is recorded rather than erased because it names *which design produced which
+number* — a metric quoted without its design is exactly the kind that propagates, and this one did,
+into three files.
+
 ### The two predictions are now kept separate, permanently
 
 `golden_facts` dumps `JavaMethod` through `dataclasses.fields()` — built that way so a new fact

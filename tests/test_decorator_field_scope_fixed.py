@@ -116,12 +116,21 @@ def test_a_program_with_no_decorator_scores_no_satisfied_property(slug, why):
     """THE VACUOUS-`all` GUARD. `all([])` is True in Python.
 
     Without `bool(decorators) and ...`, a program containing no decorator at all scores
-    `D3 1 D4 1 D6 1`. Measured before the guard: `t5_object_adapter_rejected_as_decorator__FAIL`
-    and `decorator_plain_inheritance_no_ref__FAIL` both go from PIQS 0 to **47.78**.
+    `D2 0 · D3 1 · D4 0 · D6 1` -- PSR 50.0, CPC 44.44, PIQS 0 -> **47.78**. Measured against the
+    unguarded build for `t5_object_adapter_rejected_as_decorator__FAIL` and
+    `decorator_plain_inheritance_no_ref__FAIL`.
+
+    D4 is 0 because it stays `any`, and `any([])` is False. So **two** rules are falsely satisfied,
+    not three.
 
     Their LABELS survive, because recognition is `D2 AND D3` and `D2 = 0`. That is exactly why
-    labels are not enough: the paper reports per-rule verdicts, and three falsely satisfied rules
-    on a program with no decorator is worse than the defect being fixed.
+    labels are not enough: the paper reports per-rule verdicts, and two falsely satisfied rules on
+    a program with no decorator is worse than the defect being fixed.
+
+    The figure was first recorded as 71.67. That is the same unguarded build with **D4 also
+    switched to `all`** (`D2 0 · D3 1 · D4 1 · D6 1`, PSR 75.0, CPC 66.67). Both were verified by
+    building both variants. The difference is kept on record rather than deleted, because it says
+    which design produced which number -- a metric quoted without its design is what propagates.
 
     `super_call_base_holds_nothing` is included as the CONTRAST -- it does have a candidate, so it
     is held at `D3 0` by the strict `super` rule rather than by this guard. A test that only

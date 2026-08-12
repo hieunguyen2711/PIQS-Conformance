@@ -258,9 +258,17 @@ who found it would have a fatal objection.
 `bool(decorators)` a program containing no decorator scores satisfied D3 and D6. Measured against
 the unguarded version: `t5_object_adapter_rejected_as_decorator__FAIL` and
 `decorator_plain_inheritance_no_ref__FAIL` go from PIQS 0 to **47.78** (`D2 0 · D3 1 · D4 0 · D6 1`).
-Their *labels* survive, because recognition is `D2 ∧ D3` and `D2 = 0` — which is exactly why labels
-are not enough: the paper reports **per-rule verdicts**, and three falsely satisfied rules on a
+D4 is 0 because it stays `any` and `any([])` is False, so **two** rules are falsely satisfied, not
+three. Their *labels* survive, because recognition is `D2 ∧ D3` and `D2 = 0` — which is exactly why
+labels are not enough: the paper reports **per-rule verdicts**, and two falsely satisfied rules on a
 program with no decorator is worse than the defect being fixed.
+
+> **Why 47.78 and not 71.67, kept on record rather than deleted.** The figure was first reported as
+> 71.67. That is the same unguarded build with **D4 also switched to `all`** — `D2 0 · D3 1 · D4 1 ·
+> D6 1`, PSR 75.0, CPC 66.67. This build keeps D4 as `any`, giving `D4 = 0`, PSR 50.0, CPC 44.44,
+> PIQS 47.78. Both were verified by building both variants. The difference is worth more on record
+> than erased, because it names which design produced which number — a metric quoted without its
+> design is exactly the kind that propagates.
 
 **D4 stays `any`, deliberately.** It asks about the **exposed API of the type** — does this wrapper
 present the component's whole operation set, or convert to a different interface? — not about
