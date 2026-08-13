@@ -969,9 +969,22 @@ class PIQSChecker:
             r"\b(?:List|Set|Collection|ArrayList|LinkedList|HashSet|CopyOnWriteArrayList|Vector)"
             r"\s*<\s*([A-Za-z_][A-Za-z0-9_]*)\s*>\s+([A-Za-z_][A-Za-z0-9_]*)"
         )
+        # The `(?:this\s*\.\s*)?` is NOT cosmetic. `for (Channel c : this.channels)` did not
+        # match at all, so the element type was never resolved and O2/O3/O4 -- the whole critical
+        # set -- read 0 for an ordinary Observer. This is the resolution point for loop form 1;
+        # forms 2-6 resolve through `_collection_of` in piqs/parser.py and are fixed there, in
+        # the same commit. Fixing one site would have left the other five forms broken.
+        #
+        # NON-CAPTURING, so the two groups stay (element variable, collection field) and every
+        # `.findall` unpacking below is unaffected.
+        #
+        # `this.` ONLY. `for (Observer o : other.observers)` still fails to match: the optional
+        # group does not match `other.`, and `([A-Za-z_][A-Za-z0-9_]*)\s*\)` then cannot reach
+        # the `)` past the `.`. Another object's collection is not ours -- pinned by
+        # tests/test_this_receiver_loops.py::test_a_foreign_receiver_is_not_resolved_to_our_own_field.
         foreach_re = re.compile(
             r"for\s*\(\s*(?:final\s+)?[A-Za-z_][A-Za-z0-9_<>\[\]]*\s+"
-            r"([A-Za-z_][A-Za-z0-9_]*)\s*:\s*([A-Za-z_][A-Za-z0-9_]*)\s*\)"
+            r"([A-Za-z_][A-Za-z0-9_]*)\s*:\s*(?:this\s*\.\s*)?([A-Za-z_][A-Za-z0-9_]*)\s*\)"
         )
 
         observer_type_names = set()

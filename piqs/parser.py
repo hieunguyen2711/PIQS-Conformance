@@ -553,11 +553,32 @@ def _collection_of(node, src: bytes) -> str | None:
     Form 3 is the base case -- the receiver IS the collection. Form 5 walks a chain of
     element-preserving operations back to it. Anything else returns None, and None can never
     match a `coll_fields` key, so the rejection needs no special case downstream.
+
+    `this.observers` RESOLVES TO `observers`. It is a `field_access` node, not an `identifier`,
+    so it used to fall through to None and the loop ceased to exist for the evaluator -- taking
+    O2, O3 and O4, the whole critical set, to 0 for a program that was ordinary Observer. This
+    is the single resolution point for loop forms 2-6; form 1 is resolved by `foreach_re` in
+    piqs/checker.py and is fixed there, in the same commit.
+
+    ONLY `this.`. The object must be the `this` keyword itself, not any expression:
+
+        this.observers    -> "observers"    our own field
+        other.observers   -> None           ANOTHER OBJECT's collection
+        this.a.observers  -> None           object is a field_access, not `this`
+
+    Widening to "strip any receiver and keep the trailing name" would make the negative controls
+    in tests/test_this_receiver_loops.py light up, which is what they are for.
     """
     seen = 0
     while node is not None:
         if node.type == "identifier":
             return _text(node, src)
+        if node.type == "field_access":
+            obj = node.child_by_field_name("object")
+            fld = node.child_by_field_name("field")
+            if obj is not None and obj.type == "this" and fld is not None and fld.type == "identifier":
+                return _text(fld, src)
+            return None
         if node.type != "method_invocation":
             return None
         name = node.child_by_field_name("name")
