@@ -112,18 +112,26 @@ reports the FACTS the parser extracts, so a parser regression is visible even wh
 moves — which is exactly the situation Step 3 creates:
 
 ```bash
-.venv/bin/python3 validation/golden_facts.py --check    # 220 files, 353 types, 688 methods
+.venv/bin/python3 validation/golden_facts.py --check    # 233 files, 406 types, 761 methods
 ```
 
 | Suite | Baseline |
 |---|---|
-| Kim property agreement | **90.6%** (145/160) |
-| Kim units exact on all 3 metrics | 30/40 |
+| Kim property agreement | **90.0%** (144/160) |
+| Kim units exact on all 3 metrics | 29/40 |
 | Mutation battery | 12/12 |
 | BDT battery | 28/28 + 5/5 D6 |
-| Renaming invariance failures | **8** (5 × `C3`, 3 × `O1`) |
-| pytest | **237 passed, 8 failed** (245 collected), **0 warnings** |
-| Golden facts (`--check`) | 220 files, 353 types, 688 methods, 0 differences |
+| Renaming invariance failures | **5** (5 × `C3`) |
+| pytest | **268 passed, 5 failed** (273 collected), **0 warnings** |
+| Golden facts (`--check`) | 233 files, 406 types, 761 methods, 0 differences |
+
+**Kim agreement went DOWN by one cell in Stage 3, and that is the improvement.** `SWS/Copilot O1`
+moved 1 → 0. Its old 1 came from `TransactionObserver` -- the OBSERVER interface -- being
+admitted as a SUBJECT because its callback is named `notify`, which was in the hardcoded set.
+The real subject, `Wallet`, is concrete with no supertype, so the program has no abstract subject
+at all. Kim also records satisfied, so the checker used to agree with the published ground truth
+for a structurally false reason. From Stage 3 onward, "did agreement rise?" is not the
+measurement; **which cells moved, and what named construct moved each one**, is.
 
 The per-file breakdown that used to sit here was removed: it drifted with every new test file
 and became a second, staler record of a number pytest already reports. `python3 -m pytest tests/
@@ -134,8 +142,18 @@ docstring was caught during step 2 only because the run reported `1 warning` whe
 been none. Every `.py` in the repo now compiles clean under `-W error::SyntaxWarning`. If the
 count is ever non-zero, something new is wrong.
 
-The 8 invariance failures are **known and expected**. `C3` and `O1` still read hardcoded names.
-They are fixed in Stage 3 and Stage 4, not before.
+The 5 invariance failures are **known and expected**. `C3` still reads hardcoded names — it is
+fixed in Stage 4, not before. `O1` no longer does: Stage 3 made the subject role structural and
+the three observer failures are gone.
+
+**KNOWN BLIND SPOT — `tests/fixtures_parser/` is outside the invariance suite.** `iter_cases()`
+in `tests/test_renaming_invariance.py` enumerates the two battery directories and the Kim corpus
+only, so nothing under `tests/fixtures_parser/` is ever renamed. That directory now holds 48
+files, including every loop-form, `this.`-receiver and `O1` fixture. The invariance suite is this
+instrument's main proof, so a fixture directory outside its reach is a real gap: a fixture can
+pin a name-dependent verdict and no suite will say so. `tests/test_o1_structural.py` calls the
+obfuscator directly on its own five fixtures to cover the O1 case, but that is a local patch, not
+the general fix. Widening `iter_cases()` is a separate change and has not been made.
 
 **Environment note — this is not optional on the dev machine.** Bare `python3` resolves to a pyenv
 build with **no `tree_sitter_java`**; `run_scorer.py` then exits 1, correctly. Use

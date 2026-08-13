@@ -34,16 +34,28 @@ O1 is 1 in all ten fixtures, and it has nothing to do with loops. `subject_candi
 `attach` and `notifyObservers` on an interface. O1 then asks whether any such candidate is
 abstract, which the interface is.
 
-**Stage 3 makes O1 structural.** When it does, these expected vectors will change, and that will
-be CORRECT, not a regression. A future session reading a Stage 3 movement as a Step 3 breakage
-would be reading it wrong. The properties that are currently name-dependent:
+**Stage 3 HAS NOW MADE O1 STRUCTURAL, and the nine negative vectors below moved 1 -> 0 exactly
+as this paragraph predicted.** Recorded here rather than rewritten away, because the prediction
+being right is the evidence that the movement is the intended one:
 
-    O1  name-based via subject_candidates          -- WILL move in Stage 3
-    O2  structural (abstract observer type)        -- loop-dependent
-    O3  structural (subject notifies)              -- loop-dependent
-    O4  structural (concrete observers implement)  -- loop-dependent
+    O1  name-based via subject_candidates          -- MOVED in Stage 3, 1 -> 0 on all nine
+    O2  structural (abstract observer type)        -- loop-dependent, unmoved
+    O3  structural (subject notifies)              -- loop-dependent, unmoved
+    O4  structural (concrete observers implement)  -- loop-dependent, unmoved
 
-Only O2/O3/O4 are what Step 3 is measuring.
+WHY 1 -> 0 IS THE CORRECT DIRECTION HERE, AND NOT A LOSS. Every negative fixture is a program in
+which NO notification is detected -- that is what makes it a negative. The old O1 read a
+hardcoded method-name set, and every fixture declares `interface Subject { void attach(Observer
+o); void notifyObservers(); }`, so `Subject` name-matched and O1 read 1 for a program that
+notifies nothing. O1 asks whether an abstract SUBJECT exists; a type that no one notifies through
+is not a subject. The new rule derives candidates from notification sites, so a program with no
+notification has no candidate and `any([])` is False.
+
+The old expected value encoded the defect. It was not adjusted to make a test pass -- the
+movement was predicted in writing before the run, cell by cell, and measured to be exactly the
+nine here plus two in tests/test_this_receiver_loops.py.
+
+Only O2/O3/O4 are what Step 3 measures, and none of them moved.
 """
 
 from __future__ import annotations
@@ -95,10 +107,11 @@ NEGATIVES = [
 
 @pytest.mark.parametrize("slug", NEGATIVES)
 def test_negative_control_is_not_detected_as_notification(slug):
-    """O2/O3/O4 must stay 0. O1 stays 1 for the name-based reason in the module docstring."""
+    """O2/O3/O4 must stay 0. O1 is ALSO 0 since Stage 3 -- see the module docstring: no
+    notification is detected here, so there is no subject to be abstract."""
     v = vector(slug)
-    assert v == {"O1": 1, "O2": 0, "O3": 0, "O4": 0}, f"{slug} moved -- the widening is too wide"
-    assert piqs(slug) == 22.27
+    assert v == {"O1": 0, "O2": 0, "O3": 0, "O4": 0}, f"{slug} moved -- the widening is too wide"
+    assert piqs(slug) == 0.0
 
 
 def test_enclosing_loop_is_necessary_but_not_sufficient():
@@ -177,11 +190,11 @@ def test_loop_form(slug, shape):
         assert v == {"O1": 1, "O2": 1, "O3": 1, "O4": 1}, f"{slug} ({shape}) regressed"
         assert piqs(slug) == 100.0
     else:
-        assert v == {"O1": 1, "O2": 0, "O3": 0, "O4": 0}, (
+        assert v == {"O1": 0, "O2": 0, "O3": 0, "O4": 0}, (
             f"{slug} ({shape}) is detected but not listed in DETECTED -- "
             "if that was intended, move it and record the movement"
         )
-        assert piqs(slug) == 22.27
+        assert piqs(slug) == 0.0
 
 
 def test_the_six_differ_only_in_the_loop():

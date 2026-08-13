@@ -989,8 +989,69 @@ class PIQSChecker:
 
         observer_type_names = set()
         callback_names = set()
-        notifies_loop = False
-        notifies_single = False
+        # (notifying type, observer type name) per notification site. This REPLACES the booleans
+        # `notifies_loop` / `notifies_single`: O1 asks which type plays the abstract Subject
+        # role, and a bool discards the only fact that can answer it -- WHO notified. The two
+        # bools are re-derived below, so O3 is unaffected by the change of representation.
+        loop_notifications: list[tuple[JavaType, str]] = []
+        single_notifications: list[tuple[JavaType, str]] = []
+
+        def _is_child_traversal(holder: JavaType, method: JavaMethod, elem_name: str) -> bool:
+            """A COMPOSITE walking its children, which is not a subject notifying observers.
+
+            Both are "loop a collection of an abstract type and call a method on each element",
+            so shape alone cannot separate them. The difference is WHOSE operation is being
+            called:
+
+                class Sale implements SaleComponent {          // Composite
+                    List<SaleComponent> components;
+                    public void print() { components.forEach(SaleComponent::print); }
+                }
+
+            `Sale` IS a `SaleComponent`, and `print` is `SaleComponent`'s own operation -- the
+            type is recursing into itself, one level down. A subject is NOT one of its own
+            observers, and `notifyObservers` is not part of the observer's interface: two roles,
+            not one self-similar role.
+
+            BOTH CONJUNCTS ARE REQUIRED, and the conjunction is deliberately narrower than
+            either alone. Rejecting on "holder conforms to element" alone would reject a subject
+            that legitimately implements its own observer interface (an event relay). Rejecting
+            on "the loop method belongs to the element's API" alone would reject
+            `void notify() { for (Observer o : obs) o.notify(); }`, a genuine subject whose
+            notify method happens to share the callback's name. Each counter-case breaks only
+            one conjunct, so the conjunction accepts both.
+
+            NO IDENTIFIER IS READ. This compares two names TO EACH OTHER -- the loop method's
+            and the element type's declared methods'. The obfuscator's rename map is name-keyed
+            and consistent across files, so an override and its declaration are renamed to the
+            SAME symbol and the comparison is preserved exactly. Verified, not assumed:
+            `Sale.print` and `SaleComponent.print` both become `m2`, while `notifyObservers`
+            becomes `m1` against `update` -> `m3`.
+            """
+            elem = types[elem_name]
+            return self._conforms_to(holder, elem_name, types) and any(
+                em.name == method.name for em in elem.methods
+            )
+
+        def _project_supertypes(t: JavaType) -> list[JavaType]:
+            """Every PROJECT-DECLARED supertype of `t`, transitively, breadth-first.
+
+            `java.util.Observable` is not in `types`, so a framework supertype never enters the
+            closure. That is not a special case here -- it is what the Stage 2C framework policy
+            requires, and it falls out of the closure being over project types only.
+            """
+            out: list[JavaType] = []
+            seen = {t.name}
+            stack = list(t.implements) + ([t.extends] if t.extends else [])
+            while stack:
+                name = stack.pop(0)
+                if name in seen or name not in types:
+                    continue
+                seen.add(name)
+                sup = types[name]
+                out.append(sup)
+                stack.extend(list(sup.implements) + ([sup.extends] if sup.extends else []))
+            return out
 
         for t in class_types:
             coll_fields = {name: elem for (elem, name) in elem_field_re.findall(t.body)}
@@ -1006,11 +1067,13 @@ class PIQSChecker:
                     elem = coll_fields.get(coll)
                     if not elem or elem not in types:
                         continue
+                    if _is_child_traversal(t, m, elem):
+                        continue
                     calls = re.findall(r"\b" + re.escape(var) + r"\.([A-Za-z_][A-Za-z0-9_]*)\s*\(", body)
                     if calls:
                         observer_type_names.add(elem)
                         callback_names.update(calls)
-                        notifies_loop = True
+                        loop_notifications.append((t, elem))
                 # (a2) Phase 2 step 3: loop forms the enhanced-for regex above cannot express.
                 # The parser reports (collection, callback); the element type is resolved HERE,
                 # from the same `coll_fields` the enhanced-for branch uses, so no new way of
@@ -1027,9 +1090,11 @@ class PIQSChecker:
                     # accepted, because narrower is safe where the corpus cannot decide.
                     if qual is not None and qual != elem:
                         continue
+                    if _is_child_traversal(t, m, elem):
+                        continue
                     observer_type_names.add(elem)
                     callback_names.add(cb)
-                    notifies_loop = True
+                    loop_notifications.append((t, elem))
                 # (b) single held observer of an abstract type that has a concrete impl
                 for fname, ftype in single_obs_fields.items():
                     has_impl = any(
@@ -1043,7 +1108,12 @@ class PIQSChecker:
                     if calls:
                         observer_type_names.add(ftype)
                         callback_names.update(calls)
-                        notifies_single = True
+                        single_notifications.append((t, ftype))
+
+        # Re-derived from the notification sites, so every predicate below that used to read
+        # these bools is bit-identical unless a notification was actually added or removed.
+        notifies_loop = bool(loop_notifications)
+        notifies_single = bool(single_notifications)
 
         observer_type_objs = [types[n] for n in observer_type_names if n in types]
         # Fix J (framework-inheritance policy): the observer role is whatever the source
@@ -1051,18 +1121,59 @@ class PIQSChecker:
         # from the framework and no longer contributes one here.
         observer_names = set(observer_type_names)
 
-        # Subject candidates (registration/notification role): interface or class declaring
-        # registration/notification methods (unchanged from prior behaviour), augmented with
-        # JDK Observable subclasses.
-        subject_candidates = [
-            t
-            for t in types.values()
-            if t.kind in {"class", "interface"}
-            and any(
-                m.name in {"attach", "detach", "notifyObservers", "register", "remove", "notify"}
-                for m in t.methods
-            )
-        ]
+        # THE SUBJECT ROLE, STRUCTURALLY. Stage 3.
+        #
+        # This used to select any type declaring a method whose name was in a hardcoded set --
+        # {attach, detach, notifyObservers, register, remove, notify}. Same structure, different
+        # names, different verdict:
+        #
+        #     attach / notifyObservers   ->  O1 = 1
+        #     subscribe / broadcast      ->  O1 = 0
+        #
+        # which is precisely the artefact this instrument exists to avoid: under the unnamed
+        # condition a model invents its own vocabulary, and a name-matching checker marks it
+        # down for a naming reason that looks exactly like the paper's finding.
+        #
+        # It also admitted the WRONG ROLE. In SWS/Copilot the only abstract name-match was
+        # `TransactionObserver`, the OBSERVER interface, admitted as a SUBJECT because its
+        # callback happens to be named `notify`. The actual subject, `Wallet`, is concrete with
+        # no supertype -- so O1 = 1 was reported for a program that has no abstract subject at
+        # all, and it agreed with Kim for a structurally false reason.
+        #
+        # THE STRUCTURAL RULE, in three parts:
+        #
+        #   1. the CONCRETE subject is whichever type actually notifies -- it is known now,
+        #      because the notification sites carry their holder;
+        #   2. the ABSTRACT subject is normally its SUPERTYPE, so search upward. The type
+        #      running the loop is usually the concrete one; O1 asks for the abstract role;
+        #   3. a supertype counts only if it declares THE REGISTRATION CONTRACT -- a method
+        #      whose parameter type is the observer type. Otherwise any unrelated abstract
+        #      supertype (a project `Printable`, `Comparable`-alike) would grant O1.
+        #
+        # Part 3 is name-free and it is what the corpus's two positive cases actually declare,
+        # under two DIFFERENT names -- `addObserver(InventoryObserver)` in POSS/ChatGPT and
+        # `registerObserver(InventoryObserver)` in POSS/Meta. Neither name is in the old
+        # hardcoded set; both types matched only via `notifyObservers`. That is the fragility,
+        # demonstrated by the corpus rather than argued.
+        #
+        # ONE CONSTRUCTION SITE, NO STRING LITERALS. Both are required of this expression: the
+        # eight readers below must never disagree about what a subject is, and a literal here is
+        # the defect being removed. Dict-keyed by name to dedupe while keeping insertion order,
+        # so the list is deterministic.
+        subject_candidates = list(
+            {
+                cand.name: cand
+                for holder, observer_name in loop_notifications + single_notifications
+                for cand in (
+                    holder,
+                    *(
+                        sup
+                        for sup in _project_supertypes(holder)
+                        if any(observer_name in mm.param_types for mm in sup.methods)
+                    ),
+                )
+            }.values()
+        )
 
         reads = any(re.search(r"\bget[A-Z][A-Za-z0-9_]*\s*\(", m.body) for t in types.values() for m in t.methods)
         modifies = any(re.search(r"\bset[A-Z][A-Za-z0-9_]*\s*\(", m.body) for t in types.values() for m in t.methods)
@@ -1130,7 +1241,10 @@ class PIQSChecker:
             "updates(o,s)": observers_update,
         }
 
-        # O1: an ABSTRACT subject exists -- an interface/abstract-class subject.
+        # O1: an ABSTRACT subject exists -- a supertype of a type that actually notifies, which
+        #     declares the registration contract. `any([])` is False, so a program that notifies
+        #     nothing has no candidate and O1 is 0; that is the clause holding SWS/Meta at 0,
+        #     where `AuditLog extends Observable` performs no traversal the source declares.
         # O2: an ABSTRACT observer exists -- a structurally-detected observer interface or
         #     abstract class.
         # Fix J (framework-inheritance policy): both clauses that credited a type for merely
@@ -1146,7 +1260,13 @@ class PIQSChecker:
         o4 = observers_update
 
         rows = [
-            self._row("O1", 2, o1, "At least one abstract subject exists."),
+            self._row(
+                "O1",
+                2,
+                o1,
+                "At least one abstract subject exists -- a notifying type has an abstract "
+                "supertype declaring a method that takes the observer type.",
+            ),
             self._row("O2", 3, o2, "At least one abstract observer exists."),
             self._row("O3", 3, o3, "Subject notifies all registered observers."),
             self._row("O4", 3, o4, "Observers implement update behavior."),

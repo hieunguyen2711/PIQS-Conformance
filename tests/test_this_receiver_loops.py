@@ -133,10 +133,14 @@ def test_a_foreign_receiver_is_not_resolved_to_our_own_field(slug, site):
     without them the widening is unfalsifiable.
     """
     v = vector(slug)
-    assert v == {"O1": 1, "O2": 0, "O3": 0, "O4": 0}, (
+    # O1 was 1 here until Stage 3 made the subject role structural. It is 0 now for the same
+    # reason O2/O3/O4 are: no notification is detected, so there is no subject at all. The old
+    # 1 came from `interface Subject` name-matching a hardcoded method set while nothing
+    # notified. Predicted before the run, together with the nine in test_loop_forms.py.
+    assert v == {"O1": 0, "O2": 0, "O3": 0, "O4": 0}, (
         f"{slug}: a foreign receiver resolved to our own field. The widening is too wide at {site}"
     )
-    assert piqs(slug) == 22.27
+    assert piqs(slug) == 0.0
 
 
 def test_the_twins_differ_from_their_originals_only_in_the_receiver():

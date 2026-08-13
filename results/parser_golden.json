@@ -31453,6 +31453,999 @@
    "name": "Outer"
   }
  },
+ "tests/fixtures_parser/o1_composite_is_not_a_subject.java": {
+  "Folder": {
+   "body": {
+    "len": 207,
+    "sha256": "9993dedcc280f983"
+   },
+   "extends": null,
+   "fields": [
+    {
+     "field_type": "List",
+     "modifiers": [
+      "private"
+     ],
+     "name": "kids"
+    }
+   ],
+   "implements": [
+    "Node"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 26,
+      "sha256": "5df6931f95408fb6"
+     },
+     "calls": [
+      [
+       "kids",
+       "add"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "add",
+      "kids",
+      "n"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "addChild",
+     "owner": "Folder",
+     "param_names": [
+      "n"
+     ],
+     "param_types": [
+      "Node"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 67,
+      "sha256": "8731e77678d92eb4"
+     },
+     "calls": [
+      [
+       "n",
+       "show"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {
+      "n": "Node"
+     },
+     "mentions": [
+      "Node",
+      "kids",
+      "n",
+      "show"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "show",
+     "owner": "Folder",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Folder"
+  },
+  "Leaf": {
+   "body": {
+    "len": 32,
+    "sha256": "960e6d4b9a545895"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [
+    "Node"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 5,
+      "sha256": "4dc501d66cd78903"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [
+      "public"
+     ],
+     "name": "show",
+     "owner": "Leaf",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Leaf"
+  },
+  "Node": {
+   "body": {
+    "len": 18,
+    "sha256": "6fd49be37ec46afb"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "show",
+     "owner": "Node",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Node"
+  }
+ },
+ "tests/fixtures_parser/o1_concrete_subject_no_supertype.java": {
+  "Display": {
+   "body": {
+    "len": 32,
+    "sha256": "674653d7cd15630e"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [
+    "Feed"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 5,
+      "sha256": "4dc501d66cd78903"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [
+      "public"
+     ],
+     "name": "ping",
+     "owner": "Display",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Display"
+  },
+  "Feed": {
+   "body": {
+    "len": 18,
+    "sha256": "3186ab2552a0cd1e"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "ping",
+     "owner": "Feed",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Feed"
+  },
+  "Station": {
+   "body": {
+    "len": 210,
+    "sha256": "8f6b8ab2d51e2c67"
+   },
+   "extends": null,
+   "fields": [
+    {
+     "field_type": "List",
+     "modifiers": [
+      "private"
+     ],
+     "name": "sinks"
+    }
+   ],
+   "implements": [],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 27,
+      "sha256": "9298bf3bae60ddb3"
+     },
+     "calls": [
+      [
+       "sinks",
+       "add"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "add",
+      "f",
+      "sinks"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "enrol",
+     "owner": "Station",
+     "param_names": [
+      "f"
+     ],
+     "param_types": [
+      "Feed"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 68,
+      "sha256": "f0d306b68f17b63f"
+     },
+     "calls": [
+      [
+       "f",
+       "ping"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {
+      "f": "Feed"
+     },
+     "mentions": [
+      "Feed",
+      "f",
+      "ping",
+      "sinks"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "publish",
+     "owner": "Station",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Station"
+  }
+ },
+ "tests/fixtures_parser/o1_dual_role_observer_missing_callback.java": {
+  "Feed": {
+   "body": {
+    "len": 18,
+    "sha256": "3186ab2552a0cd1e"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "ping",
+     "owner": "Feed",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Feed"
+  },
+  "Folder": {
+   "body": {
+    "len": 144,
+    "sha256": "0fc06ecf6f3b246b"
+   },
+   "extends": null,
+   "fields": [
+    {
+     "field_type": "List",
+     "modifiers": [
+      "private"
+     ],
+     "name": "kids"
+    }
+   ],
+   "implements": [
+    "Node"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 67,
+      "sha256": "8731e77678d92eb4"
+     },
+     "calls": [
+      [
+       "n",
+       "show"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {
+      "n": "Node"
+     },
+     "mentions": [
+      "Node",
+      "kids",
+      "n",
+      "show"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "show",
+     "owner": "Folder",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Folder"
+  },
+  "Hybrid": {
+   "body": {
+    "len": 32,
+    "sha256": "960e6d4b9a545895"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [
+    "Feed",
+    "Node"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 5,
+      "sha256": "4dc501d66cd78903"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [
+      "public"
+     ],
+     "name": "show",
+     "owner": "Hybrid",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Hybrid"
+  },
+  "Node": {
+   "body": {
+    "len": 18,
+    "sha256": "6fd49be37ec46afb"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "show",
+     "owner": "Node",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Node"
+  },
+  "Station": {
+   "body": {
+    "len": 210,
+    "sha256": "8f6b8ab2d51e2c67"
+   },
+   "extends": null,
+   "fields": [
+    {
+     "field_type": "List",
+     "modifiers": [
+      "private"
+     ],
+     "name": "sinks"
+    }
+   ],
+   "implements": [],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 27,
+      "sha256": "9298bf3bae60ddb3"
+     },
+     "calls": [
+      [
+       "sinks",
+       "add"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "add",
+      "f",
+      "sinks"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "enrol",
+     "owner": "Station",
+     "param_names": [
+      "f"
+     ],
+     "param_types": [
+      "Feed"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 68,
+      "sha256": "f0d306b68f17b63f"
+     },
+     "calls": [
+      [
+       "f",
+       "ping"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {
+      "f": "Feed"
+     },
+     "mentions": [
+      "Feed",
+      "f",
+      "ping",
+      "sinks"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "publish",
+     "owner": "Station",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Station"
+  }
+ },
+ "tests/fixtures_parser/o1_supertype_with_contract.java": {
+  "Broadcaster": {
+   "body": {
+    "len": 25,
+    "sha256": "1adb43744a74d070"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "enrol",
+     "owner": "Broadcaster",
+     "param_names": [
+      "f"
+     ],
+     "param_types": [
+      "Feed"
+     ],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Broadcaster"
+  },
+  "Display": {
+   "body": {
+    "len": 32,
+    "sha256": "674653d7cd15630e"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [
+    "Feed"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 5,
+      "sha256": "4dc501d66cd78903"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [
+      "public"
+     ],
+     "name": "ping",
+     "owner": "Display",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Display"
+  },
+  "Feed": {
+   "body": {
+    "len": 18,
+    "sha256": "3186ab2552a0cd1e"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "ping",
+     "owner": "Feed",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Feed"
+  },
+  "Station": {
+   "body": {
+    "len": 210,
+    "sha256": "8f6b8ab2d51e2c67"
+   },
+   "extends": null,
+   "fields": [
+    {
+     "field_type": "List",
+     "modifiers": [
+      "private"
+     ],
+     "name": "sinks"
+    }
+   ],
+   "implements": [
+    "Broadcaster"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 27,
+      "sha256": "9298bf3bae60ddb3"
+     },
+     "calls": [
+      [
+       "sinks",
+       "add"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "add",
+      "f",
+      "sinks"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "enrol",
+     "owner": "Station",
+     "param_names": [
+      "f"
+     ],
+     "param_types": [
+      "Feed"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 68,
+      "sha256": "f0d306b68f17b63f"
+     },
+     "calls": [
+      [
+       "f",
+       "ping"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {
+      "f": "Feed"
+     },
+     "mentions": [
+      "Feed",
+      "f",
+      "ping",
+      "sinks"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "publish",
+     "owner": "Station",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Station"
+  }
+ },
+ "tests/fixtures_parser/o1_supertype_without_contract.java": {
+  "Display": {
+   "body": {
+    "len": 32,
+    "sha256": "674653d7cd15630e"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [
+    "Feed"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 5,
+      "sha256": "4dc501d66cd78903"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [
+      "public"
+     ],
+     "name": "ping",
+     "owner": "Display",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Display"
+  },
+  "Feed": {
+   "body": {
+    "len": 18,
+    "sha256": "3186ab2552a0cd1e"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "ping",
+     "owner": "Feed",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Feed"
+  },
+  "Serialisable": {
+   "body": {
+    "len": 22,
+    "sha256": "062aa3307323d974"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "encode",
+     "owner": "Serialisable",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "String",
+     "traversals": []
+    }
+   ],
+   "name": "Serialisable"
+  },
+  "Station": {
+   "body": {
+    "len": 265,
+    "sha256": "c0203bb9366a5261"
+   },
+   "extends": null,
+   "fields": [
+    {
+     "field_type": "List",
+     "modifiers": [
+      "private"
+     ],
+     "name": "sinks"
+    }
+   ],
+   "implements": [
+    "Serialisable"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 27,
+      "sha256": "9298bf3bae60ddb3"
+     },
+     "calls": [
+      [
+       "sinks",
+       "add"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "add",
+      "f",
+      "sinks"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "enrol",
+     "owner": "Station",
+     "param_names": [
+      "f"
+     ],
+     "param_types": [
+      "Feed"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 24,
+      "sha256": "5152c3839de85776"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [
+      "public"
+     ],
+     "name": "encode",
+     "owner": "Station",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "String",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 68,
+      "sha256": "f0d306b68f17b63f"
+     },
+     "calls": [
+      [
+       "f",
+       "ping"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {
+      "f": "Feed"
+     },
+     "mentions": [
+      "Feed",
+      "f",
+      "ping",
+      "sinks"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "publish",
+     "owner": "Station",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Station"
+  }
+ },
  "tests/fixtures_parser/object_adapter_not_a_decorator.java": {
   "Adapt": {
    "body": {

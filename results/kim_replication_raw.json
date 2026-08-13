@@ -525,7 +525,7 @@
           "weight": 2,
           "satisfaction": 1,
           "satisfied": true,
-          "justification": "At least one abstract subject exists."
+          "justification": "At least one abstract subject exists -- a notifying type has an abstract supertype declaring a method that takes the observer type."
         },
         "O2": {
           "weight": 3,
@@ -767,7 +767,7 @@
           "weight": 2,
           "satisfaction": 0,
           "satisfied": false,
-          "justification": "At least one abstract subject exists."
+          "justification": "At least one abstract subject exists -- a notifying type has an abstract supertype declaring a method that takes the observer type."
         },
         "O2": {
           "weight": 3,
@@ -1009,7 +1009,7 @@
           "weight": 2,
           "satisfaction": 0,
           "satisfied": false,
-          "justification": "At least one abstract subject exists."
+          "justification": "At least one abstract subject exists -- a notifying type has an abstract supertype declaring a method that takes the observer type."
         },
         "O2": {
           "weight": 3,
@@ -1251,7 +1251,7 @@
           "weight": 2,
           "satisfaction": 0,
           "satisfied": false,
-          "justification": "At least one abstract subject exists."
+          "justification": "At least one abstract subject exists -- a notifying type has an abstract supertype declaring a method that takes the observer type."
         },
         "O2": {
           "weight": 3,
@@ -1493,7 +1493,7 @@
           "weight": 2,
           "satisfaction": 1,
           "satisfied": true,
-          "justification": "At least one abstract subject exists."
+          "justification": "At least one abstract subject exists -- a notifying type has an abstract supertype declaring a method that takes the observer type."
         },
         "O2": {
           "weight": 3,
@@ -1709,7 +1709,7 @@
           "weight": 2,
           "satisfaction": 0,
           "satisfied": false,
-          "justification": "At least one abstract subject exists."
+          "justification": "At least one abstract subject exists -- a notifying type has an abstract supertype declaring a method that takes the observer type."
         },
         "O2": {
           "weight": 3,
@@ -1752,7 +1752,7 @@
       "derived_predicates": {
         "isObserver(x)": true,
         "isUpdate(m)": true,
-        "isSubject(x)": false,
+        "isSubject(x)": true,
         "isRegisterObserver(m)": false,
         "isUnregisterObserver(m)": false,
         "isNotify(m)": false,
@@ -1925,7 +1925,7 @@
           "weight": 2,
           "satisfaction": 0,
           "satisfied": false,
-          "justification": "At least one abstract subject exists."
+          "justification": "At least one abstract subject exists -- a notifying type has an abstract supertype declaring a method that takes the observer type."
         },
         "O2": {
           "weight": 3,
@@ -2139,9 +2139,9 @@
       "properties": {
         "O1": {
           "weight": 2,
-          "satisfaction": 1,
-          "satisfied": true,
-          "justification": "At least one abstract subject exists."
+          "satisfaction": 0,
+          "satisfied": false,
+          "justification": "At least one abstract subject exists -- a notifying type has an abstract supertype declaring a method that takes the observer type."
         },
         "O2": {
           "weight": 3,
@@ -2162,12 +2162,12 @@
           "justification": "Observers implement update behavior."
         }
       },
-      "psr": 100.0,
-      "cpc": 100.0,
-      "piqs": 100.0,
-      "psr_formula": "(4/4)*100",
-      "cpc_formula": "(11/11)*100",
-      "piqs_formula": "(100.0*0.6)+(100.0*0.4)",
+      "psr": 75.0,
+      "cpc": 81.82,
+      "piqs": 77.73,
+      "psr_formula": "(3/4)*100",
+      "cpc_formula": "(9/11)*100",
+      "piqs_formula": "(75.0*0.6)+(81.82*0.4)",
       "base_predicates": {
         "isAbstract(x)": true,
         "isConcrete(x)": true,
@@ -2191,7 +2191,7 @@
         "notifies(s,o)": true,
         "updates(o,s)": true
       },
-      "grade": "Excellent"
+      "grade": "Good"
     },
     {
       "case_study": "SWS",
@@ -2357,7 +2357,7 @@
           "weight": 2,
           "satisfaction": 0,
           "satisfied": false,
-          "justification": "At least one abstract subject exists."
+          "justification": "At least one abstract subject exists -- a notifying type has an abstract supertype declaring a method that takes the observer type."
         },
         "O2": {
           "weight": 3,
@@ -2389,10 +2389,10 @@
         "isConcrete(x)": true,
         "reads(m,p)": true,
         "modifies(m,p)": false,
-        "modifiesCollection(m,c,p)": false,
+        "modifiesCollection(m,c,p)": true,
         "traversesCollection(m,c)": true,
-        "increases(m,c)": false,
-        "decreases(m,c)": false,
+        "increases(m,c)": true,
+        "decreases(m,c)": true,
         "hasMethod(c,m)": true,
         "calls(m1,m2)": true,
         "implements(x,y)": true
@@ -2400,7 +2400,7 @@
       "derived_predicates": {
         "isObserver(x)": true,
         "isUpdate(m)": true,
-        "isSubject(x)": false,
+        "isSubject(x)": true,
         "isRegisterObserver(m)": false,
         "isUnregisterObserver(m)": false,
         "isNotify(m)": false,
@@ -2573,7 +2573,7 @@
           "weight": 2,
           "satisfaction": 0,
           "satisfied": false,
-          "justification": "At least one abstract subject exists."
+          "justification": "At least one abstract subject exists -- a notifying type has an abstract supertype declaring a method that takes the observer type."
         },
         "O2": {
           "weight": 3,
