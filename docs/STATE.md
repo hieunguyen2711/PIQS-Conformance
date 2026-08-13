@@ -103,7 +103,7 @@ Run all four after **every** change. Never fewer.
 ```bash
 .venv/bin/python3 validation/run_scorer.py && .venv/bin/python3 validation/compare.py
 .venv/bin/python3 validation/run_mutation_battery.py                 # 12 cases
-.venv/bin/python3 validation/run_mutation_battery_bdt.py             # 27 cases + 5 D6
+.venv/bin/python3 validation/run_mutation_battery_bdt.py             # 28 cases + 5 D6
 .venv/bin/python3 -m pytest tests/ -q                                # incl. invariance
 ```
 
@@ -112,7 +112,7 @@ reports the FACTS the parser extracts, so a parser regression is visible even wh
 moves — which is exactly the situation Step 3 creates:
 
 ```bash
-.venv/bin/python3 validation/golden_facts.py --check    # 197 files, 267 types, 552 methods
+.venv/bin/python3 validation/golden_facts.py --check    # 220 files, 353 types, 688 methods
 ```
 
 | Suite | Baseline |
@@ -120,15 +120,14 @@ moves — which is exactly the situation Step 3 creates:
 | Kim property agreement | **90.6%** (145/160) |
 | Kim units exact on all 3 metrics | 30/40 |
 | Mutation battery | 12/12 |
-| BDT battery | 27/27 + 5/5 D6 |
+| BDT battery | 28/28 + 5/5 D6 |
 | Renaming invariance failures | **8** (5 × `C3`, 3 × `O1`) |
-| pytest | **179 passed, 8 failed** (187 collected), **0 warnings** |
-| Golden facts (`--check`) | 197 files, 267 types, 552 methods, 0 differences |
+| pytest | **237 passed, 8 failed** (245 collected), **0 warnings** |
+| Golden facts (`--check`) | 220 files, 353 types, 688 methods, 0 differences |
 
-pytest was 120 before the scope table (+20 `tests/test_scope_table.py`) and 140 before body
-helper 1 (+17 `tests/test_body_helpers_divergences.py`). Collected by file: 81 invariance +
-22 parity-harness + 20 method-extraction + 20 scope-table + 17 body-divergences +
-3 parser-declarations + 2 D6 = 165.
+The per-file breakdown that used to sit here was removed: it drifted with every new test file
+and became a second, staler record of a number pytest already reports. `python3 -m pytest tests/
+-q --collect-only` is the authority.
 
 **The pytest warning count is 0, and that is load-bearing.** A `SyntaxWarning` from `\\s` in a
 docstring was caught during step 2 only because the run reported `1 warning` where there had
