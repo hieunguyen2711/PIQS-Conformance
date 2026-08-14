@@ -1,10 +1,10 @@
 {
   "headline": {
     "total_property_judgments": 160,
-    "agreed": 144,
-    "agreement_pct": 90.0,
+    "agreed": 142,
+    "agreement_pct": 88.8,
     "score_units": 40,
-    "units_exact_match_all3": 29
+    "units_exact_match_all3": 27
   },
   "arithmetic_check": [
     {
@@ -998,8 +998,8 @@
       "pattern": "composite",
       "property": "C3",
       "kim": "satisfied",
-      "mine": "satisfied",
-      "match": true
+      "mine": "not satisfied",
+      "match": false
     },
     {
       "case_study": "POSS",
@@ -1160,8 +1160,8 @@
       "pattern": "composite",
       "property": "C3",
       "kim": "satisfied",
-      "mine": "satisfied",
-      "match": true
+      "mine": "not satisfied",
+      "match": false
     },
     {
       "case_study": "POSS",
@@ -2158,12 +2158,12 @@
       "kim_psr": 40.0,
       "kim_cpc": 35.71,
       "kim_piqs": 38.29,
-      "my_psr": 40.0,
-      "my_cpc": 35.71,
-      "my_piqs": 38.29,
-      "d_psr": 0.0,
-      "d_cpc": 0.0,
-      "d_piqs": 0.0
+      "my_psr": 20.0,
+      "my_cpc": 14.29,
+      "my_piqs": 17.71,
+      "d_psr": 20.0,
+      "d_cpc": 21.42,
+      "d_piqs": 20.58
     },
     {
       "case_study": "POSS",
@@ -2214,12 +2214,12 @@
       "kim_psr": 40.0,
       "kim_cpc": 35.71,
       "kim_piqs": 38.29,
-      "my_psr": 40.0,
-      "my_cpc": 35.71,
-      "my_piqs": 38.29,
-      "d_psr": 0.0,
-      "d_cpc": 0.0,
-      "d_piqs": 0.0
+      "my_psr": 20.0,
+      "my_cpc": 14.29,
+      "my_piqs": 17.71,
+      "d_psr": 20.0,
+      "d_cpc": 21.42,
+      "d_piqs": 20.58
     },
     {
       "case_study": "POSS",
@@ -2641,9 +2641,9 @@
     },
     "C3": {
       "tested": 5,
-      "agreed": 5,
-      "agreement_pct": 100.0,
-      "reliable": true
+      "agreed": 3,
+      "agreement_pct": 60.0,
+      "reliable": false
     },
     "C4": {
       "tested": 5,

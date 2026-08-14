@@ -474,7 +474,7 @@
           "weight": 3,
           "satisfaction": 1,
           "satisfied": true,
-          "justification": "Composite type exists."
+          "justification": "Composite type exists -- a concrete component that holds a collection of the component type and accepts a child of that type into it."
         },
         "C4": {
           "weight": 3,
@@ -508,7 +508,7 @@
         "isComponent(x)": true,
         "hasChildren(x)": true,
         "isAddChild(m)": true,
-        "isRemoveChild(m)": true,
+        "isRemoveChild(m)": false,
         "containsComponent(x,y)": true,
         "isComposite(x)": true,
         "isLeaf(x)": true
@@ -716,7 +716,7 @@
           "weight": 3,
           "satisfaction": 1,
           "satisfied": true,
-          "justification": "Composite type exists."
+          "justification": "Composite type exists -- a concrete component that holds a collection of the component type and accepts a child of that type into it."
         },
         "C4": {
           "weight": 3,
@@ -956,9 +956,9 @@
         },
         "C3": {
           "weight": 3,
-          "satisfaction": 1,
-          "satisfied": true,
-          "justification": "Composite type exists."
+          "satisfaction": 0,
+          "satisfied": false,
+          "justification": "Composite type exists -- a concrete component that holds a collection of the component type and accepts a child of that type into it."
         },
         "C4": {
           "weight": 3,
@@ -973,12 +973,12 @@
           "justification": "Uniform composite/leaf treatment is possible."
         }
       },
-      "psr": 40.0,
-      "cpc": 35.71,
-      "piqs": 38.29,
-      "psr_formula": "(2/5)*100",
-      "cpc_formula": "(5/14)*100",
-      "piqs_formula": "(40.0*0.6)+(35.71*0.4)",
+      "psr": 20.0,
+      "cpc": 14.29,
+      "piqs": 17.71,
+      "psr_formula": "(1/5)*100",
+      "cpc_formula": "(2/14)*100",
+      "piqs_formula": "(20.0*0.6)+(14.29*0.4)",
       "base_predicates": {
         "isAbstract(x)": true,
         "isConcrete(x)": true,
@@ -990,11 +990,11 @@
       },
       "derived_predicates": {
         "isComponent(x)": true,
-        "hasChildren(x)": true,
-        "isAddChild(m)": true,
+        "hasChildren(x)": false,
+        "isAddChild(m)": false,
         "isRemoveChild(m)": false,
         "containsComponent(x,y)": false,
-        "isComposite(x)": true,
+        "isComposite(x)": false,
         "isLeaf(x)": true
       },
       "grade": "Poor"
@@ -1198,9 +1198,9 @@
         },
         "C3": {
           "weight": 3,
-          "satisfaction": 1,
-          "satisfied": true,
-          "justification": "Composite type exists."
+          "satisfaction": 0,
+          "satisfied": false,
+          "justification": "Composite type exists -- a concrete component that holds a collection of the component type and accepts a child of that type into it."
         },
         "C4": {
           "weight": 3,
@@ -1215,12 +1215,12 @@
           "justification": "Uniform composite/leaf treatment is possible."
         }
       },
-      "psr": 40.0,
-      "cpc": 35.71,
-      "piqs": 38.29,
-      "psr_formula": "(2/5)*100",
-      "cpc_formula": "(5/14)*100",
-      "piqs_formula": "(40.0*0.6)+(35.71*0.4)",
+      "psr": 20.0,
+      "cpc": 14.29,
+      "piqs": 17.71,
+      "psr_formula": "(1/5)*100",
+      "cpc_formula": "(2/14)*100",
+      "piqs_formula": "(20.0*0.6)+(14.29*0.4)",
       "base_predicates": {
         "isAbstract(x)": true,
         "isConcrete(x)": true,
@@ -1232,11 +1232,11 @@
       },
       "derived_predicates": {
         "isComponent(x)": true,
-        "hasChildren(x)": true,
-        "isAddChild(m)": true,
+        "hasChildren(x)": false,
+        "isAddChild(m)": false,
         "isRemoveChild(m)": false,
         "containsComponent(x,y)": false,
-        "isComposite(x)": true,
+        "isComposite(x)": false,
         "isLeaf(x)": true
       },
       "grade": "Poor"
@@ -1442,7 +1442,7 @@
           "weight": 3,
           "satisfaction": 1,
           "satisfied": true,
-          "justification": "Composite type exists."
+          "justification": "Composite type exists -- a concrete component that holds a collection of the component type and accepts a child of that type into it."
         },
         "C4": {
           "weight": 3,
@@ -1476,7 +1476,7 @@
         "isComponent(x)": true,
         "hasChildren(x)": true,
         "isAddChild(m)": true,
-        "isRemoveChild(m)": true,
+        "isRemoveChild(m)": false,
         "containsComponent(x,y)": true,
         "isComposite(x)": true,
         "isLeaf(x)": true

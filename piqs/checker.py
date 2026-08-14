@@ -860,16 +860,89 @@ class PIQSChecker:
 
         # Fix G: recognise add/remove operations by whole-token camelCase verb prefix
         # (add, addChild, addComponent) -- not by substring ("add" also occurs in "address").
+        # STILL NAME-BASED, and deliberately left so: `isAdd`/`isRemove` are evidence-trace
+        # entries in `base`, recorded by run_scorer.py and read by nothing. No verdict uses them.
         is_add = any(self._has_verb_prefix(m.name, "add") for t in concrete_components for m in t.methods)
         is_remove = any(self._has_verb_prefix(m.name, "remove") for t in concrete_components for m in t.methods)
 
         accepts_exists = any(any(pt in component_names for pt in m.param_types) for t in concrete_components for m in t.methods)
 
-        composites = [
-            t
-            for t in concrete_components
-            if any(self._has_verb_prefix(m.name, "add") or self._has_verb_prefix(m.name, "remove") for m in t.methods)
-        ]
+        elem_re = re.compile(
+            r"\b(?:List|Set|Collection|ArrayList|LinkedList|HashSet|CopyOnWriteArrayList|Vector)"
+            r"\s*<\s*([A-Za-z_][A-Za-z0-9_]*)\s*>"
+        )
+        # As `elem_re`, but also capturing the FIELD NAME, because C3 has to check that the
+        # collection a child is added to is the same collection the type holds. `elem_re` alone
+        # cannot: it matches the type argument wherever it appears, including in a return type.
+        child_field_re = re.compile(
+            r"\b(?:List|Set|Collection|ArrayList|LinkedList|HashSet|CopyOnWriteArrayList|Vector)"
+            r"\s*<\s*([A-Za-z_][A-Za-z0-9_]*)\s*>\s+([A-Za-z_][A-Za-z0-9_]*)"
+        )
+
+        # Fix D: a REAL Composite requires an actual part-whole hierarchy, not merely the
+        # presence of some interface. For each abstract component, a COMPOSITE is a concrete
+        # implementor that HOLDS A COLLECTION of that component type; a LEAF is a concrete
+        # implementor that does not. C1/C4/C5 fire only when such a real hierarchy exists,
+        # so programs whose only interfaces are Strategy/Observer (no part-whole structure)
+        # no longer produce spurious component/composite detections.
+        real_components = []
+        for comp in abstract_components:
+            impls = [
+                t
+                for t in types.values()
+                if t.kind == "class"
+                and not t.is_abstract
+                and (t.extends == comp.name or comp.name in t.implements)
+            ]
+            comp_composites = [t for t in impls if comp.name in elem_re.findall(t.body)]
+            comp_leaves = [t for t in impls if t not in comp_composites]
+            if comp_composites:
+                real_components.append((comp, comp_composites, comp_leaves))
+
+        def _manages_children(holder: JavaType, component_name: str, fields: set[str]) -> bool:
+            """Does `holder` let a caller put a child INTO its own child collection?
+
+            A method whose PARAMETER TYPE is the component type, which operates on one of the
+            component-typed collection fields or assigns it. Same shape as Observer's
+            registration check, and for the same reason: "holds a collection" alone does not
+            make a whole -- the whole has to accept parts.
+            """
+            return any(
+                component_name in mm.param_types
+                and (
+                    any(receiver in fields for (receiver, _name) in mm.calls)
+                    or bool(fields & mm.assignments)
+                )
+                for mm in holder.methods
+            )
+
+        # C3, STRUCTURALLY. This used to be "a concrete component declaring a method whose name
+        # begins with the token `add` or `remove`" -- so `Register implements InventoryObserver`
+        # with `addSale()` and a `List<Sale>` scored as a Composite in POSS/Copilot and
+        # POSS/Gemini, two programs that contain no Composite at all. Their own C1 says so: no
+        # abstract component exists, yet a composite type was reported.
+        #
+        # A composite is a concrete type that conforms to an abstract component, HOLDS a
+        # collection of that component type, and ACCEPTS a child of that type into it. All three
+        # come from declarations -- conformance, a field's type argument, a parameter's type --
+        # and none from a method name. `add` and `addComponent` both qualify; so does `graft`.
+        #
+        # ONE CONSTRUCTION SITE, and it reuses `real_components`, which C1/C4/C5 already read.
+        # The old code held TWO definitions of "composite" in this one function: this name-based
+        # list, and `comp_composites` inside `real_components`. That is why C3 could be 1 while
+        # C1 and C4 were 0 for the same program.
+        composites = list(
+            {
+                t.name: t
+                for (comp, comp_composites, _comp_leaves) in real_components
+                for t in comp_composites
+                if _manages_children(
+                    t,
+                    comp.name,
+                    {n for (e, n) in child_field_re.findall(t.body) if e == comp.name},
+                )
+            }.values()
+        )
         leaves = [t for t in concrete_components if t not in composites]
 
         has_children = any(re.search(r"\b(List|Set|Collection)<", t.body) for t in composites)
@@ -900,31 +973,6 @@ class PIQSChecker:
             "isLeaf(x)": bool(leaves),
         }
 
-        # Fix D: a REAL Composite requires an actual part-whole hierarchy, not merely the
-        # presence of some interface. For each abstract component, a COMPOSITE is a concrete
-        # implementor that HOLDS A COLLECTION of that component type; a LEAF is a concrete
-        # implementor that does not. C1/C4/C5 fire only when such a real hierarchy exists,
-        # so programs whose only interfaces are Strategy/Observer (no part-whole structure)
-        # no longer produce spurious component/composite detections. C2/C3 keep their prior
-        # (already-100%-agreeing) behaviour.
-        elem_re = re.compile(
-            r"\b(?:List|Set|Collection|ArrayList|LinkedList|HashSet|CopyOnWriteArrayList|Vector)"
-            r"\s*<\s*([A-Za-z_][A-Za-z0-9_]*)\s*>"
-        )
-        real_components = []
-        for comp in abstract_components:
-            impls = [
-                t
-                for t in types.values()
-                if t.kind == "class"
-                and not t.is_abstract
-                and (t.extends == comp.name or comp.name in t.implements)
-            ]
-            comp_composites = [t for t in impls if comp.name in elem_re.findall(t.body)]
-            comp_leaves = [t for t in impls if t not in comp_composites]
-            if comp_composites:
-                real_components.append((comp, comp_composites, comp_leaves))
-
         real_c5 = False
         for comp, comp_composites, comp_leaves in real_components:
             if comp_composites and comp_leaves:
@@ -944,7 +992,13 @@ class PIQSChecker:
         rows = [
             self._row("C1", 3, c1, "Abstract component exists."),
             self._row("C2", 2, c2, "Leaf type exists."),
-            self._row("C3", 3, c3, "Composite type exists."),
+            self._row(
+                "C3",
+                3,
+                c3,
+                "Composite type exists -- a concrete component that holds a collection of the "
+                "component type and accepts a child of that type into it.",
+            ),
             self._row("C4", 3, c4, "Composite and leaf implement component."),
             self._row("C5", 3, c5, "Uniform composite/leaf treatment is possible."),
         ]
