@@ -993,8 +993,50 @@ class PIQSChecker:
         # `notifies_loop` / `notifies_single`: O1 asks which type plays the abstract Subject
         # role, and a bool discards the only fact that can answer it -- WHO notified. The two
         # bools are re-derived below, so O3 is unaffected by the change of representation.
-        loop_notifications: list[tuple[JavaType, str]] = []
-        single_notifications: list[tuple[JavaType, str]] = []
+        # (notifying type, observer type name, the field notified THROUGH). The field is carried
+        # because O3 must check that the collection being iterated is the same one registration
+        # writes to -- see `_is_maintained`.
+        loop_notifications: list[tuple[JavaType, str, str]] = []
+        single_notifications: list[tuple[JavaType, str, str]] = []
+
+        def _is_maintained(holder: JavaType, observer_name: str, field_name: str) -> bool:
+            """Does `holder` let observers REGISTER into `field_name` at runtime?
+
+            O3's published sentence has always been "Subject notifies all REGISTERED observers",
+            and nothing in the code ever checked the registered half. Without it O3 was "a loop
+            over a collection calls a method on each element", which a shopping cart totalling
+            line items satisfies -- three of eleven points, critical weight, free in every
+            experimental condition.
+
+            REGISTRATION IS: a method whose parameter type is the observer type, which either
+            operates on that field or assigns it. One definition covers both branches -- a
+            collection is added to (`sinks.add(f)`, a call whose RECEIVER is the field), a single
+            held observer is assigned (`this.sink = f`). Writing two rules would have left the
+            single-observer branch gated by a rule authored only for collections.
+
+            THE PARAMETER TYPE MUST BE THE OBSERVER TYPE, NOT THE COLLECTION. `setSinks(List<Feed>)`
+            and `Station(List<Feed>)` replace the whole dependent set wholesale; no individual
+            observer can subscribe or unsubscribe. The Strict General Rules require "a
+            registration mechanism adds/removes observers at runtime" and name "the set and
+            identity of dependents at runtime" as what varies. A list fixed at construction has
+            no runtime dependent set.
+
+            THE FIELD IDENTITY IS THE WHOLE CONTENT OF THE RULE. "Some method taking the element
+            type touches some collection" passes a program that registers into `spare` and
+            notifies `sinks`, where nobody who registers is ever notified. Pinned by
+            o3_registration_into_a_different_collection.java.
+
+            NO NAME IS READ. The parameter type comes from the method's own declaration and the
+            field name from the holder's own field, compared to each other. Renaming moves both.
+            """
+            return any(
+                observer_name in mm.param_types
+                and (
+                    any(receiver == field_name for (receiver, _name) in mm.calls)
+                    or field_name in mm.assignments
+                )
+                for mm in holder.methods
+            )
 
         def _is_child_traversal(holder: JavaType, method: JavaMethod, elem_name: str) -> bool:
             """A COMPOSITE walking its children, which is not a subject notifying observers.
@@ -1067,13 +1109,15 @@ class PIQSChecker:
                     elem = coll_fields.get(coll)
                     if not elem or elem not in types:
                         continue
+                    if not types[elem].is_abstract:
+                        continue
                     if _is_child_traversal(t, m, elem):
                         continue
                     calls = re.findall(r"\b" + re.escape(var) + r"\.([A-Za-z_][A-Za-z0-9_]*)\s*\(", body)
                     if calls:
                         observer_type_names.add(elem)
                         callback_names.update(calls)
-                        loop_notifications.append((t, elem))
+                        loop_notifications.append((t, elem, coll))
                 # (a2) Phase 2 step 3: loop forms the enhanced-for regex above cannot express.
                 # The parser reports (collection, callback); the element type is resolved HERE,
                 # from the same `coll_fields` the enhanced-for branch uses, so no new way of
@@ -1090,11 +1134,13 @@ class PIQSChecker:
                     # accepted, because narrower is safe where the corpus cannot decide.
                     if qual is not None and qual != elem:
                         continue
+                    if not types[elem].is_abstract:
+                        continue
                     if _is_child_traversal(t, m, elem):
                         continue
                     observer_type_names.add(elem)
                     callback_names.add(cb)
-                    loop_notifications.append((t, elem))
+                    loop_notifications.append((t, elem, coll))
                 # (b) single held observer of an abstract type that has a concrete impl
                 for fname, ftype in single_obs_fields.items():
                     has_impl = any(
@@ -1108,12 +1154,22 @@ class PIQSChecker:
                     if calls:
                         observer_type_names.add(ftype)
                         callback_names.update(calls)
-                        single_notifications.append((t, ftype))
+                        single_notifications.append((t, ftype, fname))
 
         # Re-derived from the notification sites, so every predicate below that used to read
         # these bools is bit-identical unless a notification was actually added or removed.
         notifies_loop = bool(loop_notifications)
         notifies_single = bool(single_notifications)
+
+        # The REGISTERED subset -- notification sites whose field is also the one observers
+        # register into. This is O3; `notifies_observers` above stays the raw "does it notify at
+        # all", which is honest evidence and is what keeps the two claims distinguishable in the
+        # predicate trace: a constructor-injected subject notifies but registers nobody.
+        registered_notifications = [
+            (holder, observer_name, field_name)
+            for (holder, observer_name, field_name) in loop_notifications + single_notifications
+            if _is_maintained(holder, observer_name, field_name)
+        ]
 
         observer_type_objs = [types[n] for n in observer_type_names if n in types]
         # Fix J (framework-inheritance policy): the observer role is whatever the source
@@ -1163,7 +1219,7 @@ class PIQSChecker:
         subject_candidates = list(
             {
                 cand.name: cand
-                for holder, observer_name in loop_notifications + single_notifications
+                for holder, observer_name, _field in loop_notifications + single_notifications
                 for cand in (
                     holder,
                     *(
@@ -1253,9 +1309,15 @@ class PIQSChecker:
         # The detector survives as a flag on the result, never as a verdict.
         o1 = any(t.is_abstract for t in subject_candidates)
         o2 = any(t.is_abstract for t in observer_type_objs)
-        # O3: the subject actually notifies observers -- collection loop or single held
-        #     observer -- regardless of the callback's name (Fix A).
-        o3 = notifies_observers
+        # O3: the subject notifies its REGISTERED observers -- it iterates the same field that
+        #     observers register themselves into, regardless of the callback's name (Fix A).
+        #     The raw "does it notify at all" is `notifies_observers`, and it is NOT enough: a
+        #     shopping cart totalling line items satisfied it, for 3 critical points of 11.
+        #     O3 => O2, and O2 does NOT imply O3 -- a constructor-injected subject has an
+        #     abstract observer role and no registration. That strictness is what keeps the two
+        #     properties from becoming one rule under two names, which would put the same
+        #     sentence twice into the generated prompt.
+        o3 = bool(registered_notifications)
         # O4: concrete observers implement the callback (any name) / the JDK Observer.
         o4 = observers_update
 
@@ -1267,8 +1329,20 @@ class PIQSChecker:
                 "At least one abstract subject exists -- a notifying type has an abstract "
                 "supertype declaring a method that takes the observer type.",
             ),
-            self._row("O2", 3, o2, "At least one abstract observer exists."),
-            self._row("O3", 3, o3, "Subject notifies all registered observers."),
+            self._row(
+                "O2",
+                3,
+                o2,
+                "At least one abstract observer exists -- an interface or abstract class "
+                "that is the element type of a notification.",
+            ),
+            self._row(
+                "O3",
+                3,
+                o3,
+                "Subject notifies all registered observers -- it iterates the same "
+                "observer-typed field that observers register themselves into.",
+            ),
             self._row("O4", 3, o4, "Observers implement update behavior."),
         ]
         return base, derived, rows

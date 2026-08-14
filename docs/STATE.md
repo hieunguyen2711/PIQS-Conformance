@@ -112,7 +112,7 @@ reports the FACTS the parser extracts, so a parser regression is visible even wh
 moves — which is exactly the situation Step 3 creates:
 
 ```bash
-.venv/bin/python3 validation/golden_facts.py --check    # 233 files, 406 types, 761 methods
+.venv/bin/python3 validation/golden_facts.py --check    # 239 files, 423 types, 784 methods
 ```
 
 | Suite | Baseline |
@@ -122,8 +122,8 @@ moves — which is exactly the situation Step 3 creates:
 | Mutation battery | 12/12 |
 | BDT battery | 28/28 + 5/5 D6 |
 | Renaming invariance failures | **5** (5 × `C3`) |
-| pytest | **268 passed, 5 failed** (273 collected), **0 warnings** |
-| Golden facts (`--check`) | 233 files, 406 types, 761 methods, 0 differences |
+| pytest | **285 passed, 5 failed** (290 collected), **0 warnings** |
+| Golden facts (`--check`) | 239 files, 423 types, 784 methods, 0 differences |
 
 **Kim agreement went DOWN by one cell in Stage 3, and that is the improvement.** `SWS/Copilot O1`
 moved 1 → 0. Its old 1 came from `TransactionObserver` -- the OBSERVER interface -- being
@@ -148,7 +148,7 @@ the three observer failures are gone.
 
 **KNOWN BLIND SPOT — `tests/fixtures_parser/` is outside the invariance suite.** `iter_cases()`
 in `tests/test_renaming_invariance.py` enumerates the two battery directories and the Kim corpus
-only, so nothing under `tests/fixtures_parser/` is ever renamed. That directory now holds 48
+only, so nothing under `tests/fixtures_parser/` is ever renamed. That directory now holds 54
 files, including every loop-form, `this.`-receiver and `O1` fixture. The invariance suite is this
 instrument's main proof, so a fixture directory outside its reach is a real gap: a fixture can
 pin a name-dependent verdict and no suite will say so. `tests/test_o1_structural.py` calls the

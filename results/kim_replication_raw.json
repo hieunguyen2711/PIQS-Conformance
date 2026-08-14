@@ -531,13 +531,13 @@
           "weight": 3,
           "satisfaction": 1,
           "satisfied": true,
-          "justification": "At least one abstract observer exists."
+          "justification": "At least one abstract observer exists -- an interface or abstract class that is the element type of a notification."
         },
         "O3": {
           "weight": 3,
           "satisfaction": 1,
           "satisfied": true,
-          "justification": "Subject notifies all registered observers."
+          "justification": "Subject notifies all registered observers -- it iterates the same observer-typed field that observers register themselves into."
         },
         "O4": {
           "weight": 3,
@@ -773,13 +773,13 @@
           "weight": 3,
           "satisfaction": 1,
           "satisfied": true,
-          "justification": "At least one abstract observer exists."
+          "justification": "At least one abstract observer exists -- an interface or abstract class that is the element type of a notification."
         },
         "O3": {
           "weight": 3,
           "satisfaction": 1,
           "satisfied": true,
-          "justification": "Subject notifies all registered observers."
+          "justification": "Subject notifies all registered observers -- it iterates the same observer-typed field that observers register themselves into."
         },
         "O4": {
           "weight": 3,
@@ -1015,13 +1015,13 @@
           "weight": 3,
           "satisfaction": 1,
           "satisfied": true,
-          "justification": "At least one abstract observer exists."
+          "justification": "At least one abstract observer exists -- an interface or abstract class that is the element type of a notification."
         },
         "O3": {
           "weight": 3,
           "satisfaction": 1,
           "satisfied": true,
-          "justification": "Subject notifies all registered observers."
+          "justification": "Subject notifies all registered observers -- it iterates the same observer-typed field that observers register themselves into."
         },
         "O4": {
           "weight": 3,
@@ -1257,13 +1257,13 @@
           "weight": 3,
           "satisfaction": 1,
           "satisfied": true,
-          "justification": "At least one abstract observer exists."
+          "justification": "At least one abstract observer exists -- an interface or abstract class that is the element type of a notification."
         },
         "O3": {
           "weight": 3,
           "satisfaction": 1,
           "satisfied": true,
-          "justification": "Subject notifies all registered observers."
+          "justification": "Subject notifies all registered observers -- it iterates the same observer-typed field that observers register themselves into."
         },
         "O4": {
           "weight": 3,
@@ -1499,13 +1499,13 @@
           "weight": 3,
           "satisfaction": 1,
           "satisfied": true,
-          "justification": "At least one abstract observer exists."
+          "justification": "At least one abstract observer exists -- an interface or abstract class that is the element type of a notification."
         },
         "O3": {
           "weight": 3,
           "satisfaction": 1,
           "satisfied": true,
-          "justification": "Subject notifies all registered observers."
+          "justification": "Subject notifies all registered observers -- it iterates the same observer-typed field that observers register themselves into."
         },
         "O4": {
           "weight": 3,
@@ -1715,13 +1715,13 @@
           "weight": 3,
           "satisfaction": 1,
           "satisfied": true,
-          "justification": "At least one abstract observer exists."
+          "justification": "At least one abstract observer exists -- an interface or abstract class that is the element type of a notification."
         },
         "O3": {
           "weight": 3,
           "satisfaction": 1,
           "satisfied": true,
-          "justification": "Subject notifies all registered observers."
+          "justification": "Subject notifies all registered observers -- it iterates the same observer-typed field that observers register themselves into."
         },
         "O4": {
           "weight": 3,
@@ -1931,13 +1931,13 @@
           "weight": 3,
           "satisfaction": 1,
           "satisfied": true,
-          "justification": "At least one abstract observer exists."
+          "justification": "At least one abstract observer exists -- an interface or abstract class that is the element type of a notification."
         },
         "O3": {
           "weight": 3,
           "satisfaction": 1,
           "satisfied": true,
-          "justification": "Subject notifies all registered observers."
+          "justification": "Subject notifies all registered observers -- it iterates the same observer-typed field that observers register themselves into."
         },
         "O4": {
           "weight": 3,
@@ -2147,13 +2147,13 @@
           "weight": 3,
           "satisfaction": 1,
           "satisfied": true,
-          "justification": "At least one abstract observer exists."
+          "justification": "At least one abstract observer exists -- an interface or abstract class that is the element type of a notification."
         },
         "O3": {
           "weight": 3,
           "satisfaction": 1,
           "satisfied": true,
-          "justification": "Subject notifies all registered observers."
+          "justification": "Subject notifies all registered observers -- it iterates the same observer-typed field that observers register themselves into."
         },
         "O4": {
           "weight": 3,
@@ -2363,13 +2363,13 @@
           "weight": 3,
           "satisfaction": 1,
           "satisfied": true,
-          "justification": "At least one abstract observer exists."
+          "justification": "At least one abstract observer exists -- an interface or abstract class that is the element type of a notification."
         },
         "O3": {
           "weight": 3,
           "satisfaction": 1,
           "satisfied": true,
-          "justification": "Subject notifies all registered observers."
+          "justification": "Subject notifies all registered observers -- it iterates the same observer-typed field that observers register themselves into."
         },
         "O4": {
           "weight": 3,
@@ -2579,13 +2579,13 @@
           "weight": 3,
           "satisfaction": 0,
           "satisfied": false,
-          "justification": "At least one abstract observer exists."
+          "justification": "At least one abstract observer exists -- an interface or abstract class that is the element type of a notification."
         },
         "O3": {
           "weight": 3,
           "satisfaction": 0,
           "satisfied": false,
-          "justification": "Subject notifies all registered observers."
+          "justification": "Subject notifies all registered observers -- it iterates the same observer-typed field that observers register themselves into."
         },
         "O4": {
           "weight": 3,

@@ -32446,6 +32446,943 @@
    "name": "Station"
   }
  },
+ "tests/fixtures_parser/o3_cart_aggregation_is_not_notification.java": {
+  "Cart": {
+   "body": {
+    "len": 266,
+    "sha256": "27e599454fad43a7"
+   },
+   "extends": null,
+   "fields": [
+    {
+     "field_type": "List",
+     "modifiers": [
+      "private"
+     ],
+     "name": "lines"
+    }
+   ],
+   "implements": [],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 27,
+      "sha256": "4851fab67f19f8a5"
+     },
+     "calls": [
+      [
+       "lines",
+       "add"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "add",
+      "l",
+      "lines"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "add",
+     "owner": "Cart",
+     "param_names": [
+      "l"
+     ],
+     "param_types": [
+      "LineItem"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 121,
+      "sha256": "38d07d69f4ed96bc"
+     },
+     "calls": [
+      [
+       "l",
+       "getSubTotal"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {
+      "l": "LineItem",
+      "t": "int"
+     },
+     "mentions": [
+      "LineItem",
+      "getSubTotal",
+      "l",
+      "lines",
+      "t"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "total",
+     "owner": "Cart",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "int",
+     "traversals": []
+    }
+   ],
+   "name": "Cart"
+  },
+  "LineItem": {
+   "body": {
+    "len": 80,
+    "sha256": "06b7c4a27ec77f67"
+   },
+   "extends": null,
+   "fields": [
+    {
+     "field_type": "int",
+     "modifiers": [
+      "private"
+     ],
+     "name": "amt"
+    }
+   ],
+   "implements": [],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 25,
+      "sha256": "b9e01e768af231ef"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "amt"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "getSubTotal",
+     "owner": "LineItem",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "int",
+     "traversals": []
+    }
+   ],
+   "name": "LineItem"
+  }
+ },
+ "tests/fixtures_parser/o3_constructor_injected_never_registered.java": {
+  "Display": {
+   "body": {
+    "len": 32,
+    "sha256": "674653d7cd15630e"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [
+    "Feed"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 5,
+      "sha256": "4dc501d66cd78903"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [
+      "public"
+     ],
+     "name": "ping",
+     "owner": "Display",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Display"
+  },
+  "Feed": {
+   "body": {
+    "len": 18,
+    "sha256": "3186ab2552a0cd1e"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "ping",
+     "owner": "Feed",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Feed"
+  },
+  "Station": {
+   "body": {
+    "len": 195,
+    "sha256": "4b2fccfe8298a249"
+   },
+   "extends": null,
+   "fields": [
+    {
+     "field_type": "List",
+     "modifiers": [
+      "private"
+     ],
+     "name": "sinks"
+    }
+   ],
+   "implements": [],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [
+      "sinks"
+     ],
+     "body": {
+      "len": 29,
+      "sha256": "d858322ad1d403a5"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": true,
+     "locals": {},
+     "mentions": [
+      "s",
+      "sinks",
+      "this"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "Station",
+     "owner": "Station",
+     "param_names": [
+      "s"
+     ],
+     "param_types": [
+      "List"
+     ],
+     "return_type": null,
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 68,
+      "sha256": "f0d306b68f17b63f"
+     },
+     "calls": [
+      [
+       "f",
+       "ping"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {
+      "f": "Feed"
+     },
+     "mentions": [
+      "Feed",
+      "f",
+      "ping",
+      "sinks"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "publish",
+     "owner": "Station",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Station"
+  }
+ },
+ "tests/fixtures_parser/o3_registration_into_a_different_collection.java": {
+  "Display": {
+   "body": {
+    "len": 32,
+    "sha256": "674653d7cd15630e"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [
+    "Feed"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 5,
+      "sha256": "4dc501d66cd78903"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [
+      "public"
+     ],
+     "name": "ping",
+     "owner": "Display",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Display"
+  },
+  "Feed": {
+   "body": {
+    "len": 18,
+    "sha256": "3186ab2552a0cd1e"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "ping",
+     "owner": "Feed",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Feed"
+  },
+  "Station": {
+   "body": {
+    "len": 260,
+    "sha256": "c61f523539de7f30"
+   },
+   "extends": null,
+   "fields": [
+    {
+     "field_type": "List",
+     "modifiers": [
+      "private"
+     ],
+     "name": "sinks"
+    },
+    {
+     "field_type": "List",
+     "modifiers": [
+      "private"
+     ],
+     "name": "spare"
+    }
+   ],
+   "implements": [],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 27,
+      "sha256": "90ab69dd14e313b9"
+     },
+     "calls": [
+      [
+       "spare",
+       "add"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "add",
+      "f",
+      "spare"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "enrol",
+     "owner": "Station",
+     "param_names": [
+      "f"
+     ],
+     "param_types": [
+      "Feed"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 68,
+      "sha256": "f0d306b68f17b63f"
+     },
+     "calls": [
+      [
+       "f",
+       "ping"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {
+      "f": "Feed"
+     },
+     "mentions": [
+      "Feed",
+      "f",
+      "ping",
+      "sinks"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "publish",
+     "owner": "Station",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Station"
+  }
+ },
+ "tests/fixtures_parser/o3_registration_via_add.java": {
+  "Display": {
+   "body": {
+    "len": 32,
+    "sha256": "674653d7cd15630e"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [
+    "Feed"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 5,
+      "sha256": "4dc501d66cd78903"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [
+      "public"
+     ],
+     "name": "ping",
+     "owner": "Display",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Display"
+  },
+  "Feed": {
+   "body": {
+    "len": 18,
+    "sha256": "3186ab2552a0cd1e"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "ping",
+     "owner": "Feed",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Feed"
+  },
+  "Station": {
+   "body": {
+    "len": 210,
+    "sha256": "8f6b8ab2d51e2c67"
+   },
+   "extends": null,
+   "fields": [
+    {
+     "field_type": "List",
+     "modifiers": [
+      "private"
+     ],
+     "name": "sinks"
+    }
+   ],
+   "implements": [],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 27,
+      "sha256": "9298bf3bae60ddb3"
+     },
+     "calls": [
+      [
+       "sinks",
+       "add"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "add",
+      "f",
+      "sinks"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "enrol",
+     "owner": "Station",
+     "param_names": [
+      "f"
+     ],
+     "param_types": [
+      "Feed"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 68,
+      "sha256": "f0d306b68f17b63f"
+     },
+     "calls": [
+      [
+       "f",
+       "ping"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {
+      "f": "Feed"
+     },
+     "mentions": [
+      "Feed",
+      "f",
+      "ping",
+      "sinks"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "publish",
+     "owner": "Station",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Station"
+  }
+ },
+ "tests/fixtures_parser/o3_registration_via_setter_taking_a_list.java": {
+  "Display": {
+   "body": {
+    "len": 32,
+    "sha256": "674653d7cd15630e"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [
+    "Feed"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 5,
+      "sha256": "4dc501d66cd78903"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [
+      "public"
+     ],
+     "name": "ping",
+     "owner": "Display",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Display"
+  },
+  "Feed": {
+   "body": {
+    "len": 18,
+    "sha256": "3186ab2552a0cd1e"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "ping",
+     "owner": "Feed",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Feed"
+  },
+  "Station": {
+   "body": {
+    "len": 221,
+    "sha256": "50daa968cf1ae5e9"
+   },
+   "extends": null,
+   "fields": [
+    {
+     "field_type": "List",
+     "modifiers": [
+      "private"
+     ],
+     "name": "sinks"
+    }
+   ],
+   "implements": [],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [
+      "sinks"
+     ],
+     "body": {
+      "len": 29,
+      "sha256": "d858322ad1d403a5"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "s",
+      "sinks",
+      "this"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "setSinks",
+     "owner": "Station",
+     "param_names": [
+      "s"
+     ],
+     "param_types": [
+      "List"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 68,
+      "sha256": "f0d306b68f17b63f"
+     },
+     "calls": [
+      [
+       "f",
+       "ping"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {
+      "f": "Feed"
+     },
+     "mentions": [
+      "Feed",
+      "f",
+      "ping",
+      "sinks"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "publish",
+     "owner": "Station",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Station"
+  }
+ },
+ "tests/fixtures_parser/o3_single_observer_registered_by_setter.java": {
+  "Display": {
+   "body": {
+    "len": 32,
+    "sha256": "674653d7cd15630e"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [
+    "Feed"
+   ],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 5,
+      "sha256": "4dc501d66cd78903"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [
+      "public"
+     ],
+     "name": "ping",
+     "owner": "Display",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Display"
+  },
+  "Feed": {
+   "body": {
+    "len": 18,
+    "sha256": "3186ab2552a0cd1e"
+   },
+   "extends": null,
+   "fields": [],
+   "implements": [],
+   "is_abstract": true,
+   "kind": "interface",
+   "methods": [
+    {
+     "assignments": [],
+     "body": {
+      "len": 0,
+      "sha256": "e3b0c44298fc1c14"
+     },
+     "calls": [],
+     "has_body": false,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [],
+     "modifiers": [],
+     "name": "ping",
+     "owner": "Feed",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Feed"
+  },
+  "Station": {
+   "body": {
+    "len": 142,
+    "sha256": "f868ff99f0de05be"
+   },
+   "extends": null,
+   "fields": [
+    {
+     "field_type": "Feed",
+     "modifiers": [
+      "private"
+     ],
+     "name": "sink"
+    }
+   ],
+   "implements": [],
+   "is_abstract": false,
+   "kind": "class",
+   "methods": [
+    {
+     "assignments": [
+      "sink"
+     ],
+     "body": {
+      "len": 28,
+      "sha256": "96bc043466f78893"
+     },
+     "calls": [],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "f",
+      "sink",
+      "this"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "enrol",
+     "owner": "Station",
+     "param_names": [
+      "f"
+     ],
+     "param_types": [
+      "Feed"
+     ],
+     "return_type": "void",
+     "traversals": []
+    },
+    {
+     "assignments": [],
+     "body": {
+      "len": 26,
+      "sha256": "c541c4a926900cbd"
+     },
+     "calls": [
+      [
+       "sink",
+       "ping"
+      ]
+     ],
+     "has_body": true,
+     "is_constructor": false,
+     "locals": {},
+     "mentions": [
+      "ping",
+      "sink"
+     ],
+     "modifiers": [
+      "public"
+     ],
+     "name": "publish",
+     "owner": "Station",
+     "param_names": [],
+     "param_types": [],
+     "return_type": "void",
+     "traversals": []
+    }
+   ],
+   "name": "Station"
+  }
+ },
  "tests/fixtures_parser/object_adapter_not_a_decorator.java": {
   "Adapt": {
    "body": {
