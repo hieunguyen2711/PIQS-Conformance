@@ -146,7 +146,8 @@ _LOCAL_RE = re.compile(
     r"(?P<name>" + _IDENT + r")\s*(?:=[^;]*)?;"
 )
 _FOREACH_RE = re.compile(
-    r"\bfor\s*\(\s*(?:final\s+)?" + _IDENT + r"(?:\s*<[^)]*?>)?(?:\s*\[\s*\])*\s+"
+    r"\bfor\s*\(\s*(?:final\s+)?"
+    r"(?P<type>" + _IDENT + r"(?:\s*<[^)]*?>)?(?:\s*\[\s*\])*)\s+"
     r"(?P<name>" + _IDENT + r")\s*:"
 )
 _FORINIT_RE = re.compile(
@@ -154,7 +155,7 @@ _FORINIT_RE = re.compile(
     + r")\s+(?P<name>" + _IDENT + r")\s*="
 )
 _CATCH_RE = re.compile(
-    r"\bcatch\s*\(\s*(?:final\s+)?[\w$.|\s]*?\s+(?P<name>" + _IDENT + r")\s*\)"
+    r"\bcatch\s*\(\s*(?:final\s+)?(?P<type>[\w$.|\s]*?)\s+(?P<name>" + _IDENT + r")\s*\)"
 )
 
 
@@ -256,8 +257,22 @@ def _class_scope_only(body: str) -> str:
     return "".join(out)
 
 
-def _split_params(params: str) -> list[str]:
-    """Parameter names, splitting on top-level commas so generics survive."""
+def _base_type(raw: str) -> str:
+    """The bare type token of a declared type: `List<Node>` -> `List`, `Node[]` -> `Node`,
+    `java.util.Map` -> `Map`. Empty when there is no single type (multi-catch, or a form the
+    declaration regexes matched loosely enough to have caught something that is not a type)."""
+    t = raw.strip()
+    if "|" in t:                                    # multi-catch names no single type
+        return ""
+    t = t.split("<", 1)[0].split("[", 1)[0]
+    toks = _IDENT_RE.findall(t)
+    return toks[-1] if toks else ""                 # last segment of a qualified name
+
+
+def _split_params(params: str) -> list[tuple[str, str]]:
+    """(base type, name) per parameter, splitting on top-level commas so generics survive.
+
+    The type is "" when this parameter's declared type could not be read off cleanly."""
     parts, depth, current = [], 0, []
     for ch in params:
         if ch in "<([":
@@ -274,9 +289,15 @@ def _split_params(params: str) -> list[str]:
 
     out = []
     for raw in parts:
-        toks = [t for t in _IDENT_RE.findall(raw.replace("...", " ")) if t != "final"]
-        if toks:
-            out.append(toks[-1])
+        cleaned = raw.replace("...", " ")
+        toks = [t for t in _IDENT_RE.findall(cleaned) if t != "final"]
+        if not toks:
+            continue
+        name = toks[-1]
+        # Everything left of the name is the declared type. A bare `(int)` with no name at all
+        # yields one token, which _collect discards as a keyword.
+        head = cleaned[: cleaned.rindex(name)] if len(toks) > 1 else ""
+        out.append((_base_type(head), name))
     return out
 
 
@@ -293,6 +314,30 @@ class _Decls:
     fields: set[str] = field(default_factory=set)
     params: set[str] = field(default_factory=set)
     locals: set[str] = field(default_factory=set)
+
+    # Declared types, for resolving what a call receiver is. One table for the whole source
+    # set, keyed by name -- the same by-name basis the rename map itself uses.
+    type_of: dict[str, str] = field(default_factory=dict)          # name -> base declared type
+    ambiguous: set[str] = field(default_factory=set)               # name -> two different types
+    # class -> field name -> base type. "" marks a field name this class declares twice with
+    # different types, which is no more usable than not knowing it at all.
+    fields_of: dict[str, dict[str, str]] = field(default_factory=dict)
+
+    def note_type(self, name: str, raw_type: str) -> None:
+        """Record `name`'s declared type, or mark it ambiguous if it already had another.
+
+        Primitives and the keywords the declaration regexes sometimes catch in place of a type
+        (`return foo;`, `var x = ...`) are not types worth keeping: nothing is ever called on
+        them, so they are dropped rather than allowed to collide with a real declaration."""
+        base = _base_type(raw_type)
+        if not base or base in _KEYWORDS or name in self.ambiguous:
+            return
+        prev = self.type_of.get(name)
+        if prev is None:
+            self.type_of[name] = base
+        elif prev != base:
+            del self.type_of[name]
+            self.ambiguous.add(name)
 
 
 def _collect(masked_sources: list[str]) -> _Decls:
@@ -316,9 +361,17 @@ def _collect(masked_sources: list[str]) -> _Decls:
             body = _extract_block(src, src.index("{", tm.end() - 1))
             owned = d.methods_of.setdefault(name, set())
 
+            own_fields = d.fields_of.setdefault(name, {})
             for fm in _FIELD_RE.finditer(_class_scope_only(body)):
-                if fm.group("name") not in _KEYWORDS:
-                    d.fields.add(fm.group("name"))
+                fname = fm.group("name")
+                if fname in _KEYWORDS:
+                    continue
+                d.fields.add(fname)
+                d.note_type(fname, fm.group("type"))
+                base = _base_type(fm.group("type"))
+                if base and base not in _KEYWORDS:
+                    prev = own_fields.get(fname)
+                    own_fields[fname] = base if prev in (None, base) else ""
 
             for mm in _METHOD_SIG_RE.finditer(body):
                 mname = mm.group("name")
@@ -331,15 +384,19 @@ def _collect(masked_sources: list[str]) -> _Decls:
                 if mname != name:
                     d.methods.add(mname)
                     owned.add(mname)
-                for pname in _split_params(mm.group("params") or ""):
+                for ptype, pname in _split_params(mm.group("params") or ""):
                     if pname not in _KEYWORDS:
                         d.params.add(pname)
+                        d.note_type(pname, ptype)
                 if mm.group("tail") == "{":
                     mbody = _extract_block(body, body.index("{", mm.end() - 1))
                     for rx in (_LOCAL_RE, _FOREACH_RE, _FORINIT_RE, _CATCH_RE):
                         for lm in rx.finditer(mbody):
                             if lm.group("name") not in _KEYWORDS:
                                 d.locals.add(lm.group("name"))
+                                # _FORINIT_RE matches the type but does not capture it: a
+                                # `for (int i = ...)` counter is never a call receiver.
+                                d.note_type(lm.group("name"), lm.groupdict().get("type") or "")
 
     return d
 
