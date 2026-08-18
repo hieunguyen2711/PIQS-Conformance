@@ -24,20 +24,33 @@ rare case where user code declares a type that shadows a JDK name.
 Never touched: Java keywords, JDK names, annotation names, string and character literals,
 comments, and `package` / `import` lines.
 
-## Renaming is by name, not by declaration site
+## Renaming is by name, but decided per call site
 
-Every occurrence of one original name maps to one new name across the whole set. Java is not
-parsed to types here, so `x.foo()` cannot be resolved to a declaration -- renaming by name is
-the only way to keep call sites attached to their targets. Three consequences:
+Every occurrence of one original name maps to one new name across the whole set. Two
+consequences follow, and both are wanted:
 
 * Overrides keep matching names automatically, which Java requires. A method declared in a
   supertype and in a subtype shares one original name, so it shares one new name.
 * Two unrelated classes that both declare `run()` get the same new name. That leaks no
   information and preserves every call.
-* A user method sharing a name with a JDK member it does not override -- a user `add(Node)`
-  in a class that also calls `list.add(n)` -- renames both occurrences. `shadowed_jdk_members`
-  in `RenameMap` records exactly these, so a caller can tell an obfuscator ambiguity apart
-  from a genuine name dependence in whatever consumes the output.
+
+What does *not* follow is that every token spelled `add` is ours. A user `add(Node)` in a
+class that also calls `list.add(n)` used to rename both, turning `kids.add(n)` into
+`f1.m1(n)` -- `List` has no `m1`, so the output did not compile. A renaming tool that changes
+which method is called cannot be used to argue that verdicts are name-independent.
+
+So a token immediately after `.` (or `::`) is renamed only when the receiver's declared type
+is one of ours. `_collect` records the declared type of every name it sees; `_Receivers`
+reads a chain like `this.parent`, `super`, `Type` or `x` and answers user / JDK / unresolved.
+Resolution is global and by name, like the rename map itself, not lexically scoped.
+
+The two ways to get this wrong both emit invalid Java -- renaming a JDK call site, or
+renaming a declaration whose call sites were left behind -- so "skip the occurrence when
+unsure" is not a safe rule. One unresolvable occurrence withholds the name **everywhere**,
+declaration included. That is always valid, and it costs a name the reader can still see:
+`withheld_names` records each one with the reason, and `jdk_member_sites` counts the call
+sites deliberately left alone. Both are read by tests. (`shadowed_jdk_members` predates this
+and only flags a name collision; it never looked at a call site.)
 
 Methods that override something *outside* the given sources keep their names, since the
 supertype cannot be renamed with them: `toString` / `equals` / `hashCode` / `clone` and `main`
@@ -145,6 +158,19 @@ _LOCAL_RE = re.compile(
     r"(?P<type>" + _IDENT + r"(?:\s*<[^;{}]*?>)?(?:\s*\[\s*\])*)\s+"
     r"(?P<name>" + _IDENT + r")\s*(?:=[^;]*)?;"
 )
+# The same declaration, anchored zero-width. `_LOCAL_RE` *consumes* the `;` that ends the
+# previous statement, so `finditer` cannot use that `;` to anchor the next match and every
+# second declaration in a run is missed. Only the type table reads this wider scan: closing
+# the gap in `_LOCAL_RE` itself would change which names are renamed, which is a separate
+# change needing its own evidence. But a missing declaration is worse here than a miss --
+# it is a confidently wrong answer. With `Map<Integer,Integer> inventory` visible in one
+# class and `ItemInventory inventory` invisible in another, `inventory.addInventory(...)`
+# resolves to the JDK, the call site is left behind, and its declaration is renamed anyway.
+_LOCAL_TYPE_RE = re.compile(
+    r"(?:(?<=[;{}])|^)(?:\s|\x00\d+\x00)*(?:final\s+)?"     # a masked comment may sit here
+    r"(?P<type>" + _IDENT + r"(?:\s*<[^;{}]*?>)?(?:\s*\[\s*\])*)\s+"
+    r"(?P<name>" + _IDENT + r")\s*(?:=[^;]*)?;"
+)
 _FOREACH_RE = re.compile(
     r"\bfor\s*\(\s*(?:final\s+)?"
     r"(?P<type>" + _IDENT + r"(?:\s*<[^)]*?>)?(?:\s*\[\s*\])*)\s+"
@@ -230,8 +256,8 @@ def _unmask(masked: str, held: list[str]) -> str:
     return re.sub(r"\x00(\d+)\x00", lambda m: held[int(m.group(1))], masked)
 
 
-def _extract_block(text: str, open_brace_idx: int) -> str:
-    """The text between a `{` and its matching `}`."""
+def _block_end(text: str, open_brace_idx: int) -> int:
+    """Index of the `}` matching the `{` at `open_brace_idx`, or the end of the text."""
     depth = 0
     for i in range(open_brace_idx, len(text)):
         if text[i] == "{":
@@ -239,8 +265,13 @@ def _extract_block(text: str, open_brace_idx: int) -> str:
         elif text[i] == "}":
             depth -= 1
             if depth == 0:
-                return text[open_brace_idx + 1 : i]
-    return text[open_brace_idx + 1 :]
+                return i
+    return len(text)
+
+
+def _extract_block(text: str, open_brace_idx: int) -> str:
+    """The text between a `{` and its matching `}`."""
+    return text[open_brace_idx + 1 : _block_end(text, open_brace_idx)]
 
 
 def _class_scope_only(body: str) -> str:
@@ -319,6 +350,7 @@ class _Decls:
     # set, keyed by name -- the same by-name basis the rename map itself uses.
     type_of: dict[str, str] = field(default_factory=dict)          # name -> base declared type
     ambiguous: set[str] = field(default_factory=set)               # name -> two different types
+    seen_types: dict[str, set[str]] = field(default_factory=dict)  # name -> every type seen
     # class -> field name -> base type. "" marks a field name this class declares twice with
     # different types, which is no more usable than not knowing it at all.
     fields_of: dict[str, dict[str, str]] = field(default_factory=dict)
@@ -330,7 +362,10 @@ class _Decls:
         (`return foo;`, `var x = ...`) are not types worth keeping: nothing is ever called on
         them, so they are dropped rather than allowed to collide with a real declaration."""
         base = _base_type(raw_type)
-        if not base or base in _KEYWORDS or name in self.ambiguous:
+        if not base or base in _KEYWORDS:
+            return
+        self.seen_types.setdefault(name, set()).add(base)
+        if name in self.ambiguous:
             return
         prev = self.type_of.get(name)
         if prev is None:
@@ -397,8 +432,209 @@ def _collect(masked_sources: list[str]) -> _Decls:
                                 # _FORINIT_RE matches the type but does not capture it: a
                                 # `for (int i = ...)` counter is never a call receiver.
                                 d.note_type(lm.group("name"), lm.groupdict().get("type") or "")
+                    # Types only -- see _LOCAL_TYPE_RE. Deliberately not added to d.locals.
+                    for lm in _LOCAL_TYPE_RE.finditer(mbody):
+                        if lm.group("name") not in _KEYWORDS:
+                            d.note_type(lm.group("name"), lm.group("type"))
 
     return d
+
+
+# --------------------------------------------------------------------------------------- #
+# Receiver resolution
+#
+# `kids.add(n)` and `folder.add(n)` are the same three tokens to a regex and opposite answers
+# to a renamer: the first is `java.util.List.add`, the second is ours. What separates them is
+# the declared type of the receiver, which `_collect` now has. Resolution is global and
+# by-name, matching how the rename map itself is built -- one mechanism, not two. Real lexical
+# scoping would be a second mechanism, and a mechanism change that also changes meaning makes
+# any movement in the results ambiguous.
+# --------------------------------------------------------------------------------------- #
+
+USER, JDK, UNRESOLVED = "user", "jdk", "unresolved"
+
+_EXTERNAL = "\x00external"      # a type that is not declared in these sources
+_SOME_USER = "\x00some-user"    # one of ours, but which one is not known
+
+
+def _class_spans(masked: str) -> list[tuple[int, int, str]]:
+    """(body start, body end, type name) for every type declared in one masked source."""
+    spans = []
+    for tm in _TYPE_DECL_RE.finditer(masked):
+        name = tm.group("name")
+        if name in _KEYWORDS:
+            continue
+        open_idx = masked.find("{", tm.end() - 1)
+        if open_idx == -1:
+            continue
+        spans.append((open_idx, _block_end(masked, open_idx), name))
+    return spans
+
+
+def _enclosing_type(spans: list[tuple[int, int, str]], idx: int) -> str | None:
+    """The innermost type whose body contains `idx`."""
+    best: tuple[int, int, str] | None = None
+    for span in spans:
+        if span[0] <= idx <= span[1] and (best is None or span[1] - span[0] < best[1] - best[0]):
+            best = span
+    return best[2] if best else None
+
+
+def _prev_significant(masked: str, held: list[str], i: int) -> tuple[int, str]:
+    """Walk left from `i`, skipping whitespace and masked comments.
+
+    Returns `(index, "char")` for an ordinary character, `(index, "literal")` when a masked
+    string or character literal ends there, or `(-1, "none")` at the start of the text."""
+    while i > 0:
+        j = i - 1
+        ch = masked[j]
+        if ch.isspace():
+            i = j
+            continue
+        if ch == "\x00":
+            start = masked.rfind("\x00", 0, j)
+            text = held[int(masked[start + 1 : j])]
+            if text.startswith("//") or text.startswith("/*"):
+                i = start                       # a comment is not part of any expression
+                continue
+            return start, "literal"
+        return j, "char"
+    return -1, "none"
+
+
+def _receiver_parts(masked: str, held: list[str], i: int) -> list[str] | None:
+    """The receiver chain immediately left of `i`, outermost first.
+
+    `[]` means a string or character literal -- a JDK receiver with no names in it. `None`
+    means the receiver is not a plain chain of names: a call, an index, a parenthesised
+    expression, a cast. Those are unresolvable here by design."""
+    parts: list[str] = []
+    while True:
+        j, kind = _prev_significant(masked, held, i)
+        if kind == "none":
+            return None
+        if kind == "literal":
+            return []
+        end = j + 1
+        while j >= 0 and (masked[j].isalnum() or masked[j] in "_$"):
+            j -= 1
+        tok = masked[j + 1 : end]
+        if not _IDENT_RE.fullmatch(tok) or (tok in _KEYWORDS and tok not in ("this", "super")):
+            return None
+        parts.append(tok)
+        k, kind2 = _prev_significant(masked, held, j + 1)
+        if kind2 != "char" or masked[k] != ".":
+            parts.reverse()
+            return parts
+        i = k
+
+
+def _member_access_at(masked: str, held: list[str], start: int) -> int | None:
+    """The index just left of the `.` or `::` that makes the token at `start` a member
+    access, or None when the token is not one."""
+    j, kind = _prev_significant(masked, held, start)
+    if kind != "char":
+        return None
+    if masked[j] == ".":
+        return j
+    if masked[j] == ":":
+        k, kind2 = _prev_significant(masked, held, j)
+        if kind2 == "char" and masked[k] == ":":        # a `Type::member` method reference
+            return k
+    return None
+
+
+class _Receivers:
+    """Answers one question per call site: is the thing left of the dot one of ours?"""
+
+    def __init__(self, decls: _Decls) -> None:
+        self.d = decls
+        self.declared = decls.fields | decls.params | decls.locals
+
+    def _of_name(self, name: str) -> str | None:
+        """The type a bare name has: a user type name, `_EXTERNAL`, or None when unknown."""
+        if name in self.d.ambiguous:
+            return None
+        base = self.d.type_of.get(name)
+        if base is not None:
+            return base if base in self.d.types else _EXTERNAL
+        if name in self.d.types:
+            return name                     # a static call on one of our types
+        if name in _JDK_NAMES:
+            return _EXTERNAL                # a static call on a JDK type
+        return None                         # declared in a form we could not read, or not here
+
+    def _of_field(self, owner: str, fname: str) -> str | None:
+        """The type of field `fname` on user type `owner`, searching its user supertypes."""
+        seen: set[str] = set()
+        stack = [owner]
+        while stack:
+            cls = stack.pop()
+            if cls in seen:
+                continue
+            seen.add(cls)
+            base = self.d.fields_of.get(cls, {}).get(fname)
+            if base == "":                  # declared twice in this class with two types
+                return None
+            if base:
+                return base if base in self.d.types else _EXTERNAL
+            stack.extend(s for s in self.d.supertypes.get(cls, ()) if s in self.d.types)
+        return None
+
+    def _of_super(self, enclosing: str | None) -> str | None:
+        if enclosing is None:
+            return None
+        supers = self.d.supertypes.get(enclosing) or set()
+        if not supers:
+            return _EXTERNAL                # implicit java.lang.Object
+        user = {s for s in supers if s in self.d.types}
+        if not user:
+            return _EXTERNAL
+        if len(user) != len(supers):
+            return None                     # `extends Ours implements Theirs`: which one?
+        return next(iter(user)) if len(user) == 1 else _SOME_USER
+
+    def verdict(self, masked: str, held: list[str], spans, start: int) -> tuple[str, str]:
+        """`(USER | JDK | UNRESOLVED, reason)` for the member-access token at `start`."""
+        dot = _member_access_at(masked, held, start)
+        if dot is None:
+            return USER, ""                             # not a member access: always renamed
+        parts = _receiver_parts(masked, held, dot)
+        if parts is None:
+            return UNRESOLVED, "receiver is an expression, not a name"
+        if not parts:
+            return JDK, ""                              # a literal receiver
+
+        head, rest = parts[0], parts[1:]
+        if head == "this":
+            cur: str | None = _enclosing_type(spans, start)
+        elif head == "super":
+            cur = self._of_super(_enclosing_type(spans, start))
+        else:
+            cur = self._of_name(head)
+
+        for step in rest:
+            if cur is None:
+                break
+            if cur == _EXTERNAL:
+                return JDK, ""                          # everything under a JDK type is theirs
+            if cur == _SOME_USER:
+                cur = None
+                break
+            cur = self._of_field(cur, step)
+
+        if cur == _EXTERNAL:
+            return JDK, ""
+        if cur == _SOME_USER or (cur is not None and cur in self.d.types):
+            return USER, ""
+
+        chain = ".".join(parts)
+        if head in self.d.ambiguous:
+            kinds = ", ".join(sorted(self.d.seen_types.get(head, ())))
+            return UNRESOLVED, f"ambiguous type for receiver `{chain}`: {kinds}"
+        if head in self.declared:
+            return UNRESOLVED, f"no declared type found for receiver `{chain}`"
+        return UNRESOLVED, f"receiver `{chain}` is not declared in these sources"
 
 
 # --------------------------------------------------------------------------------------- #
@@ -414,6 +650,17 @@ class RenameMap:
     shadowed_jdk_members: dict[str, str] = field(default_factory=dict)
     file_mapping: dict[str, str] = field(default_factory=dict)
 
+    # Names that are renamed nowhere -- not the declaration, not one call site -- because at
+    # least one `.name` occurrence had a receiver that could not be resolved. Each one is a
+    # hole in the name-blindness proof, so each one is named and counted rather than dropped.
+    withheld_names: dict[str, str] = field(default_factory=dict)
+    # name -> how many `.name` sites were left alone because the receiver is not ours.
+    jdk_member_sites: dict[str, int] = field(default_factory=dict)
+
+    # The declarations the mapping was built from, kept so `_apply` can re-ask the receiver
+    # question at each site. Internal.
+    decls: _Decls | None = field(default=None, repr=False, compare=False)
+
     def __len__(self) -> int:
         return len(self.mapping)
 
@@ -424,7 +671,7 @@ def build_rename_map(java_files: dict[str, str]) -> RenameMap:
     d = _collect(masked)
 
     user_types = set(d.types)
-    result = RenameMap()
+    result = RenameMap(decls=d)
 
     def preserve_method(name: str) -> str | None:
         """Reason this method name must keep its name, or None."""
@@ -467,6 +714,8 @@ def build_rename_map(java_files: dict[str, str]) -> RenameMap:
     for name in sorted(d.locals):
         assign(name, "v")
 
+    _withhold_unresolvable(result, java_files)
+
     # Filenames leak names too. The key follows its primary type where there is one.
     used: set[str] = set()
     for fname in sorted(java_files):
@@ -484,10 +733,58 @@ def build_rename_map(java_files: dict[str, str]) -> RenameMap:
     return result
 
 
-def _apply(src: str, mapping: dict[str, str]) -> str:
+def _withhold_unresolvable(result: RenameMap, java_files: dict[str, str]) -> None:
+    """Classify every `.name` site, then drop from the map any name with an unresolvable one.
+
+    Both halves of getting this wrong emit Java that does not compile. Renaming too much turns
+    `kids.add(n)` into `f1.m1(n)`, and `List` has no `m1`. Renaming too little renames the
+    declaration `add` to `m1` and leaves `folder.add(x)` calling a method that no longer
+    exists. So "skip the occurrence when unsure" is not a safe rule: the only safe response to
+    one unresolvable site is to leave the name alone *everywhere*, declaration included.
+
+    That keeps the output valid at the cost of a name the reader can still see. The cost is
+    recorded in `withheld_names` so it can be stated, not discovered later.
+    """
+    rec = _Receivers(result.decls)
+    verdicts: dict[str, str] = {}
+    jdk_hits: dict[str, int] = {}
+
+    for _, src in sorted(java_files.items()):
+        masked, held = _mask(src)
+        spans = _class_spans(masked)
+        for m in _IDENT_RE.finditer(masked):
+            name = m.group(0)
+            if name not in result.mapping:
+                continue
+            kind, why = rec.verdict(masked, held, spans, m.start())
+            if kind == JDK:
+                jdk_hits[name] = jdk_hits.get(name, 0) + 1
+            elif kind == UNRESOLVED and name not in verdicts:
+                verdicts[name] = why
+
+    for name, why in sorted(verdicts.items()):
+        result.withheld_names[name] = why
+        result.mapping.pop(name, None)
+
+    # A withheld name is left alone everywhere, so its JDK sites are not a decision this made.
+    result.jdk_member_sites = {n: c for n, c in sorted(jdk_hits.items()) if n in result.mapping}
+
+
+def _apply(src: str, rmap: RenameMap) -> str:
     masked, held = _mask(src)
-    rewritten = _IDENT_RE.sub(lambda m: mapping.get(m.group(0), m.group(0)), masked)
-    return _unmask(rewritten, held)
+    spans = _class_spans(masked)
+    rec = _Receivers(rmap.decls) if rmap.decls is not None else None
+
+    def rename(m: re.Match) -> str:
+        name = m.group(0)
+        new = rmap.mapping.get(name)
+        if new is None:
+            return name
+        if rec is not None and rec.verdict(masked, held, spans, m.start())[0] != USER:
+            return name                     # a member of something that is not ours
+        return new
+
+    return _unmask(_IDENT_RE.sub(rename, masked), held)
 
 
 def obfuscate(java_files: dict[str, str], *, rename_files: bool = True) -> dict[str, str]:
@@ -498,6 +795,6 @@ def obfuscate(java_files: dict[str, str], *, rename_files: bool = True) -> dict[
     """
     rmap = build_rename_map(java_files)
     return {
-        (rmap.file_mapping.get(fname, fname) if rename_files else fname): _apply(src, rmap.mapping)
+        (rmap.file_mapping.get(fname, fname) if rename_files else fname): _apply(src, rmap)
         for fname, src in java_files.items()
     }
