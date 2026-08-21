@@ -3,6 +3,30 @@
     from piqs.obfuscator import obfuscate
     renamed = obfuscate({"Bus.java": src, "Watcher.java": src2})
 
+## Which implementation runs
+
+`obfuscate` and `build_rename_map` -- the public entry points -- now delegate to
+`piqs.obfuscator_ts`, which reads a tree-sitter parse instead of matching text. The regex
+implementation in this file is unchanged and stays reachable as `obfuscate_regex` /
+`build_rename_map_regex`. It is not dead code: it is the control arm of
+`validation/obfuscator_diff.py`, and "the parser implements the same policy" is a claim that
+needs something to be checked against.
+
+THE POLICY BELOW STILL GOVERNS. `piqs.obfuscator_ts` imports `_KEYWORDS`, `_JDK_NAMES`,
+`_JDK_OVERRIDABLE`, `_ALWAYS_PRESERVE_METHODS`, `_COMMON_JDK_MEMBERS`, `_base_type`, `_Decls`
+and `RenameMap` from this module rather than restating them, so the two cannot drift apart on
+*what* is renamed. Only the reading of the source differs.
+
+Two defects the regex path has and the parser does not, both measured over 110 source sets:
+
+  * `_LOCAL_RE` opens with `(?:^|[;{}])`, which CONSUMES the `;` ending the previous
+    statement, leaving `finditer` no anchor for the next one, so every second declaration in a
+    run is skipped -- 29 locals missed on the Kim corpus, 22 surviving unrenamed.
+  * `_METHOD_SIG_RE` matches *word word `(`*, so `new DecimalFormat("$0.00")` reads as a
+    declaration named `DecimalFormat` with return type `new`, and a JDK class is renamed to a
+    method name. Of the 101 sets whose original compiles, this makes the regex output fail
+    `javac` on 5.
+
 Input and output are both `{filename: source}`. Classes and enums become `C1, C2, ...`,
 interfaces `I1, I2, ...`, methods `m1, m2, ...`, fields `f1, f2, ...`, parameters
 `p1, p2, ...`, local variables `v1, v2, ...`. Names are assigned once for the whole set, so
@@ -63,7 +87,13 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-__all__ = ["obfuscate", "build_rename_map", "RenameMap"]
+__all__ = [
+    "obfuscate",
+    "build_rename_map",
+    "obfuscate_regex",
+    "build_rename_map_regex",
+    "RenameMap",
+]
 
 
 _KEYWORDS = {
@@ -665,8 +695,9 @@ class RenameMap:
         return len(self.mapping)
 
 
-def build_rename_map(java_files: dict[str, str]) -> RenameMap:
-    """The identifier map for `java_files`, without applying it."""
+def build_rename_map_regex(java_files: dict[str, str]) -> RenameMap:
+    """The identifier map for `java_files`, without applying it. REGEX PATH -- see
+    `build_rename_map` below, which is the public entry point and is now a parser."""
     masked = [_mask(src)[0] for _, src in sorted(java_files.items())]
     d = _collect(masked)
 
@@ -787,14 +818,52 @@ def _apply(src: str, rmap: RenameMap) -> str:
     return _unmask(_IDENT_RE.sub(rename, masked), held)
 
 
+def obfuscate_regex(java_files: dict[str, str], *, rename_files: bool = True) -> dict[str, str]:
+    """Rename every user-defined identifier in `java_files`. REGEX PATH.
+
+    Kept importable, and kept working, so `validation/obfuscator_diff.py` can go on comparing
+    the two implementations. Deleting it would delete the only evidence that the parser
+    implements the same policy rather than a different one.
+    """
+    rmap = build_rename_map_regex(java_files)
+    return {
+        (rmap.file_mapping.get(fname, fname) if rename_files else fname): _apply(src, rmap)
+        for fname, src in java_files.items()
+    }
+
+
+# --------------------------------------------------------------------------------------- #
+# The public entry points, which are now the PARSER.
+#
+# The regex scanning above stays in the file and stays working: it is the control arm of
+# `validation/obfuscator_diff.py`, and a claim that the parser implements the same policy is
+# only checkable against something. The import is function-local because `piqs.obfuscator_ts`
+# imports the policy constants FROM THIS MODULE -- the two would deadlock at import time
+# otherwise, and the direction of that dependency is the point: policy lives here, mechanism
+# lives there.
+# --------------------------------------------------------------------------------------- #
+
+def build_rename_map(java_files: dict[str, str]) -> RenameMap:
+    """The identifier map for `java_files`, without applying it.
+
+    Built by `piqs.obfuscator_ts` from a tree-sitter parse. Raises `JavaParseError` on a file
+    that does not parse cleanly, where the regex path would silently rename part of it.
+    """
+    from piqs.obfuscator_ts import build_rename_map as _ts_build
+
+    return _ts_build(java_files)
+
+
 def obfuscate(java_files: dict[str, str], *, rename_files: bool = True) -> dict[str, str]:
     """Rename every user-defined identifier in `java_files`, consistently across the set.
 
     Returns a new `{filename: source}`; the input is not modified. Pass `rename_files=False`
     to keep the original keys. Use `build_rename_map` when the mapping itself is wanted.
+
+    Backed by `piqs.obfuscator_ts`. Measured against the regex path over 110 source sets:
+    1388 identifiers renamed against 1353, and of the 101 sets whose original compiles the
+    regex output fails `javac` on 7 where this fails on 2. See `validation/obfuscator_diff.py`.
     """
-    rmap = build_rename_map(java_files)
-    return {
-        (rmap.file_mapping.get(fname, fname) if rename_files else fname): _apply(src, rmap)
-        for fname, src in java_files.items()
-    }
+    from piqs.obfuscator_ts import obfuscate as _ts_obfuscate
+
+    return _ts_obfuscate(java_files, rename_files=rename_files)

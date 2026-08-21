@@ -61,8 +61,9 @@ def _bijection_check(mapping: dict[str, str]) -> None:
 
 
 def test_holder_map_is_a_bijection_in_both_python_tools() -> None:
-    for label, mod in (("regex", regex_mod), ("tree-sitter", ts_mod)):
-        rmap = mod.build_rename_map({"Holder.java": HOLDER})
+    for label, build in (("regex", regex_mod.build_rename_map_regex),
+                         ("tree-sitter", ts_mod.build_rename_map)):
+        rmap = build({"Holder.java": HOLDER})
         _bijection_check(rmap.mapping)
         assert COLLIDING <= set(rmap.mapping), (
             f"{label}: the colliding names were not all discovered; "
@@ -98,7 +99,7 @@ def test_holder_is_a_swap_not_a_collision() -> None:
 
 def test_holder_both_python_tools_rename_the_same_names() -> None:
     """The VALUES may differ (numbering shifts); the SET of renamed names may not."""
-    a = regex_mod.build_rename_map({"Holder.java": HOLDER})
+    a = regex_mod.build_rename_map_regex({"Holder.java": HOLDER})
     b = ts_mod.build_rename_map({"Holder.java": HOLDER})
     assert set(a.mapping) == set(b.mapping), (
         f"regex only: {sorted(set(a.mapping) - set(b.mapping))}; "

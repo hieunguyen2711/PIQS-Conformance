@@ -96,7 +96,7 @@ def corpus() -> list[tuple[str, dict[str, str]]]:
 
 def compare_set(files: dict[str, str]):
     """`(regex map, tree-sitter map)` for one source set, or an error string."""
-    a = regex_mod.build_rename_map(files)
+    a = regex_mod.build_rename_map_regex(files)
     b = ts_mod.build_rename_map(files)
     return a, b
 
@@ -149,9 +149,10 @@ def compile_report(sets) -> None:
             bad_original.append(label)
             continue
         good += 1
-        for mod, bucket in ((regex_mod, broke_regex), (ts_mod, broke_ts)):
+        for fn, bucket in ((regex_mod.obfuscate_regex, broke_regex),
+                           (ts_mod.obfuscate, broke_ts)):
             try:
-                out = mod.obfuscate(files)
+                out = fn(files)
                 ok, err = javac(out)
             except Exception as exc:  # noqa: BLE001
                 ok, err = False, f"{type(exc).__name__}: {exc}"
